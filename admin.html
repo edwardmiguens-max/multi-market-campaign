@@ -401,6 +401,33 @@
         (function () {
             var SB_URL = 'https://obrjpgucgcrclukkvook.supabase.co';
             var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9icmpwZ3VjZ2NyY2x1a2t2b29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzM1OTksImV4cCI6MjA5NzQwOTU5OX0.tN2DmXRTjcvR1azRcvILTxNZEViXkIutVlqYBhbPOq8';
+            window.slugifyReportName = function (name) {
+                return String(name || 'campaign-report').trim().toLowerCase()
+                    .replace(/[^\w\s-]+/g, '').replace(/\s+/g, '-')
+                    .replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'campaign-report';
+            };
+            window.getReportBasePath = function () {
+                var u = new URL(window.location.href);
+                var parts = u.pathname.split('/').filter(Boolean);
+                if (parts.length && parts[parts.length - 1].endsWith('.html')) parts.pop();
+                return u.origin + (parts.length ? '/' + parts.join('/') : '');
+            };
+            window.getReportLiveUrl = function (reportName, campaignData) {
+                var slug = (campaignData && campaignData.reportSlug) || window.slugifyReportName(reportName);
+                return window.getReportBasePath() + '/' + encodeURIComponent(slug);
+            };
+            window.formatLiveReportLinkHtml = function (reportName, campaignData) {
+                var url = window.getReportLiveUrl(reportName, campaignData);
+                return '<a href="' + url + '" target="_blank" rel="noopener" class="underline font-bold text-white tracking-wide block mt-1 py-1 px-2 bg-green-700/60 rounded border border-green-500">👉 Open Live Hub</a>'
+                    + '<p class="text-[10px] text-gray-300 mt-2 break-all leading-relaxed">' + url + '</p>';
+            };
+            window.showLiveReportLinkInSidebar = function (reportName, campaignData, heading) {
+                var el = document.getElementById('publish-result');
+                if (!el) return;
+                el.innerHTML = (heading || 'Live report URL') + '<br>' + window.formatLiveReportLinkHtml(reportName, campaignData);
+                el.classList.remove('hidden', 'text-red-400', 'text-yellow-400');
+                el.classList.add('text-green-400');
+            };
             function getDropdown() { return document.getElementById('select-campaign-directory'); }
             function getRetryBtn() { return document.getElementById('btn-retry-db'); }
             window.refreshCampaignDirectory = function refreshCampaignDirectory() {
@@ -665,7 +692,7 @@
                         if (res.error) throw res.error;
                         try {
                             window.applyLoadedCampaignRecord(res.data);
-                            showCampaignLoadStatus('✅ Loaded <strong>' + (res.data.report_name || 'campaign') + '</strong>', 'ok');
+                            window.showLiveReportLinkInSidebar(res.data.report_name, res.data.campaign_data, '✅ Loaded <strong>' + (res.data.report_name || 'campaign') + '</strong>');
                             if (typeof window.__campaignApplyFn !== 'function') {
                                 var tries = 0;
                                 var upgrade = setInterval(function () {
@@ -2158,6 +2185,7 @@
 
             calculateGlobalDashboard();
             window.__pendingCampaignLoadId = null;
+            window.showLiveReportLinkInSidebar(data.report_name, old, `✅ Loaded <strong>${data.report_name || 'campaign'}</strong>`);
         }
         window.applyLogoBase64 = applyLogoBase64;
         window.applyLoadedCampaignRecord = applyLoadedCampaignRecord;
@@ -2183,7 +2211,7 @@
                 const { data, error } = await client.from('reports').select('*').eq('id', reportId).single();
                 if (error) throw error;
                 applyLoadedCampaignRecord(data);
-                showCampaignLoadStatusMain(`✅ Loaded <strong>${data.report_name || 'campaign'}</strong>`, 'ok');
+                window.showLiveReportLinkInSidebar(data.report_name, data.campaign_data, `✅ Loaded <strong>${data.report_name || 'campaign'}</strong>`);
             } catch (err) {
                 console.error('Loader Exception:', err);
                 showCampaignLoadStatusMain(`❌ Error Loading: <br><span class="text-[10px]">${err.message || 'Unknown error'}</span>`, 'err');
@@ -2532,19 +2560,8 @@
             document.getElementById('btn-clear-load')?.addEventListener('click', () => { resetLoadedCampaignToDefaults(); });
             wireCampaignSelectHandler();
 
-            const getReportBasePath = () => {
-                const u = new URL(window.location.href);
-                const parts = u.pathname.split('/').filter(Boolean);
-                if(parts.length && parts[parts.length - 1].endsWith('.html')) parts.pop();
-                return u.origin + (parts.length ? '/' + parts.join('/') : '');
-            };
-            function slugifyReportName(name) {
-                return String(name || 'campaign-report').trim().toLowerCase()
-                    .replace(/[^\w\s-]+/g, '').replace(/\s+/g, '-')
-                    .replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'campaign-report';
-            }
             async function resolveUniqueReportSlug(name, currentId) {
-                const base = slugifyReportName(name);
+                const base = window.slugifyReportName(name);
                 let slug = base;
                 let attempt = 2;
                 while(attempt <= 50) {
@@ -2555,7 +2572,6 @@
                 }
                 return `${base}-${String(currentId || '').slice(0, 8)}`;
             }
-            const getReportUrl = (reportSlug) => `${getReportBasePath()}/${encodeURIComponent(reportSlug)}`;
 
             function optimizeLogoForPublish(dataUrl, maxChars = 240000, cardBg = '#ffffff', useOverlay = true) {
                 return new Promise((resolve) => {
@@ -2676,9 +2692,11 @@
                     if (!data || data.length === 0) throw new Error("Insert returned no ID.");
                     targetId = data[0].id; activeLoadedReportId = targetId;
                     
-                    const liveUrl = getReportUrl(publishPayload.reportSlug);
-
-                    if(resDiv) { resDiv.classList.remove('text-yellow-400', 'text-red-400'); resDiv.classList.add('text-green-400'); resDiv.innerHTML = `✅ Successfully Saved! <br><a href="${liveUrl}" target="_blank" class="underline font-bold text-white tracking-wide block mt-1 py-1 px-2 bg-green-700/60 rounded border border-green-500">👉 Open Live Hub</a>`; }
+                    if(resDiv) {
+                        resDiv.classList.remove('text-yellow-400', 'text-red-400');
+                        resDiv.classList.add('text-green-400');
+                        resDiv.innerHTML = `✅ Successfully Saved!<br>${window.formatLiveReportLinkHtml(nameInput, publishPayload)}`;
+                    }
                     refreshCampaignDirectory();
 
                 } catch(err) { 
