@@ -4,13 +4,578 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campaign Multi-Market Hub</title>
+    <link rel="icon" id="report-favicon" href="data:,">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style id="dynamic-dashboard-styles">
+        :root {
+            --rep-v-bg: #f6f6f7; --rep-v-card-bg: #ffffff;
+            --rep-v-logo-col: #202223; --rep-v-acc-col: #202223;
+            --rep-v-prim: #008060; --rep-v-sec: #5c6ac4;
+            --rep-v-tert: #9c6ade; --rep-v-quat: #47c1bf;
+            --rep-v-hdr-txt: #6d7175; --rep-v-body-txt: #202223; --rep-v-acc-txt: #ffffff;
+            --rep-v-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --rep-v-h-scale: 1; --rep-v-acc-scale: 1; --rep-v-b-scale: 1; --rep-v-logo-scale: 1;
+            --shopify-border: #e1e3e5;
+        }
+    </style>
+    <style>
+        body { background-color: var(--rep-v-bg) !important; color: var(--rep-v-body-txt) !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow-x: hidden; }
+        #dashboard-area, #dashboard-area * { font-family: var(--rep-v-font) !important; box-sizing: border-box; }
+        #dashboard-area { color: var(--rep-v-body-txt) !important; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+        #dashboard-area #display-title { color: var(--rep-v-logo-col) !important; font-size: calc(1.5rem * var(--rep-v-h-scale)) !important; line-height: calc(2rem * var(--rep-v-h-scale)) !important; font-weight: 600 !important; letter-spacing: -0.02em; }
+        #dashboard-area summary span.text-lg, #dashboard-area .accordion-title-text { font-size: calc(0.9375rem * var(--rep-v-acc-scale)) !important; line-height: calc(1.375rem * var(--rep-v-acc-scale)) !important; color: var(--rep-v-acc-txt) !important; font-weight: 600 !important; }
+        #dashboard-area .card-header-custom { font-size: calc(0.8125rem * var(--rep-v-h-scale)) !important; line-height: calc(1.125rem * var(--rep-v-h-scale)) !important; color: var(--rep-v-hdr-txt) !important; font-weight: 500 !important; text-transform: none !important; letter-spacing: normal !important; }
+        #dashboard-area .text-xs:not(.card-header-custom) { font-size: calc(0.75rem * var(--rep-v-b-scale)) !important; line-height: calc(1rem * var(--rep-v-b-scale)) !important; }
+        #dashboard-area .text-sm { font-size: calc(0.875rem * var(--rep-v-b-scale)) !important; line-height: calc(1.25rem * var(--rep-v-b-scale)) !important; }
+        #dashboard-area .text-base { font-size: calc(1rem * var(--rep-v-b-scale)) !important; line-height: calc(1.5rem * var(--rep-v-b-scale)) !important; }
+        #dashboard-area .text-lg:not(summary span.text-lg) { font-size: calc(1.125rem * var(--rep-v-b-scale)) !important; line-height: calc(1.75rem * var(--rep-v-b-scale)) !important; }
+        #dashboard-area .text-xl { font-size: calc(1.25rem * var(--rep-v-b-scale)) !important; line-height: calc(1.75rem * var(--rep-v-b-scale)) !important; }
+        #dashboard-area .text-2xl { font-size: calc(1.5rem * var(--rep-v-b-scale)) !important; line-height: calc(2rem * var(--rep-v-b-scale)) !important; font-weight: 600 !important; letter-spacing: -0.02em; }
+        #dashboard-area .text-3xl { font-size: calc(1.875rem * var(--rep-v-b-scale)) !important; line-height: calc(2.25rem * var(--rep-v-b-scale)) !important; }
+        #dashboard-area .text-4xl:not(#display-title) { font-size: calc(2.25rem * var(--rep-v-b-scale)) !important; line-height: calc(2.5rem * var(--rep-v-b-scale)) !important; }
+
+        .dashboard-card { background-color: var(--rep-v-card-bg) !important; border-radius: 0.75rem; border: 1px solid var(--shopify-border); box-shadow: none; padding: 1.25rem; max-width: 100%; overflow: hidden; min-width: 0; }
+        .dashboard-card h3, .dashboard-card .card-header-custom, .dashboard-card p.text-xs { font-weight: 600 !important; }
+        #dashboard-area .global-kpi-grid .card-header-custom { font-weight: 500 !important; letter-spacing: normal; text-transform: none; }
+        #dashboard-area .global-kpi-grid .dashboard-card { border-left: none !important; }
+        #dashboard-area .card-header-custom { color: var(--rep-v-hdr-txt) !important; }
+        #dashboard-area #logo-container { margin-bottom: 1.5rem; display: none; align-items: center; justify-content: center; overflow: visible; max-width: 100%; }
+        #dashboard-area td, #dashboard-area th, #dashboard-area p, #dashboard-area span:not(summary span.text-lg) { color: var(--rep-v-body-txt); }
+        #display-logo { max-width: min(100%, 20rem); max-height: 8rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
+        #display-logo-img { max-width: min(100%, 20rem); max-height: 8rem; object-fit: contain; background-color: var(--rep-v-card-bg); border-radius: 0.25rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
+        #products-grid .product-image-slot { background-color: var(--rep-v-card-bg) !important; }
+        .logo-mask { background-color: var(--rep-v-logo-col) !important; -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-size: contain; mask-repeat: no-repeat; mask-position: center; }
+        .analytics-panel { background: #fff !important; border: 1px solid var(--shopify-border) !important; border-radius: 0.75rem !important; box-shadow: none !important; overflow: hidden; max-width: 100%; }
+        .accordion-summary-bar { background-color: var(--rep-v-acc-col) !important; color: var(--rep-v-acc-txt) !important; border-bottom: none; }
+        #dashboard-area summary span.text-lg, #dashboard-area .accordion-title-text { color: var(--rep-v-acc-txt) !important; }
+        .analytics-panel > div { background: var(--rep-v-bg) !important; }
+        details > summary { list-style: none; } details > summary::-webkit-details-marker { display: none; }
+        .chart-shell { position: relative; width: 100%; max-width: 100%; overflow: hidden; min-width: 0; }
+        .chart-shell canvas { display: block; max-width: 100%; }
+        .chart-shell.chart-h-timeline { height: 18rem; }
+        .chart-shell.chart-h-pie { height: 15rem; }
+        .chart-shell.chart-h-bar { height: 8rem; }
+        .chart-shell.chart-h-cat { height: 9rem; }
+        .chart-shell.chart-h-lever { height: 12rem; }
+        #loader { position: fixed; inset: 0; background: #f6f6f7; display: flex; align-items: center; justify-content: center; font-weight: 600; z-index: 50; color: #202223; }
+        .report-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+        header { border-bottom-color: var(--shopify-border) !important; max-width: 100%; }
+        @media (max-width: 768px) {
+            body { padding: 0.75rem !important; }
+            #dashboard-area { max-width: 100% !important; }
+            .dashboard-card { padding: 1rem !important; }
+            #dashboard-area .global-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 0.75rem !important; }
+            #dashboard-area .global-kpi-grid .text-2xl { font-size: calc(1.125rem * var(--rep-v-b-scale)) !important; }
+            #dashboard-area summary.accordion-summary-bar { padding: 0.875rem 1rem !important; }
+            #dashboard-area .segment-grid-2 { grid-template-columns: 1fr !important; }
+            #dashboard-area .segment-kpi-row { flex-direction: column !important; align-items: flex-start !important; gap: 0.75rem !important; }
+            #dashboard-area .segment-kpi-row > .text-right { text-align: left !important; }
+            #dashboard-area .traffic-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            #dashboard-area .split-grid-2 { grid-template-columns: 1fr !important; gap: 1rem !important; }
+            #dashboard-area .lever-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .chart-shell.chart-h-timeline { height: 11rem; }
+            .chart-shell.chart-h-pie { height: 10rem; }
+            .chart-shell.chart-h-bar { height: 7rem; }
+            .chart-shell.chart-h-cat { height: 8rem; }
+            .chart-shell.chart-h-lever { height: 9rem; }
+            #live-top-countries-map { height: 240px !important; max-width: 100%; overflow: hidden; }
+            #dashboard-area .space-y-4 > div { max-width: 100%; min-width: 0; }
+        }
+    </style>
 </head>
-<body>
-    <h1>Campaign Multi-Market Report</h1>
-    <p>Public-facing campaign analytics dashboard.</p>
+<body class="p-4 md:p-8 flex justify-center">
+
+    <div id="loader">Loading Multi-Market Environments...</div>
+
+    <main id="dashboard-area" class="w-full max-w-5xl hidden space-y-6">
+        <div id="logo-container" style="display: none;" class="justify-center mb-6"><div id="display-logo" class="logo-mask"></div><img id="display-logo-img" alt="" class="object-contain" style="display: none;"></div>
+        <header class="border-b pb-4 mb-2"><h1 id="display-title" class="text-2xl font-semibold tracking-tight">--</h1></header>
+
+        <div id="products-grid" style="display: none;" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="dashboard-card product-image-slot flex items-center justify-center aspect-square p-2 overflow-hidden"><img id="view-p1" style="display: none;" class="w-full h-full max-h-64 lg:max-h-80 object-contain rounded"></div>
+            <div class="dashboard-card product-image-slot flex items-center justify-center aspect-square p-2 overflow-hidden"><img id="view-p2" style="display: none;" class="w-full h-full max-h-64 lg:max-h-80 object-contain rounded"></div>
+            <div class="dashboard-card product-image-slot flex items-center justify-center aspect-square p-2 overflow-hidden"><img id="view-p3" style="display: none;" class="w-full h-full max-h-64 lg:max-h-80 object-contain rounded"></div>
+            <div class="dashboard-card product-image-slot flex items-center justify-center aspect-square p-2 overflow-hidden"><img id="view-p4" style="display: none;" class="w-full h-full max-h-64 lg:max-h-80 object-contain rounded"></div>
+        </div>
+
+        <div class="space-y-4">
+            <div id="report-section-global">
+            <details class="group analytics-panel" open>
+                <summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-global">
+                    <span class="text-lg" id="title-global">1. Global Dashboard Summary</span>
+                    <span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span>
+                </summary>
+                <div class="p-6 space-y-6 rounded-b-lg">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 global-kpi-grid"><div class="dashboard-card"><p class="text-xs card-header-custom">Global revenue</p><p id="g-rev" class="text-2xl font-semibold">--</p></div><div class="dashboard-card"><p class="text-xs card-header-custom">Global units sold</p><p id="g-items" class="text-2xl font-semibold">--</p></div><div class="dashboard-card"><p class="text-xs card-header-custom">Total orders</p><p id="g-orders" class="text-2xl font-semibold">--</p></div><div class="dashboard-card"><p class="text-xs card-header-custom">Blended AOV</p><p id="g-aov" class="text-2xl font-semibold">--</p></div></div>
+                    
+                    <div class="dashboard-card w-full">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-4">
+                            <h3 class="text-xs card-header-custom mb-0">Total sales over time</h3>
+                            <span class="text-xs font-medium text-gray-500" id="live-timeline-range">Awaiting Data...</span>
+                        </div>
+                        <div class="chart-shell chart-h-timeline w-full relative">
+                            <canvas id="liveTimelineChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 split-grid-2"><div class="dashboard-card"><h3 class="text-xs card-header-custom mb-4">Market revenue split</h3><div class="chart-shell chart-h-pie"><canvas id="globalPie"></canvas></div></div><div class="dashboard-card"><h3 class="text-xs card-header-custom mb-2">Global top leaders</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><tbody id="g-table"></tbody></table></div></div></div>
+                </div>
+            </details>
+            </div>
+
+            <div id="report-section-uk"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-uk"><span class="text-lg" id="title-uk">2. United Kingdom Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="uk-pane"></div></details></div>
+            <div id="report-section-eu"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-eu"><span class="text-lg" id="title-eu">3. European Union Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="eu-pane"></div></details></div>
+            <div id="report-section-us"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-us"><span class="text-lg" id="title-us">4. United States Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="us-pane"></div></details></div>
+            <div id="report-section-int"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-int"><span class="text-lg" id="title-int">5. Rest of World / International Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="int-pane"></div></details></div>
+            <div id="report-section-countries"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-countries"><span class="text-lg" id="title-countries">6. Top Countries</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-4"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><h3 class="text-xs card-header-custom mb-0">Global country distribution</h3><span id="live-top-countries-metric" class="text-xs text-gray-500">Metric: Orders</span></div><div id="live-top-countries-map" class="w-full" style="height: 440px;"></div></div><div class="dashboard-card"><h3 class="text-xs card-header-custom mb-2">Top 10 countries</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[280px]"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Orders</th><th class="text-right py-1">Net Revenue</th></tr></thead><tbody id="live-top-countries-table"></tbody></table></div></div></div></details></div>
+        </div>
+    </main>
+
+    <script>
+        const supabaseUrl = 'https://obrjpgucgcrclukkvook.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9icmpwZ3VjZ2NyY2x1a2t2b29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzM1OTksImV4cCI6MjA5NzQwOTU5OX0.tN2DmXRTjcvR1azRcvILTxNZEViXkIutVlqYBhbPOq8';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const getLegacyMarket = (oldObj, modCode) => {
+            if(!oldObj) return null;
+            if(oldObj[modCode]) return oldObj[modCode];
+            if(modCode === 'uk') return oldObj['United Kingdom'] || oldObj['UK'] || oldObj['united kingdom'];
+            if(modCode === 'us') return oldObj['United States'] || oldObj['USA'] || oldObj['united states'] || oldObj['US'];
+            if(modCode === 'eu') return oldObj['Europe'] || oldObj['EU'] || oldObj['europe'];
+            if(modCode === 'int') return oldObj['International'] || oldObj['Rest of World'] || oldObj['international'] || oldObj['ROW'];
+            return null;
+        };
+        const parseCurrencyLike = (v) => parseFloat(String(v ?? '').replace(/[^0-9.-]+/g, '')) || 0;
+        const formatGBP = (v) => `£${Number(v || 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+        const buildMapColorscale = (darkColor) => {
+            const dark = darkColor || '#1e3a8a';
+            const mix = (a, b, t) => {
+                const parse = (hex) => {
+                    const h = String(hex).replace('#', '');
+                    const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+                    const n = parseInt(full, 16);
+                    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+                };
+                const A = parse(a), B = parse(b);
+                const ch = (x, y) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0');
+                return `#${ch(A.r, B.r)}${ch(A.g, B.g)}${ch(A.b, B.b)}`;
+            };
+            return [[0, mix('#ffffff', dark, 0.1)], [0.5, mix('#ffffff', dark, 0.45)], [1, dark]];
+        };
+        function sizeLogoFromImage(logoBase64, onSized) {
+            if(!logoBase64) return;
+            const probe = new Image();
+            probe.onload = () => {
+                const maxW = 320;
+                const maxH = 128;
+                let w = probe.naturalWidth || maxW;
+                let h = probe.naturalHeight || maxH;
+                const ratio = w / h || 1;
+                if(w > maxW) { w = maxW; h = w / ratio; }
+                if(h > maxH) { h = maxH; w = h * ratio; }
+                onSized(Math.round(w), Math.round(h));
+            };
+            probe.onerror = () => onSized(192, 64);
+            probe.src = logoBase64;
+        }
+        function applyLogoToReport(logoBase64, useOverlay) {
+            const container = document.getElementById('logo-container');
+            const maskEl = document.getElementById('display-logo');
+            const imgEl = document.getElementById('display-logo-img');
+            if(!container || !logoBase64) return;
+            container.style.display = 'flex';
+            const applyDims = (w, h) => {
+                [maskEl, imgEl].forEach(el => {
+                    if(!el) return;
+                    el.style.width = `${w}px`;
+                    el.style.height = `${h}px`;
+                    el.style.maxWidth = 'none';
+                    el.style.maxHeight = 'none';
+                });
+            };
+            sizeLogoFromImage(logoBase64, applyDims);
+            const maskUrl = `url("${String(logoBase64).replace(/"/g, '\\"')}")`;
+            if(useOverlay && maskEl) {
+                maskEl.style.display = 'block';
+                maskEl.style.webkitMaskImage = maskUrl;
+                maskEl.style.maskImage = maskUrl;
+                if(imgEl) imgEl.style.display = 'none';
+            } else if(imgEl) {
+                imgEl.src = logoBase64;
+                imgEl.style.display = 'block';
+                if(maskEl) { maskEl.style.display = 'none'; maskEl.style.webkitMaskImage = ''; maskEl.style.maskImage = ''; }
+            }
+        }
+        const REPORT_SECTION_KEYS = ['global', 'uk', 'eu', 'us', 'int', 'countries'];
+        const liveLeverCharts = {};
+        const sortWeekKeys = (arr) => [...arr].sort((a, b) => {
+            if (a.includes('Period') || b.includes('Period')) return a.localeCompare(b);
+            if (a.includes('Unknown') || b.includes('Unknown')) return a.localeCompare(b);
+            const parse = (k) => {
+                const m = k.match(/^w\/c (\d+) (\w+) (\d+)$/);
+                if(m) return new Date(`${m[2]} ${m[1]}, ${m[3]}`).getTime();
+                return new Date('1 ' + k).getTime();
+            };
+            return parse(a) - parse(b);
+        });
+        function renderLeversLive(market, computed, slotId, colors) {
+            const pane = document.getElementById(slotId); if(!pane) return;
+            const data = computed?.[market] || {};
+            const keys = Object.keys(data);
+            if(keys.length === 0) { pane.innerHTML = ''; return; }
+            const prim = colors?.primary || '#8b7355';
+            const sec = colors?.secondary || '#d4c4b7';
+            const timed = (key, d) => {
+                const chartId = `live-${slotId}-chart-${key}`;
+                const shows = (d.shows || []).length ? `<div class="dashboard-card"><p class="text-xs font-bold card-header-custom uppercase mb-2">Shows</p><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Date</th><th class="text-left py-1">Venue</th><th class="text-left py-1">Country</th></tr></thead><tbody>${d.shows.map(s => `<tr class="border-b"><td class="py-1">${s.date||'—'}</td><td class="py-1">${s.venue||'—'}</td><td class="py-1">${s.country||'—'}</td></tr>`).join('')}</tbody></table></div>` : '';
+                const prize = d.prize ? `<div class="dashboard-card"><p class="text-xs font-bold card-header-custom uppercase mb-1">Prize</p><p class="text-sm font-semibold">${d.prize}</p></div>` : '';
+                const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
+                const marketLabel = market === 'uk' ? 'UK' : market === 'eu' ? 'EU' : '';
+                const sendHtml = (d.globalCombinedSend !== undefined) ? `<p class="text-xs font-semibold text-indigo-700 mt-1">Global Combined Send: ${Number(d.globalCombinedSend||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">UK + EU orders + NPN (driver dates)</p>` : '';
+                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${prim}"><h3 class="text-base font-bold">${d.title||key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${d.windowLabel||'—'}</p><div class="grid grid-cols-2 md:grid-cols-4 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="text-lg font-bold">${formatGBP(d.musicRev)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="text-lg font-bold">${formatGBP(d.merchRev)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketLabel ? marketLabel + ' Orders' : 'Orders'}</p><p class="text-lg font-bold">${Number(d.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(d.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${shows}${prize}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${top||'<tr><td colspan="3" class="italic text-gray-400 py-2">No products</td></tr>'}</tbody></table></div></div><div class="chart-shell chart-h-lever"><canvas id="${chartId}"></canvas></div></div></div>`;
+            };
+            const gwp = (d) => `<div class="dashboard-card border-l-4 space-y-2" style="border-left-color:${sec}"><h3 class="text-base font-bold">${d.title||'Gift with Purchase'}</h3><p class="text-xs text-gray-500">Gift: <strong>${d.productName||'—'}</strong></p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Orders</p><p class="text-2xl font-bold">${Number(d.orders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Full order revenue</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div></div>`;
+            const signed = (d) => {
+                const chartId = `live-${slotId}-chart-signed`;
+                const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
+                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${colors?.tertiary||'#4b5563'}"><h3 class="text-base font-bold">${d.title||'Signed'}</h3><p class="text-xs text-gray-500">${d.mode==='signed_art_card'?'Signed art card attribution':'Signed formats'}</p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed revenue</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top products</p><table class="w-full text-sm"><tbody>${top||'<tr><td class="italic text-gray-400 py-2">No signed products</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
+            };
+            let html = '';
+            if(data.preOrder1) html += timed('preOrder1', data.preOrder1);
+            if(data.preOrder2) html += timed('preOrder2', data.preOrder2);
+            if(data.giftWithPurchase) html += gwp(data.giftWithPurchase);
+            if(data.competition) html += timed('competition', data.competition);
+            if(data.signed) html += signed(data.signed);
+            pane.innerHTML = html;
+            if(typeof Chart === 'undefined') return;
+            ['preOrder1','preOrder2','competition','signed'].forEach(k => {
+                const top5 = data[k]?.top5; const cid = k === 'signed' ? `live-${slotId}-chart-signed` : `live-${slotId}-chart-${k}`;
+                const el = document.getElementById(cid); if(!el || !top5?.length) return;
+                if(liveLeverCharts[cid]) liveLeverCharts[cid].destroy();
+                liveLeverCharts[cid] = new Chart(el.getContext('2d'), { type: 'bar', data: { labels: top5.map(x => x[0].length>22?x[0].slice(0,22)+'…':x[0]), datasets: [{ label: 'Units', data: top5.map(x=>x[1].units), backgroundColor: prim, yAxisID:'y' }, { label: 'Revenue', data: top5.map(x=>x[1].revenue), backgroundColor: sec, yAxisID:'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, position: 'left' }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } } });
+            });
+        }
+        function applySectionVisibility(visibility, storeHasUsMarket) {
+            const vis = { ...(visibility || {}) };
+            if(storeHasUsMarket === false) vis.us = false;
+            REPORT_SECTION_KEYS.forEach(k => {
+                const el = document.getElementById(`report-section-${k}`);
+                if(!el) return;
+                el.style.display = (vis[k] !== false) ? '' : 'none';
+            });
+        }
+        function applyReportBranding(title, logoDataUrl) {
+            if(title) document.title = title;
+            if(!logoDataUrl) return;
+            let link = document.getElementById('report-favicon');
+            if(!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                link.id = 'report-favicon';
+                document.head.appendChild(link);
+            }
+            link.href = logoDataUrl;
+            link.type = logoDataUrl.startsWith('data:image/png') ? 'image/png' : (logoDataUrl.startsWith('data:image/svg') ? 'image/svg+xml' : 'image/jpeg');
+        }
+        const chartLegendMobile = { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, padding: 8 } };
+        function getChartOptions(extra = {}) {
+            const mobile = window.matchMedia('(max-width: 768px)').matches;
+            const base = { responsive: true, maintainAspectRatio: false, plugins: { legend: mobile ? chartLegendMobile : { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } } };
+            return Object.assign(base, extra);
+        }
+        function drawTopCountriesMapLive(mapEl, mapRows, metricType, mapGradientDark, options = {}) {
+            if(!mapEl || typeof Plotly === 'undefined') return;
+            if(!mapRows || mapRows.length === 0) {
+                Plotly.purge(mapEl);
+                mapEl.innerHTML = '<div class="text-sm text-gray-500 italic p-4">No map data available.</div>';
+                return;
+            }
+            mapEl.style.display = '';
+            mapEl.innerHTML = '';
+            const mapHeight = options.height || (window.matchMedia('(max-width: 768px)').matches ? 240 : 440);
+            Plotly.newPlot(mapEl, [{
+                type: 'choropleth',
+                locationmode: 'country names',
+                locations: mapRows.map(x => x.country),
+                z: mapRows.map(x => x.value),
+                colorscale: buildMapColorscale(mapGradientDark),
+                reversescale: false,
+                marker: { line: { color: '#ffffff', width: 0.4 } },
+                colorbar: { title: metricType === 'orders' ? 'Orders' : 'Revenue' }
+            }], {
+                margin: { t: 0, l: 0, r: 0, b: 0 },
+                height: mapHeight,
+                autosize: true,
+                geo: {
+                    scope: 'world',
+                    projection: { type: 'natural earth' },
+                    fitbounds: 'locations',
+                    showframe: false,
+                    showcoastlines: true,
+                    showcountries: true,
+                    countrycolor: '#ffffff',
+                    bgcolor: 'rgba(0,0,0,0)'
+                }
+            }, { responsive: true, displayModeBar: false });
+            setTimeout(() => { try { Plotly.Plots.resize(mapEl); } catch(e) {} }, 80);
+        }
+        function remapTopCountriesPayload(payload, storeHasUsMarket) {
+            if(storeHasUsMarket !== false || !payload) return payload;
+            const remapName = (name) => {
+                const n = String(name || '').trim();
+                return ['United States','Usa','US','U.S.','U.S.A.'].includes(n) ? 'International' : n;
+            };
+            const mergeRows = (rows) => {
+                const merged = {};
+                (rows || []).forEach(r => {
+                    const country = remapName(r.country);
+                    if(!country) return;
+                    if(!merged[country]) merged[country] = { country, orders: 0, revenue: 0, value: 0 };
+                    merged[country].orders += Number(r.orders || 0);
+                    merged[country].revenue += Number(r.revenue || 0);
+                    merged[country].value += Number(r.value ?? r.orders ?? r.revenue ?? 0);
+                });
+                return Object.values(merged).sort((a,b) => b.revenue - a.revenue);
+            };
+            const top10 = mergeRows(payload.top10).slice(0, 10);
+            const mapData = mergeRows(payload.mapData).map(r => ({ country: r.country, value: payload.metricType === 'orders' ? r.orders : r.revenue }));
+            return { ...payload, top10, mapData };
+        }
+        let lastLiveTopCountries = null;
+        let lastLiveMapGradient = null;
+        let lastLiveStoreHasUsMarket = true;
+        const normalizeCountryRow = (r) => {
+            if(!r) return null;
+            const country = String(r.country ?? r.Country ?? r.name ?? r.Name ?? r[0] ?? '').trim();
+            const ordersRaw = r.orders ?? r.Orders ?? r.order_count ?? r[1] ?? 0;
+            const revenueRaw = r.revenue ?? r['Net Revenue'] ?? r.netRevenue ?? r[2] ?? 0;
+            const valueRaw = r.value ?? r.Value ?? null;
+            const orders = Number(String(ordersRaw).replace(/[^0-9.-]/g, '')) || 0;
+            const revenue = Number(String(revenueRaw).replace(/[^0-9.-]/g, '')) || 0;
+            const value = valueRaw === null ? null : (Number(String(valueRaw).replace(/[^0-9.-]/g, '')) || 0);
+            if(!country) return null;
+            return { country, orders, revenue, value };
+        };
+        function getTopCountriesMapRows(topCountries) {
+            const normalizedMapData = (Array.isArray(topCountries.mapData) ? topCountries.mapData : []).map(normalizeCountryRow).filter(Boolean);
+            const normalizedTop10 = (Array.isArray(topCountries.top10) ? topCountries.top10 : []).map(normalizeCountryRow).filter(Boolean);
+            const fallbackMapRows = normalizedTop10.map(r => ({
+                country: r.country,
+                value: topCountries.metricType === 'orders' ? r.orders : r.revenue
+            }));
+            return (normalizedMapData.length > 0)
+                ? normalizedMapData.map(r => ({ country: r.country, value: r.value !== null ? r.value : (topCountries.metricType === 'orders' ? r.orders : r.revenue) }))
+                : fallbackMapRows;
+        }
+        function renderTopCountriesLive(payload, mapGradientDark, storeHasUsMarket) {
+            const topCountries = remapTopCountriesPayload(payload || { metricType: 'orders', mapData: [], top10: [] }, storeHasUsMarket);
+            lastLiveStoreHasUsMarket = storeHasUsMarket !== false;
+            const metricEl = document.getElementById('live-top-countries-metric');
+            if(metricEl) metricEl.textContent = `Metric: ${topCountries.metricType === 'orders' ? 'Orders' : 'Revenue (fallback)'}`;
+            const tbody = document.getElementById('live-top-countries-table');
+            if(tbody) {
+                tbody.innerHTML = '';
+                const rows = (Array.isArray(topCountries.top10) ? topCountries.top10 : []).map(normalizeCountryRow).filter(Boolean);
+                if(rows.length === 0) {
+                    tbody.innerHTML = '<tr><td class="py-2 text-gray-500 italic" colspan="3">No country-level data available in this report.</td></tr>';
+                } else {
+                    rows.forEach(row => {
+                        tbody.innerHTML += `<tr class="border-b"><td class="py-1.5">${row.country}</td><td class="py-1.5 text-right">${Number(row.orders || 0).toLocaleString()}</td><td class="py-1.5 text-right">${formatGBP(row.revenue)}</td></tr>`;
+                    });
+                }
+            }
+            const mapEl = document.getElementById('live-top-countries-map');
+            if(mapEl && typeof Plotly === 'undefined') {
+                setTimeout(() => renderTopCountriesLive(topCountries, mapGradientDark, storeHasUsMarket), 120);
+                return;
+            }
+            if(mapEl) {
+                const mapRows = getTopCountriesMapRows(topCountries);
+                lastLiveTopCountries = topCountries;
+                lastLiveMapGradient = mapGradientDark;
+                drawTopCountriesMapLive(mapEl, mapRows, topCountries.metricType, mapGradientDark);
+            }
+        }
+
+        async function fetchReportData() {
+            const id = new URLSearchParams(window.location.search).get('id');
+            const loaderEl = document.getElementById('loader');
+            const showLoadError = (msg) => {
+                if(loaderEl) loaderEl.innerHTML = `<div class="text-center p-6 bg-white shadow-xl rounded-lg border border-red-200"><p class="text-2xl font-bold text-red-600 mb-2">Error Displaying Campaign</p><p class="text-sm text-gray-600">${msg}</p></div>`;
+            };
+            if(!id) { showLoadError('No report ID in URL. Open the live link from Admin after publishing.'); return; }
+            try {
+                const { data, error } = await supabaseClient.from('reports').select('campaign_data').eq('id', id).single();
+                if(error) throw new Error(error.message);
+                if(!data?.campaign_data) throw new Error('Report data not found. The publish may have failed or the report was removed.');
+                const payload = data.campaign_data;
+
+                const fontName = payload.fontFamily || 'Inter';
+                if(fontName !== 'Helvetica Neue') {
+                    const link = document.createElement('link'); link.rel = 'stylesheet';
+                    link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
+                    document.head.appendChild(link);
+                }
+
+                document.getElementById('dynamic-dashboard-styles').innerHTML = `
+                    :root {
+                        --rep-v-bg: ${payload.colors?.bg || '#f6f6f7'}; --rep-v-card-bg: ${payload.colors?.cardBg || '#ffffff'};
+                        --rep-v-logo-col: ${payload.colors?.logo || '#202223'}; --rep-v-acc-col: ${payload.colors?.accordion || '#202223'};
+                        --rep-v-prim: ${payload.colors?.primary || '#008060'}; --rep-v-sec: ${payload.colors?.secondary || '#5c6ac4'};
+                        --rep-v-tert: ${payload.colors?.tertiary || '#9c6ade'}; --rep-v-quat: ${payload.colors?.quaternary || '#47c1bf'};
+                        --rep-v-hdr-txt: ${payload.colors?.cardHeaderText || '#6d7175'}; --rep-v-body-txt: ${payload.colors?.textColor || '#202223'};
+                        --rep-v-acc-txt: ${payload.colors?.accordionHeaderText || '#ffffff'};
+                        --shopify-border: #e1e3e5;
+                        --rep-v-font: ${fontName === 'Helvetica Neue' ? "'Helvetica Neue', sans-serif" : `'${fontName}', 'Inter', sans-serif`};
+                        --rep-v-h-scale: ${(payload.fontSizeScaleHeader || payload.fontSizeScale || 16) / 16}; --rep-v-acc-scale: ${(payload.fontSizeScaleAccordion || payload.fontSizeScaleHeader || payload.fontSizeScale || 16) / 16}; --rep-v-b-scale: ${(payload.fontSizeScaleBody || payload.fontSizeScale || 16) / 16}; --rep-v-logo-scale: ${(Number(payload.logoScale || 100) / 100)};
+                    }
+                `;
+
+                document.getElementById('display-title').textContent = payload.title;
+                applyReportBranding(payload.title, payload.logoBase64 || null);
+                if(payload.colors) {
+                    ['global','uk','eu','us','int','countries'].forEach(m => {
+                        const el = document.getElementById(`summary-header-${m}`);
+                        if(el) {
+                            el.style.backgroundColor = payload.colors.accordion || '#202223';
+                            el.style.color = payload.colors.accordionHeaderText || '#ffffff';
+                        }
+                    });
+                }
+
+                if(payload.logoBase64) {
+                    applyLogoToReport(payload.logoBase64, payload.logoColorOverlay !== false);
+                }
+
+                if(payload.productImages) {
+                    let showGrid = false;
+                    ['p1','p2','p3','p4'].forEach(p => { if(payload.productImages[p]) { document.getElementById(`view-${p}`).src = payload.productImages[p]; document.getElementById(`view-${p}`).style.display = 'block'; showGrid = true; } });
+                    if(showGrid) document.getElementById('products-grid').style.display = 'grid';
+                }
+
+                document.getElementById('g-rev').textContent = formatGBP(parseCurrencyLike(payload.global.revenue)); document.getElementById('g-items').textContent = payload.global.items;
+                document.getElementById('g-orders').textContent = payload.global.orders; document.getElementById('g-aov').textContent = formatGBP(parseCurrencyLike(payload.global.aov));
+
+                const hasUsMarket = payload.storeHasUsMarket !== false;
+                const pieLabels = hasUsMarket ? ['UK', 'EU', 'US', 'INT'] : ['UK', 'EU', 'INT'];
+                const pieData = hasUsMarket ? payload.globalChartData : [payload.globalChartData?.[0] || 0, payload.globalChartData?.[1] || 0, payload.globalChartData?.[3] || 0];
+                const pieColors = hasUsMarket ? [payload.colors?.primary, payload.colors?.tertiary, payload.colors?.secondary, payload.colors?.quaternary] : [payload.colors?.primary, payload.colors?.tertiary, payload.colors?.quaternary];
+                new Chart(document.getElementById('globalPie').getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors, borderWidth: 0 }] },
+                    options: getChartOptions()
+                });
+
+                let sortedWeeks = [];
+                let weeksSet = new Set();
+                ['uk','eu','us','int'].forEach(m => {
+                    const mData = getLegacyMarket(payload, m);
+                    const timeline = mData?.weekly || mData?.monthly || {};
+                    Object.keys(timeline).forEach(k => weeksSet.add(k));
+                });
+                if(weeksSet.size > 0) sortedWeeks = sortWeekKeys(Array.from(weeksSet));
+
+                const prim = payload.colors?.primary || '#8b7355'; const sec = payload.colors?.secondary || '#d4c4b7';
+                const tert = payload.colors?.tertiary || '#4b5563'; const quat = payload.colors?.quaternary || '#10b981';
+
+                const getTimeline = (m) => {
+                    const d = getLegacyMarket(payload, m);
+                    return d?.weekly || d?.monthly || {};
+                };
+                let liveTEl = document.getElementById('liveTimelineChart')?.getContext('2d');
+                if(liveTEl) {
+                    new Chart(liveTEl, {
+                        type: 'line',
+                        data: {
+                            labels: sortedWeeks,
+                            datasets: [
+                                { label: 'UK Market', data: sortedWeeks.map(w => getTimeline('uk')[w] || 0), borderColor: prim, backgroundColor: prim, tension: 0.4, borderWidth: 3, pointRadius: 4 },
+                                { label: 'EU Market', data: sortedWeeks.map(w => getTimeline('eu')[w] || 0), borderColor: tert, backgroundColor: tert, tension: 0.4, borderWidth: 3, pointRadius: 4 },
+                                { label: 'US Market', data: sortedWeeks.map(w => getTimeline('us')[w] || 0), borderColor: sec, backgroundColor: sec, tension: 0.4, borderWidth: 3, pointRadius: 4, hidden: !hasUsMarket },
+                                { label: 'INT Market', data: sortedWeeks.map(w => getTimeline('int')[w] || 0), borderColor: quat, backgroundColor: quat, tension: 0.4, borderWidth: 3, pointRadius: 4 }
+                            ]
+                        },
+                        options: getChartOptions({ plugins: { legend: getChartOptions().plugins.legend, tooltip: { mode: 'index', intersect: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '£' + (v > 1000 ? (v/1000).toFixed(0) + 'K' : v), maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 5 : 8 } }, x: { grid: { display: false }, ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 6 : 12 } } } })
+                    });
+                    const pointRadius = sortedWeeks.length > 24 ? 1.5 : (sortedWeeks.length > 12 ? 2.5 : 4);
+                    const chartInstance = Chart.getChart(document.getElementById('liveTimelineChart'));
+                    if(chartInstance) {
+                        chartInstance.data.datasets.forEach(ds => { ds.pointRadius = pointRadius; ds.tension = sortedWeeks.length > 24 ? 0.2 : 0.4; });
+                        chartInstance.update();
+                    }
+                    if(document.getElementById('live-timeline-range') && sortedWeeks.length > 0) {
+                        if(sortedWeeks.length === 1) {
+                            document.getElementById('live-timeline-range').textContent = sortedWeeks[0];
+                        } else {
+                            document.getElementById('live-timeline-range').textContent = `${sortedWeeks[0]} – ${sortedWeeks[sortedWeeks.length-1]}`;
+                        }
+                    }
+                }
+
+                const populateSegments = (prefix, d) => {
+                    const pane = document.getElementById(`${prefix}-pane`); if(!pane) return; let musicUnitsCount = 0;
+                    if(typeof d.campaignChartUnits === 'number') musicUnitsCount = d.campaignChartUnits;
+                    else if(d.musicProducts) { Object.values(d.musicProducts).forEach(m => { musicUnitsCount += m.units; }); }
+                    const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+                    const getCategoryBarColors = (topCats) => {
+                        const defaults = [prim, sec, tert, quat, '#94a3b8'];
+                        const toteCol = payload.colors?.toteBag || '#6366f1';
+                        return topCats.map(([name], i) => (/tote\s*bag/i.test(name) ? toteCol : defaults[i]));
+                    };
+
+                    pane.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 segment-grid-2">
+                        <div class="space-y-4 flex flex-col justify-between">
+                            <div class="dashboard-card border-l-4" style="border-color: var(--accent-primary)"><div class="flex justify-between items-start segment-kpi-row"><div><p class="text-[10px] uppercase font-bold card-header-custom">Territory Revenue</p><p class="text-2xl font-bold">${d.revenue}</p><p class="text-xs mt-1 text-gray-500">${d.items} units shipped across ${d.orders} orders (AOV: ${formatGBP(parseCurrencyLike(d.aov))})</p></div><div class="text-right"><p class="text-[10px] uppercase font-bold card-header-custom">Campaign Chart Units</p><p class="text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p></div></div></div>
+                            <div class="dashboard-card flex-1"><h3 class="text-xs font-bold card-header-custom mb-2">Standout campaign music formats</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><tbody id="${prefix}-table"></tbody></table></div></div>
+                            <div class="dashboard-card bg-white border border-gray-200"><p class="text-[10px] font-bold card-header-custom mb-2">Web traffic & device split</p><div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 text-center traffic-kpi-grid"><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Sessions</span><span class="font-semibold text-xs">${typeof d.sessions === 'number' ? d.sessions.toLocaleString() : d.sessions}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">ATC rate</span><span class="font-semibold text-xs">${d.atcRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Conv.</span><span class="font-semibold text-xs text-green-700">${d.conversionRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">UPT</span><span class="font-semibold text-xs">${d.upt || '0.00'}</span></div></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-pie-canvas"></canvas></div></div>
+                        </div>
+                        <div class="space-y-4 flex flex-col justify-between"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><span class="text-[10px] font-bold card-header-custom">Music vs merch (net rev)</span><span class="text-[11px] font-medium text-gray-500">Merch: £${(merch.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</span></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-mm-pie"></canvas></div></div><div class="dashboard-card"><div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold card-header-custom">Garment sizing (units)</span></div><div class="chart-shell chart-h-bar"><canvas id="${prefix}-size-bar"></canvas></div></div><div class="dashboard-card flex-1"><span class="text-[10px] font-bold card-header-custom block mb-2">Top merch categories</span><div class="chart-shell chart-h-cat"><canvas id="${prefix}-cat-bar"></canvas></div></div></div>
+                        </div>
+                        <div id="${prefix}-levers-slot" class="space-y-4 border-t border-gray-200 pt-6"></div>
+                    `;
+
+                    const tbody = document.getElementById(`${prefix}-table`);
+                    if(d.topMusicFormats) { d.topMusicFormats.slice(0,5).forEach(([name, metrics]) => { tbody.innerHTML += `<tr class="border-b"><td class="py-1.5 font-medium max-w-[180px] truncate">${name}</td><td class="py-1.5 text-xs text-gray-500">${metrics.units} units</td><td class="py-1.5 text-right font-semibold">£${metrics.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`; }); }
+
+                    setTimeout(() => { 
+                        if(typeof Chart === 'undefined') return;
+                        if(document.getElementById(`${prefix}-pie-canvas`)) new Chart(document.getElementById(`${prefix}-pie-canvas`).getContext('2d'), { type: 'pie', data: { labels: ['Mobile', 'Desktop'], datasets: [{ data: [d.mobilePerc || 85, d.desktopPct || 15], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } }); 
+                        if(document.getElementById(`${prefix}-mm-pie`)) new Chart(document.getElementById(`${prefix}-mm-pie`).getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev','Merch Rev'], datasets: [{ data: [merch.musicRev || 1, merch.merchRev || 1], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
+                        if(document.getElementById(`${prefix}-size-bar`)) { const s = merch.sizes || {}; new Chart(document.getElementById(`${prefix}-size-bar`).getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } }); }
+                        if(document.getElementById(`${prefix}-cat-bar`)) { const topCats = Object.entries(merch.categories || {}).sort((a,b)=>b[1]-a[1]).slice(0,5); new Chart(document.getElementById(`${prefix}-cat-bar`).getContext('2d'), { type: 'bar', data: { labels: topCats.map(x=>x[0]), datasets: [{ data: topCats.map(x=>x[1]), backgroundColor: getCategoryBarColors(topCats), borderRadius:3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{ticks:{font:{size:9}}}} } }); }
+                    }, 50);
+                };
+
+                ['uk','eu','us','int'].forEach(m => { const mData = getLegacyMarket(payload, m); if(mData) populateSegments(m, mData); });
+                if(payload.sectionNames) { ['global','uk','eu','us','int','countries'].forEach(mk => { if(payload.sectionNames[mk] && document.getElementById(`title-${mk}`)) document.getElementById(`title-${mk}`).textContent = payload.sectionNames[mk]; }); }
+                applySectionVisibility(payload.sectionVisibility || {}, payload.storeHasUsMarket);
+                if(payload.levers?.computed) {
+                    renderLeversLive('uk', payload.levers.computed, 'uk-levers-slot', payload.colors);
+                    renderLeversLive('eu', payload.levers.computed, 'eu-levers-slot', payload.colors);
+                }
+
+                const globalLeaderboardProducts = [];
+                ['uk','eu','us','int'].forEach(m => { if(payload[m]?.topProducts) { payload[m].topProducts.forEach(([name, metrics]) => { let match = globalLeaderboardProducts.find(x => x[0] === name); if(match) { match[1].units += metrics.units; match[1].revenue += metrics.revenue; } else { globalLeaderboardProducts.push([name, { units: metrics.units, revenue: metrics.revenue }]); } }); } });
+                const t = document.getElementById('g-table'); t.innerHTML = '';
+                globalLeaderboardProducts.sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5).forEach(([name, metrics]) => { t.innerHTML += `<tr class="border-b"><td class="py-2 font-medium">${name}</td><td class="py-2 text-gray-500">${metrics.units} units</td><td class="py-2 text-right font-semibold">£${metrics.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`; });
+                renderTopCountriesLive(payload.topCountries, payload.colors?.mapGradientDark, payload.storeHasUsMarket);
+                document.getElementById('report-section-countries')?.querySelector('details')?.addEventListener('toggle', (e) => {
+                    if(!e.target.open || !lastLiveTopCountries) return;
+                    const mapEl = document.getElementById('live-top-countries-map');
+                    drawTopCountriesMapLive(mapEl, getTopCountriesMapRows(lastLiveTopCountries), lastLiveTopCountries.metricType, lastLiveMapGradient);
+                });
+
+                document.getElementById('loader').remove(); document.getElementById('dashboard-area').classList.remove('hidden');
+            } catch(e) { console.error(e); const l=document.getElementById('loader'); if(l) l.innerHTML=`<div class="text-center p-6 bg-white shadow-xl rounded-lg border border-red-200"><p class="text-2xl font-bold text-red-600 mb-2">Error Displaying Campaign</p><p class="text-sm text-gray-600">${e.message}</p></div>`; }
+        }
+        window.onload = fetchReportData;
+    </script>
 </body>
 </html>
