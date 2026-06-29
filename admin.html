@@ -115,9 +115,15 @@
                     <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Save / Update Name</label>
                     <input type="text" id="input-campaign-name" placeholder="e.g., NEMZZZ - Campaign Global" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500">
                 </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Set up by</label>
+                    <input type="text" id="input-setup-by" placeholder="e.g. Ed M." maxlength="80" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500">
+                    <p class="text-[10px] text-gray-500 mt-1 leading-tight">Shown on the report index and live report header.</p>
+                </div>
                 <button id="btn-publish" type="button" class="w-full text-white font-bold py-2 px-4 rounded text-sm transition-colors">
                     Save
                 </button>
+                <a id="link-report-index" href="index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 transition-colors">Open Report Index</a>
                 <div id="publish-result" class="mt-2 text-xs hidden break-words text-center p-2 rounded bg-gray-900/80 border border-gray-700"></div>
             </div>
 
@@ -550,6 +556,7 @@
                 }
 
                 bootSetVal('input-campaign-name', data.report_name || '');
+                bootSetVal('input-setup-by', old.setupBy || '');
                 bootSetVal('input-title', old.title || 'GLOBAL ROLLUP REPORT');
                 bootSetTxt('display-title', old.title || 'GLOBAL ROLLUP REPORT');
 
@@ -1983,6 +1990,10 @@
             if(dropdown) dropdown.value = '';
             const nameInput = document.getElementById('input-campaign-name');
             if(nameInput) nameInput.value = '';
+            const setupByInput = document.getElementById('input-setup-by');
+            if(setupByInput) {
+                try { setupByInput.value = localStorage.getItem('rep-admin-setup-by') || ''; } catch (_e) { setupByInput.value = ''; }
+            }
             document.getElementById('btn-clear-load')?.classList.add('hidden');
             document.getElementById('publish-result')?.classList.add('hidden');
 
@@ -2420,6 +2431,7 @@
             if (pubBtn) { pubBtn.textContent = 'Update Existing Report'; pubBtn.classList.remove('bg-blue-600'); pubBtn.classList.add('bg-green-600'); }
 
             if (document.getElementById('input-campaign-name')) document.getElementById('input-campaign-name').value = data.report_name || '';
+            if (document.getElementById('input-setup-by')) document.getElementById('input-setup-by').value = old.setupBy || '';
             const versionBadgeEl = document.getElementById('runtime-version-badge');
             if (versionBadgeEl) {
                 const loadedVersion = old.runtimeVersion || old.comparison?.runtimeVersion || 'legacy';
@@ -2880,6 +2892,10 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             try {
+            const indexLink = document.getElementById('link-report-index');
+            if(indexLink && typeof window.getReportBasePath === 'function') indexLink.href = window.getReportBasePath() + '/index.html';
+            const setupByEl = document.getElementById('input-setup-by');
+            if(setupByEl && !setupByEl.value) { try { setupByEl.value = localStorage.getItem('rep-admin-setup-by') || ''; } catch (_e) {} }
             applyFontSelection(document.getElementById('input-font')?.value || 'Inter');
             const fontSelectEl = document.getElementById('input-font'); if(fontSelectEl) fontSelectEl.addEventListener('change', (e) => { applyFontSelection(e.target.value); calculateGlobalDashboard(); });
             document.getElementById('input-font-size-header')?.addEventListener('input', (e) => { if(document.getElementById('font-size-display-header')) document.getElementById('font-size-display-header').textContent = e.target.value; calculateGlobalDashboard(); });
@@ -3038,7 +3054,7 @@
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
                     sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only' },
-                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
+                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
                     sectionNames: { global: document.getElementById('input-name-global')?.value || '1. Global Dashboard Summary', uk: document.getElementById('input-name-uk')?.value || '2. United Kingdom Market Insights', eu: document.getElementById('input-name-eu')?.value || '3. European Union Market Insights', us: document.getElementById('input-name-us')?.value || '4. United States Market Insights', int: document.getElementById('input-name-int')?.value || '5. Rest of World / International Insights', countries: document.getElementById('input-name-countries')?.value || '6. Top Countries' },
                     campaignDates: getCampaignDates(),
                     timelineGranularity: timelineForPublish.granularity,
@@ -3071,6 +3087,10 @@
                     const data = await response.json();
                     if (!data || data.length === 0) throw new Error("Insert returned no ID.");
                     targetId = data[0].id; activeLoadedReportId = targetId;
+                    try {
+                        const setupBySaved = document.getElementById('input-setup-by')?.value.trim();
+                        if(setupBySaved) localStorage.setItem('rep-admin-setup-by', setupBySaved);
+                    } catch (_e) {}
                     
                     if(resDiv) {
                         resDiv.classList.remove('text-yellow-400', 'text-red-400');

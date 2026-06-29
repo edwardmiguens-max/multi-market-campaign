@@ -97,7 +97,7 @@
 
     <main id="dashboard-area" class="w-full max-w-5xl hidden space-y-6">
         <div id="logo-container" style="display: none;" class="justify-center mb-6"><div id="display-logo" class="logo-mask"></div><img id="display-logo-img" alt="" class="object-contain" style="display: none;"></div>
-        <header class="border-b pb-4 mb-2"><h1 id="display-title" class="text-2xl font-semibold tracking-tight">--</h1></header>
+        <header class="border-b pb-4 mb-2"><h1 id="display-title" class="text-2xl font-semibold tracking-tight">--</h1><p id="display-setup-by" class="text-xs card-header-custom mt-1 hidden"></p></header>
 
         <div id="products-grid" style="display: none;" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="dashboard-card product-image-slot flex items-center justify-center aspect-square p-2 overflow-hidden"><img id="view-p1" style="display: none;" class="w-full h-full max-h-64 lg:max-h-80 object-contain rounded"></div>
@@ -605,6 +605,12 @@
                 `;
 
                 document.getElementById('display-title').textContent = payload.title;
+                const setupByEl = document.getElementById('display-setup-by');
+                if(setupByEl) {
+                    const setupBy = String(payload.setupBy || '').trim();
+                    if(setupBy) { setupByEl.textContent = `Set up by ${setupBy}`; setupByEl.classList.remove('hidden'); }
+                    else { setupByEl.textContent = ''; setupByEl.classList.add('hidden'); }
+                }
                 applyReportBranding(payload.title, payload.logoBase64 || null);
                 if(payload.colors) {
                     ['global','uk','eu','us','int','countries'].forEach(m => {

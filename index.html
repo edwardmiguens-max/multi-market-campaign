@@ -4,183 +4,101 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campaign Reports — Live URLs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f6f6f7;
-            --card: #ffffff;
-            --border: #e1e3e5;
-            --text: #202223;
-            --muted: #6d7175;
-            --accent: #008060;
-            --accent-hover: #006e52;
+            --rep-v-bg: #f6f6f7; --rep-v-card-bg: #ffffff;
+            --rep-v-logo-col: #202223; --rep-v-acc-col: #202223;
+            --rep-v-prim: #008060; --rep-v-sec: #5c6ac4;
+            --rep-v-hdr-txt: #6d7175; --rep-v-body-txt: #202223; --rep-v-acc-txt: #ffffff;
+            --rep-v-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --shopify-border: #e1e3e5;
         }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 1.5rem;
+        body { background-color: var(--rep-v-bg) !important; color: var(--rep-v-body-txt) !important; font-family: var(--rep-v-font); overflow-x: hidden; }
+        #index-area, #index-area * { font-family: var(--rep-v-font) !important; box-sizing: border-box; }
+        #index-area #page-title { color: var(--rep-v-logo-col) !important; font-weight: 600 !important; letter-spacing: -0.02em; }
+        .dashboard-card { background-color: var(--rep-v-card-bg) !important; border-radius: 0.75rem; border: 1px solid var(--shopify-border); box-shadow: none; padding: 1.25rem; max-width: 100%; overflow: hidden; min-width: 0; }
+        .card-header-custom { color: var(--rep-v-hdr-txt) !important; font-weight: 500 !important; font-size: 0.8125rem; }
+        .index-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .index-toolbar input {
+            flex: 1; min-width: 12rem; border: 1px solid var(--shopify-border); border-radius: 0.5rem;
+            padding: 0.625rem 0.875rem; font: inherit; font-size: 0.875rem; background: #fff; color: var(--rep-v-body-txt);
         }
-        .wrap { max-width: 52rem; margin: 0 auto; }
-        header {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+        .index-toolbar input:focus { outline: none; border-color: var(--rep-v-prim); box-shadow: 0 0 0 1px var(--rep-v-prim); }
+        .index-count { font-size: 0.75rem; color: var(--rep-v-hdr-txt); white-space: nowrap; font-weight: 500; }
+        .report-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
+        .index-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; min-width: 36rem; }
+        .index-table th, .index-table td { text-align: left; padding: 0.875rem 0.75rem; vertical-align: top; border-bottom: 1px solid var(--shopify-border); }
+        .index-table th { font-size: 0.8125rem; color: var(--rep-v-hdr-txt); font-weight: 500; background: transparent; }
+        .index-table tr:last-child td { border-bottom: none; }
+        .report-name { font-weight: 600; color: var(--rep-v-body-txt); margin-bottom: 0.15rem; }
+        .report-url { font-size: 0.75rem; color: var(--rep-v-hdr-txt); word-break: break-all; line-height: 1.45; }
+        .report-url a { color: var(--rep-v-prim); text-decoration: none; font-weight: 500; }
+        .report-url a:hover { text-decoration: underline; }
+        .setup-by-tag {
+            display: inline-block; font-size: 0.6875rem; font-weight: 600; line-height: 1.2;
+            padding: 0.25rem 0.55rem; border-radius: 9999px; white-space: nowrap;
+            background: rgba(0, 128, 96, 0.1); color: var(--rep-v-prim); border: 1px solid rgba(0, 128, 96, 0.22);
         }
-        h1 {
-            font-size: 1.375rem;
-            font-weight: 700;
-            margin: 0 0 0.35rem;
-            letter-spacing: -0.02em;
-        }
-        .sub { font-size: 0.875rem; color: var(--muted); margin: 0; line-height: 1.5; }
-        .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-family: inherit;
-            font-size: 0.8125rem;
-            font-weight: 600;
-            padding: 0.625rem 1rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background 0.15s;
-        }
-        .btn-primary { background: var(--accent); color: #fff; }
-        .btn-primary:hover { background: var(--accent-hover); }
-        .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
-        .btn-secondary:hover { background: #fafbfb; }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 0.75rem;
-            overflow: hidden;
-        }
-        .toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.875rem 1rem;
-            border-bottom: 1px solid var(--border);
-            background: #fafbfb;
-        }
-        .toolbar input {
-            flex: 1;
-            min-width: 12rem;
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            font: inherit;
-            font-size: 0.875rem;
-        }
-        .count { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td {
-            text-align: left;
-            padding: 0.875rem 1rem;
-            vertical-align: top;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.875rem;
-        }
-        th {
-            font-size: 0.6875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: var(--muted);
-            font-weight: 600;
-            background: #fafbfb;
-        }
-        tr:last-child td { border-bottom: none; }
-        .report-name { font-weight: 600; margin-bottom: 0.25rem; }
-        .url {
-            font-size: 0.75rem;
-            color: var(--muted);
-            word-break: break-all;
-            line-height: 1.45;
-        }
-        .url a { color: #005bd3; text-decoration: none; }
-        .url a:hover { text-decoration: underline; }
         .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-        .btn-sm {
-            font-size: 0.75rem;
-            padding: 0.4rem 0.65rem;
-            border-radius: 0.375rem;
-            border: 1px solid var(--border);
-            background: #fff;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text);
+        .btn-index {
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem;
+            border-radius: 0.5rem; font-family: inherit; font-size: 0.8125rem; font-weight: 600;
+            padding: 0.625rem 1rem; cursor: pointer; text-decoration: none; transition: background 0.15s, border-color 0.15s;
         }
-        .btn-sm:hover { background: #f6f6f7; }
-        .btn-sm.copied { border-color: var(--accent); color: var(--accent); }
-        .state {
-            padding: 2.5rem 1rem;
-            text-align: center;
-            color: var(--muted);
-            font-size: 0.875rem;
-        }
-        .state.error { color: #b42318; }
+        .btn-index-primary { background: var(--rep-v-prim); color: #fff; border: 1px solid var(--rep-v-prim); }
+        .btn-index-primary:hover { background: #006e52; border-color: #006e52; }
+        .btn-index-secondary { background: #fff; color: var(--rep-v-body-txt); border: 1px solid var(--shopify-border); }
+        .btn-index-secondary:hover { background: #fafbfb; }
+        .btn-index-sm { font-size: 0.75rem; padding: 0.4rem 0.65rem; border-radius: 0.375rem; border: 1px solid var(--shopify-border); background: #fff; cursor: pointer; font-weight: 600; color: var(--rep-v-body-txt); }
+        .btn-index-sm:hover { background: #f6f6f7; }
+        .btn-index-sm.copied { border-color: var(--rep-v-prim); color: var(--rep-v-prim); }
+        .index-state { padding: 2.5rem 1rem; text-align: center; color: var(--rep-v-hdr-txt); font-size: 0.875rem; }
+        .index-state.error { color: #b42318; }
         .toast {
-            position: fixed;
-            bottom: 1.25rem;
-            right: 1.25rem;
-            background: #202223;
-            color: #fff;
-            font-size: 0.8125rem;
-            padding: 0.65rem 1rem;
-            border-radius: 0.5rem;
-            opacity: 0;
-            transform: translateY(0.5rem);
-            transition: opacity 0.2s, transform 0.2s;
-            pointer-events: none;
-            z-index: 20;
+            position: fixed; bottom: 1.25rem; right: 1.25rem; background: #202223; color: #fff;
+            font-size: 0.8125rem; padding: 0.65rem 1rem; border-radius: 0.5rem;
+            opacity: 0; transform: translateY(0.5rem); transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 20;
         }
         .toast.show { opacity: 1; transform: translateY(0); }
-        @media (max-width: 640px) {
-            th:nth-child(3), td:nth-child(3) { display: none; }
+        header.index-header { border-bottom: 1px solid var(--shopify-border); }
+        @media (max-width: 768px) {
+            body { padding: 0.75rem !important; }
+            .index-table { min-width: 28rem; }
+            .index-header { flex-direction: column; align-items: flex-start !important; }
         }
     </style>
 </head>
-<body>
-    <div class="wrap">
-        <header>
+<body class="p-4 md:p-8 flex justify-center">
+    <main id="index-area" class="w-full max-w-5xl space-y-6">
+        <header class="index-header pb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
-                <h1>Campaign Reports</h1>
-                <p class="sub">Published live report URLs — copy and share with stakeholders.</p>
+                <h1 id="page-title" class="text-2xl font-semibold tracking-tight">Campaign Reports</h1>
+                <p class="text-sm card-header-custom mt-1">Published live report URLs — copy and share with stakeholders.</p>
             </div>
-            <div class="actions">
-                <button type="button" class="btn btn-secondary" id="btn-refresh">Refresh</button>
-                <a class="btn btn-primary" href="admin.html">Open Admin</a>
+            <div class="flex gap-2 flex-wrap">
+                <button type="button" class="btn-index btn-index-secondary" id="btn-refresh">Refresh</button>
+                <a class="btn-index btn-index-primary" href="admin.html">Open Admin</a>
             </div>
         </header>
 
-        <div class="card">
-            <div class="toolbar">
-                <input type="search" id="search" placeholder="Search campaign name…" autocomplete="off">
-                <span class="count" id="count-label">Loading…</span>
+        <div class="dashboard-card">
+            <div class="index-toolbar">
+                <input type="search" id="search" placeholder="Search campaign or set-up name…" autocomplete="off">
+                <span class="index-count" id="count-label">Loading…</span>
             </div>
             <div id="content">
-                <div class="state">Loading reports from database…</div>
+                <div class="index-state">Loading reports from database…</div>
             </div>
         </div>
-    </div>
+    </main>
 
     <div class="toast" id="toast">Copied to clipboard</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SB_URL = 'https://obrjpgucgcrclukkvook.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9icmpwZ3VjZ2NyY2x1a2t2b29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzM1OTksImV4cCI6MjA5NzQwOTU5OX0.tN2DmXRTjcvR1azRcvILTxNZEViXkIutVlqYBhbPOq8';
@@ -203,6 +121,16 @@
         function getLiveUrl(report) {
             const slug = report.campaign_data?.reportSlug || slugifyReportName(report.report_name);
             return getReportBasePath() + '/' + encodeURIComponent(slug);
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function renderSetupByTag(name) {
+            const n = String(name || '').trim();
+            if (!n) return '<span class="text-xs card-header-custom">—</span>';
+            return `<span class="setup-by-tag">Set up by ${escapeHtml(n)}</span>`;
         }
 
         function showToast(msg) {
@@ -236,29 +164,31 @@
                 : `${reports.length} of ${allReports.length} reports`;
 
             if (!reports.length) {
-                content.innerHTML = '<div class="state">No published reports found. Publish from Admin to add URLs here.</div>';
+                content.innerHTML = '<div class="index-state">No published reports found. Publish from Admin to add URLs here.</div>';
                 return;
             }
 
             const rows = reports.map(r => {
                 const url = getLiveUrl(r);
-                const safeName = String(r.report_name || 'Untitled').replace(/</g, '&lt;');
+                const safeName = escapeHtml(r.report_name || 'Untitled');
+                const setupBy = r.campaign_data?.setupBy || '';
                 return `<tr>
                     <td><div class="report-name">${safeName}</div></td>
-                    <td><div class="url"><a href="${url}" target="_blank" rel="noopener">${url}</a></div></td>
+                    <td>${renderSetupByTag(setupBy)}</td>
+                    <td><div class="report-url"><a href="${url}" target="_blank" rel="noopener">${escapeHtml(url)}</a></div></td>
                     <td>
                         <div class="row-actions">
-                            <button type="button" class="btn-sm" data-copy="${encodeURIComponent(url)}">Copy URL</button>
-                            <a class="btn-sm" href="${url}" target="_blank" rel="noopener">Open</a>
+                            <button type="button" class="btn-index-sm" data-copy="${encodeURIComponent(url)}">Copy URL</button>
+                            <a class="btn-index-sm" href="${url}" target="_blank" rel="noopener">Open</a>
                         </div>
                     </td>
                 </tr>`;
             }).join('');
 
-            content.innerHTML = `<table>
-                <thead><tr><th>Campaign</th><th>Live URL</th><th>Actions</th></tr></thead>
+            content.innerHTML = `<div class="report-table-wrap"><table class="index-table">
+                <thead><tr><th>Campaign</th><th>Set up by</th><th>Live URL</th><th>Actions</th></tr></thead>
                 <tbody>${rows}</tbody>
-            </table>`;
+            </table></div>`;
 
             content.querySelectorAll('[data-copy]').forEach(btn => {
                 btn.addEventListener('click', () => copyText(decodeURIComponent(btn.getAttribute('data-copy')), btn));
@@ -268,12 +198,16 @@
         function filterReports(query) {
             const q = String(query || '').trim().toLowerCase();
             if (!q) return allReports;
-            return allReports.filter(r => String(r.report_name || '').toLowerCase().includes(q));
+            return allReports.filter(r => {
+                const name = String(r.report_name || '').toLowerCase();
+                const setupBy = String(r.campaign_data?.setupBy || '').toLowerCase();
+                return name.includes(q) || setupBy.includes(q);
+            });
         }
 
         async function loadReports() {
             const content = document.getElementById('content');
-            content.innerHTML = '<div class="state">Loading reports from database…</div>';
+            content.innerHTML = '<div class="index-state">Loading reports from database…</div>';
             try {
                 const client = window.supabase.createClient(SB_URL, SB_KEY);
                 const { data, error } = await client.from('reports').select('id, report_name, campaign_data').order('report_name', { ascending: true });
@@ -281,7 +215,7 @@
                 allReports = data || [];
                 renderTable(filterReports(document.getElementById('search').value));
             } catch (err) {
-                content.innerHTML = `<div class="state error">Could not load reports.<br><span style="font-size:0.75rem">${err.message || 'Network error'}</span></div>`;
+                content.innerHTML = `<div class="index-state error">Could not load reports.<br><span style="font-size:0.75rem">${escapeHtml(err.message || 'Network error')}</span></div>`;
                 document.getElementById('count-label').textContent = 'Error';
             }
         }
