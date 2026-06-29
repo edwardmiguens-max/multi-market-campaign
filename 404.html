@@ -48,7 +48,7 @@
         #dashboard-area #logo-container { margin-bottom: 1.5rem; display: none; align-items: center; justify-content: center; overflow: visible; max-width: 100%; }
         #dashboard-area td, #dashboard-area th, #dashboard-area p, #dashboard-area span:not(summary span.text-lg) { color: var(--rep-v-body-txt); }
         #display-logo { max-width: min(100%, 20rem); max-height: 8rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
-        #display-logo-img { max-width: min(100%, 20rem); max-height: 8rem; object-fit: contain; background-color: var(--rep-v-card-bg); border-radius: 0.25rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
+        #display-logo-img { max-width: min(100%, 20rem); max-height: 8rem; object-fit: contain; background-color: transparent; border-radius: 0.25rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
         #products-grid .product-image-slot { background-color: var(--rep-v-card-bg) !important; }
         .logo-mask { background-color: var(--rep-v-logo-col) !important; -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-size: contain; mask-repeat: no-repeat; mask-position: center; }
         .analytics-panel { background: #fff !important; border: 1px solid var(--shopify-border) !important; border-radius: 0.75rem !important; box-shadow: none !important; overflow: hidden; max-width: 100%; }
@@ -63,6 +63,7 @@
         .chart-shell.chart-h-bar { height: 8rem; }
         .chart-shell.chart-h-cat { height: 9rem; }
         .chart-shell.chart-h-lever { height: 12rem; }
+        .chart-shell.chart-h-sale-top5 { height: 17rem; }
         #loader { position: fixed; inset: 0; background: #f6f6f7; display: flex; align-items: center; justify-content: center; font-weight: 600; z-index: 50; color: #202223; }
         .report-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
         header { border-bottom-color: var(--shopify-border) !important; max-width: 100%; }
@@ -84,6 +85,7 @@
             .chart-shell.chart-h-bar { height: 7rem; }
             .chart-shell.chart-h-cat { height: 8rem; }
             .chart-shell.chart-h-lever { height: 9rem; }
+            .chart-shell.chart-h-sale-top5 { height: 14rem; }
             #live-top-countries-map { height: 240px !important; max-width: 100%; overflow: hidden; }
             #dashboard-area .space-y-4 > div { max-width: 100%; min-width: 0; }
         }
@@ -264,6 +266,102 @@
             };
             return parse(a) - parse(b);
         });
+        const TIMELINE_DAILY_THRESHOLD_DAYS = 14;
+        function daysBetweenInclusive(startIso, endIso) {
+            const a = new Date(String(startIso).slice(0, 10) + 'T12:00:00');
+            const b = new Date(String(endIso).slice(0, 10) + 'T12:00:00');
+            if(isNaN(a.getTime()) || isNaN(b.getTime())) return null;
+            return Math.max(1, Math.round((b - a) / 86400000) + 1);
+        }
+        function sortDayKeys(arr) {
+            return [...arr].filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+        }
+        function formatDayChartLabel(isoKey) {
+            const d = new Date(String(isoKey).slice(0, 10) + 'T12:00:00');
+            if(isNaN(d.getTime())) return isoKey;
+            return `${d.toLocaleDateString('en-GB', { weekday: 'short' })} ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+        }
+        function enumerateDayKeys(startIso, endIso) {
+            const keys = [];
+            const cur = new Date(String(startIso).slice(0, 10) + 'T12:00:00');
+            const end = new Date(String(endIso).slice(0, 10) + 'T12:00:00');
+            if(isNaN(cur.getTime()) || isNaN(end.getTime()) || cur > end) return keys;
+            while(cur <= end) {
+                keys.push(cur.toISOString().slice(0, 10));
+                cur.setDate(cur.getDate() + 1);
+            }
+            return keys;
+        }
+        function collectTimelineDailyKeys(marketDataGetter) {
+            const keys = new Set();
+            ['uk', 'eu', 'us', 'int'].forEach(m => {
+                const bucket = marketDataGetter(m)?.daily || {};
+                Object.keys(bucket).forEach(k => { if(/^\d{4}-\d{2}-\d{2}$/.test(k)) keys.add(k); });
+            });
+            return keys;
+        }
+        function getTimelineSpanDays(marketDataGetter) {
+            const dayKeys = sortDayKeys(Array.from(collectTimelineDailyKeys(marketDataGetter)));
+            if(dayKeys.length >= 2) return daysBetweenInclusive(dayKeys[0], dayKeys[dayKeys.length - 1]);
+            if(dayKeys.length === 1) return 1;
+            return null;
+        }
+        function getTimelineDailySeriesKeys(marketDataGetter) {
+            const dayKeys = sortDayKeys(Array.from(collectTimelineDailyKeys(marketDataGetter)));
+            if(dayKeys.length === 0) return [];
+            if(dayKeys.length === 1) return dayKeys;
+            return enumerateDayKeys(dayKeys[0], dayKeys[dayKeys.length - 1]);
+        }
+        function resolveTimelineChart(marketDataGetter, forcedGranularity) {
+            const spanDays = getTimelineSpanDays(marketDataGetter);
+            const useDaily = forcedGranularity === 'daily' || (forcedGranularity !== 'weekly' && spanDays !== null && spanDays < TIMELINE_DAILY_THRESHOLD_DAYS);
+            if(useDaily) {
+                const keys = getTimelineDailySeriesKeys(marketDataGetter);
+                const labels = keys.map(formatDayChartLabel);
+                const getSeries = (m) => {
+                    const bucket = marketDataGetter(m)?.daily || {};
+                    return keys.map(k => bucket[k] || 0);
+                };
+                const rangeText = keys.length === 0 ? '' : keys.length === 1 ? labels[0] : `${labels[0]} – ${labels[keys.length - 1]}`;
+                return { granularity: 'daily', keys, labels, getSeries, rangeText, pointCount: keys.length };
+            }
+            const weeksSet = new Set();
+            ['uk', 'eu', 'us', 'int'].forEach(m => {
+                const bucket = marketDataGetter(m)?.weekly || marketDataGetter(m)?.monthly || {};
+                Object.keys(bucket).forEach(w => weeksSet.add(w));
+            });
+            const keys = sortWeekKeys(Array.from(weeksSet));
+            const getSeries = (m) => {
+                const bucket = marketDataGetter(m)?.weekly || marketDataGetter(m)?.monthly || {};
+                return keys.map(k => bucket[k] || 0);
+            };
+            const rangeText = keys.length === 0 ? '' : keys.length === 1 ? keys[0] : `${keys[0]} – ${keys[keys.length - 1]}`;
+            return { granularity: 'weekly', keys, labels: keys, getSeries, rangeText, pointCount: keys.length };
+        }
+        function buildSaleTop5ChartConfig(top5, prim, sec) {
+            const fullLabels = top5.map(x => x[0]);
+            const shortLabel = (n) => { const s = String(n || ''); return s.length > 42 ? s.slice(0, 41) + '…' : s; };
+            return {
+                type: 'bar',
+                data: { labels: fullLabels.map(shortLabel), datasets: [
+                    { label: 'Units', data: top5.map(x => x[1].units), backgroundColor: prim, borderRadius: 3, xAxisID: 'x' },
+                    { label: 'Revenue (£)', data: top5.map(x => x[1].revenue), backgroundColor: sec, borderRadius: 3, xAxisID: 'x1' }
+                ]},
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', align: 'end', labels: { font: { size: 11 }, boxWidth: 12, padding: 14 } },
+                        tooltip: { callbacks: { title: (items) => fullLabels[items[0]?.dataIndex] || items[0]?.label || '' } }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, position: 'bottom', ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+                        x1: { beginAtZero: true, position: 'top', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+                        y: { ticks: { font: { size: 11 }, autoSkip: false, padding: 6 }, grid: { display: false } }
+                    },
+                    datasets: { bar: { barPercentage: 0.75, categoryPercentage: 0.82 } }
+                }
+            };
+        }
         function renderLeversLive(market, computed, slotId, colors) {
             const pane = document.getElementById(slotId); if(!pane) return;
             const data = computed?.[market] || {};
@@ -276,11 +374,22 @@
                 const shows = (d.shows || []).length ? `<div class="dashboard-card"><p class="text-xs font-bold card-header-custom uppercase mb-2">Shows</p><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Date</th><th class="text-left py-1">Venue</th><th class="text-left py-1">Country</th></tr></thead><tbody>${d.shows.map(s => `<tr class="border-b"><td class="py-1">${s.date||'—'}</td><td class="py-1">${s.venue||'—'}</td><td class="py-1">${s.country||'—'}</td></tr>`).join('')}</tbody></table></div>` : '';
                 const prize = d.prize ? `<div class="dashboard-card"><p class="text-xs font-bold card-header-custom uppercase mb-1">Prize</p><p class="text-sm font-semibold">${d.prize}</p></div>` : '';
                 const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
-                const marketLabel = market === 'uk' ? 'UK' : market === 'eu' ? 'EU' : '';
-                const sendHtml = (d.globalCombinedSend !== undefined) ? `<p class="text-xs font-semibold text-indigo-700 mt-1">Global Combined Send: ${Number(d.globalCombinedSend||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">UK + EU orders + NPN (driver dates)</p>` : '';
+                const marketLabel = { uk: 'UK', eu: 'EU', us: 'US', int: 'ROW' }[market] || '';
+                const sendHtml = (d.globalCombinedSend !== undefined) ? `<p class="text-xs font-semibold text-indigo-700 mt-1">Global Combined Send: ${Number(d.globalCombinedSend||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">All market orders + NPN (driver dates)</p>` : '';
                 return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${prim}"><h3 class="text-base font-bold">${d.title||key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${d.windowLabel||'—'}</p><div class="grid grid-cols-2 md:grid-cols-4 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="text-lg font-bold">${formatGBP(d.musicRev)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="text-lg font-bold">${formatGBP(d.merchRev)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketLabel ? marketLabel + ' Orders' : 'Orders'}</p><p class="text-lg font-bold">${Number(d.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(d.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${shows}${prize}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${top||'<tr><td colspan="3" class="italic text-gray-400 py-2">No products</td></tr>'}</tbody></table></div></div><div class="chart-shell chart-h-lever"><canvas id="${chartId}"></canvas></div></div></div>`;
             };
             const gwp = (d) => `<div class="dashboard-card border-l-4 space-y-2" style="border-left-color:${sec}"><h3 class="text-base font-bold">${d.title||'Gift with Purchase'}</h3><p class="text-xs text-gray-500">Gift: <strong>${d.productName||'—'}</strong></p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Orders</p><p class="text-2xl font-bold">${Number(d.orders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Full order revenue</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div></div>`;
+            const upsell = (d) => {
+                const discLabel = Number(d.discountPercent || 0) > 0 ? `${Number(d.discountPercent).toFixed(1)}% discount threshold` : 'Discounted lines (from CSV or unit price)';
+                return `<div class="dashboard-card border-l-4 space-y-2" style="border-left-color:${colors?.quaternary||'#47c1bf'}"><h3 class="text-base font-bold">${d.title||'Upsell'}</h3><p class="text-xs text-gray-500">Product: <strong>${d.productName||'—'}</strong> · ${discLabel}</p>${d.emptyReason ? `<p class="text-xs text-amber-600 italic">${d.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-4 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Discounted units</p><p class="text-2xl font-bold">${Number(d.discountedUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Discounted net rev</p><p class="text-lg font-bold">${formatGBP(d.discountedRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total product units</p><p class="text-2xl font-bold">${Number(d.totalUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total product net rev</p><p class="text-lg font-bold">${formatGBP(d.totalRevenue)}</p></div></div></div>`;
+            };
+            const sale = (d) => {
+                const chartId = `live-${slotId}-chart-sale`;
+                const pieId = `live-${slotId}-pie-sale`;
+                const notesHtml = d.notes ? `<p class="text-sm text-gray-600 whitespace-pre-wrap">${String(d.notes).replace(/</g, '&lt;')}</p>` : '';
+                const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
+                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:#ea580c"><h3 class="text-base font-bold mb-0">${d.title||'Sale'}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Sale window:</strong> ${d.windowLabel||'—'}</p>${d.emptyReason ? `<p class="text-xs text-amber-600 italic">${d.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total orders</p><p class="text-2xl font-bold">${Number(d.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale units</p><p class="text-2xl font-bold">${Number(d.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="text-2xl font-bold">${formatGBP(d.aov)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="text-lg font-bold">${formatGBP(d.totalRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale revenue</p><p class="text-lg font-bold">${formatGBP(d.saleRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from sale items</p><p class="text-2xl font-bold">${Number(d.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 sale products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${top||'<tr><td colspan="3" class="italic text-gray-400 py-2">No sale products</td></tr>'}</tbody></table></div></div><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Music vs merch (sale items)</p><div class="chart-shell chart-h-pie"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
+            };
             const signed = (d) => {
                 const chartId = `live-${slotId}-chart-signed`;
                 const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
@@ -290,7 +399,9 @@
             if(data.preOrder1) html += timed('preOrder1', data.preOrder1);
             if(data.preOrder2) html += timed('preOrder2', data.preOrder2);
             if(data.giftWithPurchase) html += gwp(data.giftWithPurchase);
+            if(data.upsell) html += upsell(data.upsell);
             if(data.competition) html += timed('competition', data.competition);
+            if(data.sale) html += sale(data.sale);
             if(data.signed) html += signed(data.signed);
             pane.innerHTML = html;
             if(typeof Chart === 'undefined') return;
@@ -300,6 +411,22 @@
                 if(liveLeverCharts[cid]) liveLeverCharts[cid].destroy();
                 liveLeverCharts[cid] = new Chart(el.getContext('2d'), { type: 'bar', data: { labels: top5.map(x => x[0].length>22?x[0].slice(0,22)+'…':x[0]), datasets: [{ label: 'Units', data: top5.map(x=>x[1].units), backgroundColor: prim, yAxisID:'y' }, { label: 'Revenue', data: top5.map(x=>x[1].revenue), backgroundColor: sec, yAxisID:'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, position: 'left' }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } } });
             });
+            if(data.sale) {
+                const pieId = `live-${slotId}-pie-sale`;
+                const pieEl = document.getElementById(pieId);
+                const m = Number(data.sale.saleMusicRev || 0), me = Number(data.sale.saleMerchRev || 0);
+                if(pieEl && (m > 0 || me > 0)) {
+                    if(liveLeverCharts[pieId]) liveLeverCharts[pieId].destroy();
+                    liveLeverCharts[pieId] = new Chart(pieEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Music', 'Merch'], datasets: [{ data: [m, me], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } } });
+                }
+                const saleTop = data.sale.top5;
+                const saleChartId = `live-${slotId}-chart-sale`;
+                const saleEl = document.getElementById(saleChartId);
+                if(saleEl && saleTop?.length) {
+                    if(liveLeverCharts[saleChartId]) liveLeverCharts[saleChartId].destroy();
+                    liveLeverCharts[saleChartId] = new Chart(saleEl.getContext('2d'), buildSaleTop5ChartConfig(saleTop, prim, sec));
+                }
+            }
         }
         function applySectionVisibility(visibility, storeHasUsMarket) {
             const vis = { ...(visibility || {}) };
@@ -512,49 +639,38 @@
                     options: getChartOptions()
                 });
 
-                let sortedWeeks = [];
-                let weeksSet = new Set();
-                ['uk','eu','us','int'].forEach(m => {
-                    const mData = getLegacyMarket(payload, m);
-                    const timeline = mData?.weekly || mData?.monthly || {};
-                    Object.keys(timeline).forEach(k => weeksSet.add(k));
-                });
-                if(weeksSet.size > 0) sortedWeeks = sortWeekKeys(Array.from(weeksSet));
+                const timelineChart = resolveTimelineChart(m => getLegacyMarket(payload, m));
+                const chartLabels = timelineChart.labels;
+                const pointCount = timelineChart.pointCount || chartLabels.length;
 
                 const prim = payload.colors?.primary || '#8b7355'; const sec = payload.colors?.secondary || '#d4c4b7';
                 const tert = payload.colors?.tertiary || '#4b5563'; const quat = payload.colors?.quaternary || '#10b981';
 
-                const getTimeline = (m) => {
-                    const d = getLegacyMarket(payload, m);
-                    return d?.weekly || d?.monthly || {};
-                };
                 let liveTEl = document.getElementById('liveTimelineChart')?.getContext('2d');
                 if(liveTEl) {
                     new Chart(liveTEl, {
                         type: 'line',
                         data: {
-                            labels: sortedWeeks,
+                            labels: chartLabels,
                             datasets: [
-                                { label: 'UK Market', data: sortedWeeks.map(w => getTimeline('uk')[w] || 0), borderColor: prim, backgroundColor: prim, tension: 0.4, borderWidth: 3, pointRadius: 4 },
-                                { label: 'EU Market', data: sortedWeeks.map(w => getTimeline('eu')[w] || 0), borderColor: tert, backgroundColor: tert, tension: 0.4, borderWidth: 3, pointRadius: 4 },
-                                { label: 'US Market', data: sortedWeeks.map(w => getTimeline('us')[w] || 0), borderColor: sec, backgroundColor: sec, tension: 0.4, borderWidth: 3, pointRadius: 4, hidden: !hasUsMarket },
-                                { label: 'INT Market', data: sortedWeeks.map(w => getTimeline('int')[w] || 0), borderColor: quat, backgroundColor: quat, tension: 0.4, borderWidth: 3, pointRadius: 4 }
+                                { label: 'UK Market', data: timelineChart.getSeries('uk'), borderColor: prim, backgroundColor: prim, tension: 0.4, borderWidth: 3, pointRadius: 4 },
+                                { label: 'EU Market', data: timelineChart.getSeries('eu'), borderColor: tert, backgroundColor: tert, tension: 0.4, borderWidth: 3, pointRadius: 4 },
+                                { label: 'US Market', data: timelineChart.getSeries('us'), borderColor: sec, backgroundColor: sec, tension: 0.4, borderWidth: 3, pointRadius: 4, hidden: !hasUsMarket },
+                                { label: 'INT Market', data: timelineChart.getSeries('int'), borderColor: quat, backgroundColor: quat, tension: 0.4, borderWidth: 3, pointRadius: 4 }
                             ]
                         },
-                        options: getChartOptions({ plugins: { legend: getChartOptions().plugins.legend, tooltip: { mode: 'index', intersect: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '£' + (v > 1000 ? (v/1000).toFixed(0) + 'K' : v), maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 5 : 8 } }, x: { grid: { display: false }, ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 6 : 12 } } } })
+                        options: getChartOptions({ plugins: { legend: getChartOptions().plugins.legend, tooltip: { mode: 'index', intersect: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '£' + (v > 1000 ? (v/1000).toFixed(0) + 'K' : v), maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 5 : 8 } }, x: { grid: { display: false }, ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 6 : (timelineChart.granularity === 'daily' ? 14 : 12) } } } })
                     });
-                    const pointRadius = sortedWeeks.length > 24 ? 1.5 : (sortedWeeks.length > 12 ? 2.5 : 4);
+                    const pointRadius = pointCount > 24 ? 1.5 : (pointCount > 12 ? 2.5 : 4);
                     const chartInstance = Chart.getChart(document.getElementById('liveTimelineChart'));
                     if(chartInstance) {
-                        chartInstance.data.datasets.forEach(ds => { ds.pointRadius = pointRadius; ds.tension = sortedWeeks.length > 24 ? 0.2 : 0.4; });
+                        chartInstance.data.datasets.forEach(ds => { ds.pointRadius = pointRadius; ds.tension = pointCount > 24 ? 0.2 : 0.4; });
                         chartInstance.update();
                     }
-                    if(document.getElementById('live-timeline-range') && sortedWeeks.length > 0) {
-                        if(sortedWeeks.length === 1) {
-                            document.getElementById('live-timeline-range').textContent = sortedWeeks[0];
-                        } else {
-                            document.getElementById('live-timeline-range').textContent = `${sortedWeeks[0]} – ${sortedWeeks[sortedWeeks.length-1]}`;
-                        }
+                    const rangeEl = document.getElementById('live-timeline-range');
+                    if(rangeEl) {
+                        if(!timelineChart.rangeText) rangeEl.textContent = 'Awaiting Data...';
+                        else rangeEl.textContent = timelineChart.granularity === 'daily' ? `Daily · ${timelineChart.rangeText}` : timelineChart.rangeText;
                     }
                 }
 
@@ -597,8 +713,7 @@
                 if(payload.sectionNames) { ['global','uk','eu','us','int','countries'].forEach(mk => { if(payload.sectionNames[mk] && document.getElementById(`title-${mk}`)) document.getElementById(`title-${mk}`).textContent = payload.sectionNames[mk]; }); }
                 applySectionVisibility(payload.sectionVisibility || {}, payload.storeHasUsMarket);
                 if(payload.levers?.computed) {
-                    renderLeversLive('uk', payload.levers.computed, 'uk-levers-slot', payload.colors);
-                    renderLeversLive('eu', payload.levers.computed, 'eu-levers-slot', payload.colors);
+                    ['uk', 'eu', 'us', 'int'].forEach(m => renderLeversLive(m, payload.levers.computed, `${m}-levers-slot`, payload.colors));
                 }
 
                 const globalLeaderboardProducts = [];

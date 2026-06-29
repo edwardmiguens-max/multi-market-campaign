@@ -75,11 +75,13 @@
         .dashboard-card { background-color: var(--rep-v-card-bg) !important; border-radius: 0.75rem; border: 1px solid var(--shopify-border, #e1e3e5); box-shadow: none; padding: 1.25rem; }
         .chart-shell { position: relative; width: 100%; max-width: 100%; overflow: hidden; min-width: 0; }
         .chart-shell canvas { display: block; max-width: 100% !important; }
+        .chart-shell.chart-h-sale-top5 { height: 17rem; }
+        @media (max-width: 768px) { .chart-shell.chart-h-sale-top5 { height: 14rem; } }
         .dashboard-card h3, .dashboard-card .card-header-custom, .dashboard-card .preview-header-label, .dashboard-card p.text-xs { font-weight: 700 !important; }
         #dashboard-area #logo-container { margin-bottom: 1.5rem; display: none; align-items: center; justify-content: center; overflow: visible; }
         #dashboard-area .preview-body-data, #dashboard-area .preview-small-text, #dashboard-area td, #dashboard-area th, #dashboard-area p, #dashboard-area span:not(.accordion-title-text) { color: var(--rep-v-body-txt); }
         #display-logo { max-width: min(100%, 20rem); max-height: 8rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
-        #display-logo-img { max-width: min(100%, 20rem); max-height: 8rem; object-fit: contain; background-color: var(--rep-v-card-bg); border-radius: 0.25rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
+        #display-logo-img { max-width: min(100%, 20rem); max-height: 8rem; object-fit: contain; background-color: transparent; border-radius: 0.25rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
         #products-grid .product-image-slot { background-color: var(--rep-v-card-bg) !important; }
         .overflow-y-auto::-webkit-scrollbar { width: 6px; } .overflow-y-auto::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .logo-mask { background-color: var(--rep-v-logo-col) !important; -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-size: contain; mask-repeat: no-repeat; mask-position: center; }
@@ -229,35 +231,52 @@
                 <details class="group">
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Levers</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-3 pb-2" id="levers-config-root">
-                        <p class="text-[10px] text-gray-400 leading-tight">Configure campaign drivers. UK/EU toggles control which market accordion each lever appears in. Times use Europe/London (GMT/BST).</p>
+                        <p class="text-[10px] text-gray-400 leading-tight">Configure campaign drivers. Market toggles (UK, EU, US, ROW) control which accordion each lever appears in. Times use Europe/London (GMT/BST).</p>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="preOrder1">
-                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-amber-300">Pre-order for Pre-sale</span><div class="flex gap-2 text-[10px]"><label><input type="checkbox" id="lever-preOrder1-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-preOrder1-eu" class="mr-0.5">EU</label></div></div>
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-amber-300">Pre-order for Pre-sale</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-preOrder1-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-preOrder1-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-preOrder1-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-preOrder1-int" class="mr-0.5">ROW</label></div></div>
                             <input type="text" id="lever-preOrder1-title" placeholder="Section title on report" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Pre-order for Pre-sale">
                             <div class="grid grid-cols-2 gap-2 text-[10px]"><div><span class="text-gray-400 block mb-0.5">Start date</span><input type="date" id="lever-preOrder1-start-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">Start time</span><input type="time" id="lever-preOrder1-start-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End date</span><input type="date" id="lever-preOrder1-end-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End time</span><input type="time" id="lever-preOrder1-end-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div></div>
                             <div><span class="text-gray-400 text-[10px] uppercase font-bold">Shows (display only)</span><div id="lever-preOrder1-shows" class="space-y-1 mt-1"></div><button type="button" class="text-[10px] text-blue-400 mt-1" data-add-show="preOrder1">+ Add show</button></div>
                             <div><span class="text-gray-400 text-[10px]">NPN sign-ups (manual)</span><input type="number" min="0" id="lever-preOrder1-npn" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="0"></div>
                         </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="preOrder2">
-                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-amber-300">Second Pre-order for Pre-sale</span><div class="flex gap-2 text-[10px]"><label><input type="checkbox" id="lever-preOrder2-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-preOrder2-eu" class="mr-0.5">EU</label></div></div>
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-amber-300">Second Pre-order for Pre-sale</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-preOrder2-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-preOrder2-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-preOrder2-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-preOrder2-int" class="mr-0.5">ROW</label></div></div>
                             <input type="text" id="lever-preOrder2-title" placeholder="Section title on report" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Second Pre-order for Pre-sale">
                             <div class="grid grid-cols-2 gap-2 text-[10px]"><div><span class="text-gray-400 block mb-0.5">Start date</span><input type="date" id="lever-preOrder2-start-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">Start time</span><input type="time" id="lever-preOrder2-start-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End date</span><input type="date" id="lever-preOrder2-end-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End time</span><input type="time" id="lever-preOrder2-end-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div></div>
                             <div><span class="text-gray-400 text-[10px] uppercase font-bold">Shows (display only)</span><div id="lever-preOrder2-shows" class="space-y-1 mt-1"></div><button type="button" class="text-[10px] text-blue-400 mt-1" data-add-show="preOrder2">+ Add show</button></div>
                             <div><span class="text-gray-400 text-[10px]">NPN sign-ups (manual)</span><input type="number" min="0" id="lever-preOrder2-npn" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="0"></div>
                         </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="giftWithPurchase">
-                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-emerald-300">Gift with Purchase</span><div class="flex gap-2 text-[10px]"><label><input type="checkbox" id="lever-giftWithPurchase-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-giftWithPurchase-eu" class="mr-0.5">EU</label></div></div>
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-emerald-300">Gift with Purchase</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-giftWithPurchase-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-giftWithPurchase-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-giftWithPurchase-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-giftWithPurchase-int" class="mr-0.5">ROW</label></div></div>
                             <input type="text" id="lever-giftWithPurchase-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Gift with Purchase">
                             <div><span class="text-gray-400 text-[10px]">Gift product (campaign period)</span><select id="lever-giftWithPurchase-product" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"><option value="">— Select after CSV upload —</option></select></div>
                         </div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="upsell">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-teal-300">Upsell</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-upsell-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-upsell-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-upsell-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-upsell-int" class="mr-0.5">ROW</label></div></div>
+                            <input type="text" id="lever-upsell-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Upsell">
+                            <div><span class="text-gray-400 text-[10px]">Upsell product</span><select id="lever-upsell-product" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"><option value="">— Select after CSV upload —</option></select></div>
+                            <div><span class="text-gray-400 text-[10px]">Discount % (for identifying discounted sales)</span><input type="number" min="0" max="100" step="0.1" id="lever-upsell-discount" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="0" placeholder="e.g. 20"></div>
+                        </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="competition">
-                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-purple-300">Competition</span><div class="flex gap-2 text-[10px]"><label><input type="checkbox" id="lever-competition-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-competition-eu" class="mr-0.5">EU</label></div></div>
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-purple-300">Competition</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-competition-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-competition-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-competition-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-competition-int" class="mr-0.5">ROW</label></div></div>
                             <input type="text" id="lever-competition-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Competition">
                             <div class="grid grid-cols-2 gap-2 text-[10px]"><div><span class="text-gray-400 block mb-0.5">Start date</span><input type="date" id="lever-competition-start-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">Start time</span><input type="time" id="lever-competition-start-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End date</span><input type="date" id="lever-competition-end-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End time</span><input type="time" id="lever-competition-end-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div></div>
                             <div><span class="text-gray-400 text-[10px]">Prize</span><input type="text" id="lever-competition-prize" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" placeholder="e.g. Meet & greet"></div>
                             <div><span class="text-gray-400 text-[10px]">NPN sign-ups (manual)</span><input type="number" min="0" id="lever-competition-npn" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="0"></div>
                         </div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="sale">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-orange-300">Sale</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-sale-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-sale-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-sale-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-sale-int" class="mr-0.5">ROW</label></div></div>
+                            <input type="text" id="lever-sale-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Sale">
+                            <textarea id="lever-sale-notes" rows="2" placeholder="Extra sale information (shown below header on report)" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white resize-y"></textarea>
+                            <div class="grid grid-cols-2 gap-2 text-[10px]"><div><span class="text-gray-400 block mb-0.5">Start date</span><input type="date" id="lever-sale-start-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">Start time</span><input type="time" id="lever-sale-start-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End date</span><input type="date" id="lever-sale-end-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End time</span><input type="time" id="lever-sale-end-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div></div>
+                            <div>
+                                <span class="text-gray-400 text-[10px]">Sale products</span>
+                                <input type="hidden" id="input-lever-sale-products" value="[]">
+                                <div class="flex items-center gap-2 mt-1"><button type="button" id="btn-lever-sale-products" class="text-[10px] px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600">Select products</button><span id="lever-sale-products-label" class="text-[10px] text-gray-400">None selected</span></div>
+                            </div>
+                        </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="signed">
-                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-rose-300">Signed</span><div class="flex gap-2 text-[10px]"><label><input type="checkbox" id="lever-signed-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-signed-eu" class="mr-0.5">EU</label></div></div>
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-rose-300">Signed</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-signed-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-signed-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-signed-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-signed-int" class="mr-0.5">ROW</label></div></div>
                             <input type="text" id="lever-signed-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Signed">
                             <div class="flex gap-3 text-[11px]"><label><input type="radio" name="lever-signed-mode" value="signed_formats" checked> Signed formats</label><label><input type="radio" name="lever-signed-mode" value="signed_art_card"> Signed art card</label></div>
                         </div>
@@ -392,6 +411,24 @@
             <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
                 <button type="button" id="btn-campaign-chart-products-cancel" class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
                 <button type="button" id="btn-campaign-chart-products-apply" class="text-xs px-3 py-1.5 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-500">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lever-sale-products-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+        <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center px-4 py-3 border-b border-gray-700">
+                <h3 class="text-sm font-bold text-orange-400">Sale — Select Products</h3>
+                <button type="button" id="btn-lever-sale-products-close" class="text-gray-400 hover:text-white text-lg leading-none">&times;</button>
+            </div>
+            <div class="px-4 py-2 border-b border-gray-800 flex gap-2">
+                <button type="button" id="btn-lever-sale-select-all" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700">Select all</button>
+                <button type="button" id="btn-lever-sale-clear-all" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700">Clear all</button>
+            </div>
+            <div id="lever-sale-products-list" class="overflow-y-auto flex-1 p-3 space-y-1 text-xs text-gray-200"></div>
+            <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
+                <button type="button" id="btn-lever-sale-products-cancel" class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
+                <button type="button" id="btn-lever-sale-products-apply" class="text-xs px-3 py-1.5 rounded bg-orange-600 text-white font-semibold hover:bg-orange-500">Apply</button>
             </div>
         </div>
     </div>
@@ -791,15 +828,33 @@
         let orderIndex = {};
         let loadedLeversPayload = null;
 
-        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'giftWithPurchase', 'competition', 'signed'];
+        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signed'];
+        const LEVER_MARKET_CODES = ['uk', 'eu', 'us', 'int'];
+        const LEVER_MARKET_LABELS = { uk: 'UK', eu: 'EU', us: 'US', int: 'ROW' };
+        const LEVER_MARKETS_OFF = { ukEnabled: false, euEnabled: false, usEnabled: false, intEnabled: false };
+        function readLeverMarketFlags(key) {
+            return {
+                ukEnabled: !!document.getElementById(`lever-${key}-uk`)?.checked,
+                euEnabled: !!document.getElementById(`lever-${key}-eu`)?.checked,
+                usEnabled: !!document.getElementById(`lever-${key}-us`)?.checked,
+                intEnabled: !!document.getElementById(`lever-${key}-int`)?.checked
+            };
+        }
+        function leverEnabledForMarket(cfg, market) {
+            if(!cfg) return false;
+            return !!cfg[`${market}Enabled`];
+        }
+        function leverMarketLabel(market) {
+            return LEVER_MARKET_LABELS[market] || '';
+        }
         const LEVER_SHOW_KEYS = ['preOrder1', 'preOrder2'];
 
         function getEmptyStoreData() {
             return {
-                uk: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                eu: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, traffic: { sessions: 0, atc: 0, mobile: 90, desktop: 10 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                us: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, traffic: { sessions: 0, atc: 0, mobile: 80, desktop: 20 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                int: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, traffic: { sessions: 0, atc: 0, mobile: 75, desktop: 25 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} }
+                uk: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
+                eu: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 90, desktop: 10 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
+                us: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 80, desktop: 20 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
+                int: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 75, desktop: 25 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} }
             };
         }
         let storeData = getEmptyStoreData();
@@ -1091,6 +1146,95 @@
                 return parse(a) - parse(b);
             });
         }
+        const TIMELINE_DAILY_THRESHOLD_DAYS = 14;
+        function daysBetweenInclusive(startIso, endIso) {
+            const a = new Date(String(startIso).slice(0, 10) + 'T12:00:00');
+            const b = new Date(String(endIso).slice(0, 10) + 'T12:00:00');
+            if(isNaN(a.getTime()) || isNaN(b.getTime())) return null;
+            return Math.max(1, Math.round((b - a) / 86400000) + 1);
+        }
+        function sortDayKeys(arr) {
+            return [...arr].filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+        }
+        function formatDayChartLabel(isoKey) {
+            const d = new Date(String(isoKey).slice(0, 10) + 'T12:00:00');
+            if(isNaN(d.getTime())) return isoKey;
+            return `${d.toLocaleDateString('en-GB', { weekday: 'short' })} ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`;
+        }
+        function enumerateDayKeys(startIso, endIso) {
+            const keys = [];
+            const cur = new Date(String(startIso).slice(0, 10) + 'T12:00:00');
+            const end = new Date(String(endIso).slice(0, 10) + 'T12:00:00');
+            if(isNaN(cur.getTime()) || isNaN(end.getTime()) || cur > end) return keys;
+            while(cur <= end) {
+                keys.push(cur.toISOString().slice(0, 10));
+                cur.setDate(cur.getDate() + 1);
+            }
+            return keys;
+        }
+        function dayKeyForRow(dateVal, id, minOrder, maxOrder) {
+            const d = parseCsvDateValue(dateVal);
+            if(d) return lineLondonDateKey(d.getTime());
+            if(id && windowCurrentCSVFileStart && windowCurrentCSVFileEnd && maxOrder > minOrder) {
+                const matchN = String(id).match(/\d+/);
+                if(matchN) {
+                    const num = parseInt(matchN[0], 10);
+                    const ratio = (num - minOrder) / (maxOrder - minOrder);
+                    const estTime = windowCurrentCSVFileStart + ratio * (windowCurrentCSVFileEnd - windowCurrentCSVFileStart);
+                    return lineLondonDateKey(estTime);
+                }
+            }
+            return null;
+        }
+        function weekKeyForIsoDay(isoDay) {
+            return weekKeyForRow(isoDay, null, 0, 0);
+        }
+        function collectTimelineDailyKeys(marketDataGetter) {
+            const keys = new Set();
+            ['uk', 'eu', 'us', 'int'].forEach(m => {
+                const bucket = marketDataGetter(m)?.daily || {};
+                Object.keys(bucket).forEach(k => { if(/^\d{4}-\d{2}-\d{2}$/.test(k)) keys.add(k); });
+            });
+            return keys;
+        }
+        function getTimelineSpanDays(marketDataGetter) {
+            const dayKeys = sortDayKeys(Array.from(collectTimelineDailyKeys(marketDataGetter)));
+            if(dayKeys.length >= 2) return daysBetweenInclusive(dayKeys[0], dayKeys[dayKeys.length - 1]);
+            if(dayKeys.length === 1) return 1;
+            return null;
+        }
+        function getTimelineDailySeriesKeys(marketDataGetter) {
+            const dayKeys = sortDayKeys(Array.from(collectTimelineDailyKeys(marketDataGetter)));
+            if(dayKeys.length === 0) return [];
+            if(dayKeys.length === 1) return dayKeys;
+            return enumerateDayKeys(dayKeys[0], dayKeys[dayKeys.length - 1]);
+        }
+        function resolveTimelineChart(marketDataGetter, forcedGranularity) {
+            const spanDays = getTimelineSpanDays(marketDataGetter);
+            const useDaily = forcedGranularity === 'daily' || (forcedGranularity !== 'weekly' && spanDays !== null && spanDays < TIMELINE_DAILY_THRESHOLD_DAYS);
+            if(useDaily) {
+                const keys = getTimelineDailySeriesKeys(marketDataGetter);
+                const labels = keys.map(formatDayChartLabel);
+                const getSeries = (m) => {
+                    const bucket = marketDataGetter(m)?.daily || {};
+                    return keys.map(k => bucket[k] || 0);
+                };
+                const rangeText = keys.length === 0 ? '' : keys.length === 1 ? labels[0] : `${labels[0]} – ${labels[keys.length - 1]}`;
+                return { granularity: 'daily', keys, labels, getSeries, rangeText, pointCount: keys.length };
+            }
+            const weeksSet = new Set();
+            ['uk', 'eu', 'us', 'int'].forEach(m => {
+                const bucket = marketDataGetter(m)?.weekly || marketDataGetter(m)?.monthly || {};
+                Object.keys(bucket).forEach(w => weeksSet.add(w));
+            });
+            const keys = sortWeekKeys(Array.from(weeksSet));
+            const getSeries = (m) => {
+                const bucket = marketDataGetter(m)?.weekly || marketDataGetter(m)?.monthly || {};
+                return keys.map(k => bucket[k] || 0);
+            };
+            const rangeText = keys.length === 0 ? '' : keys.length === 1 ? keys[0] : `${keys[0]} – ${keys[keys.length - 1]}`;
+            return { granularity: 'weekly', keys, labels: keys, getSeries, rangeCount: keys.length, pointCount: keys.length, rangeText };
+        }
         function monthKeyForRow(dateVal, id, minOrder, maxOrder) {
             return weekKeyForRow(dateVal, id, minOrder, maxOrder);
         }
@@ -1284,11 +1428,13 @@
         function getLeversConfigFromForm() {
             const signedModeEl = document.querySelector('input[name="lever-signed-mode"]:checked');
             return {
-                preOrder1: { ukEnabled: !!document.getElementById('lever-preOrder1-uk')?.checked, euEnabled: !!document.getElementById('lever-preOrder1-eu')?.checked, title: document.getElementById('lever-preOrder1-title')?.value || 'Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder1-start-date')?.value || '', startTime: document.getElementById('lever-preOrder1-start-time')?.value || '', endDate: document.getElementById('lever-preOrder1-end-date')?.value || '', endTime: document.getElementById('lever-preOrder1-end-time')?.value || '', shows: getShowRowsFromDom('preOrder1'), npnSignups: Number(document.getElementById('lever-preOrder1-npn')?.value || 0) },
-                preOrder2: { ukEnabled: !!document.getElementById('lever-preOrder2-uk')?.checked, euEnabled: !!document.getElementById('lever-preOrder2-eu')?.checked, title: document.getElementById('lever-preOrder2-title')?.value || 'Second Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder2-start-date')?.value || '', startTime: document.getElementById('lever-preOrder2-start-time')?.value || '', endDate: document.getElementById('lever-preOrder2-end-date')?.value || '', endTime: document.getElementById('lever-preOrder2-end-time')?.value || '', shows: getShowRowsFromDom('preOrder2'), npnSignups: Number(document.getElementById('lever-preOrder2-npn')?.value || 0) },
-                giftWithPurchase: { ukEnabled: !!document.getElementById('lever-giftWithPurchase-uk')?.checked, euEnabled: !!document.getElementById('lever-giftWithPurchase-eu')?.checked, title: document.getElementById('lever-giftWithPurchase-title')?.value || 'Gift with Purchase', productName: document.getElementById('lever-giftWithPurchase-product')?.value || '' },
-                competition: { ukEnabled: !!document.getElementById('lever-competition-uk')?.checked, euEnabled: !!document.getElementById('lever-competition-eu')?.checked, title: document.getElementById('lever-competition-title')?.value || 'Competition', startDate: document.getElementById('lever-competition-start-date')?.value || '', startTime: document.getElementById('lever-competition-start-time')?.value || '', endDate: document.getElementById('lever-competition-end-date')?.value || '', endTime: document.getElementById('lever-competition-end-time')?.value || '', prize: document.getElementById('lever-competition-prize')?.value || '', npnSignups: Number(document.getElementById('lever-competition-npn')?.value || 0) },
-                signed: { ukEnabled: !!document.getElementById('lever-signed-uk')?.checked, euEnabled: !!document.getElementById('lever-signed-eu')?.checked, title: document.getElementById('lever-signed-title')?.value || 'Signed', mode: signedModeEl?.value || 'signed_formats' }
+                preOrder1: { ...readLeverMarketFlags('preOrder1'), title: document.getElementById('lever-preOrder1-title')?.value || 'Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder1-start-date')?.value || '', startTime: document.getElementById('lever-preOrder1-start-time')?.value || '', endDate: document.getElementById('lever-preOrder1-end-date')?.value || '', endTime: document.getElementById('lever-preOrder1-end-time')?.value || '', shows: getShowRowsFromDom('preOrder1'), npnSignups: Number(document.getElementById('lever-preOrder1-npn')?.value || 0) },
+                preOrder2: { ...readLeverMarketFlags('preOrder2'), title: document.getElementById('lever-preOrder2-title')?.value || 'Second Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder2-start-date')?.value || '', startTime: document.getElementById('lever-preOrder2-start-time')?.value || '', endDate: document.getElementById('lever-preOrder2-end-date')?.value || '', endTime: document.getElementById('lever-preOrder2-end-time')?.value || '', shows: getShowRowsFromDom('preOrder2'), npnSignups: Number(document.getElementById('lever-preOrder2-npn')?.value || 0) },
+                giftWithPurchase: { ...readLeverMarketFlags('giftWithPurchase'), title: document.getElementById('lever-giftWithPurchase-title')?.value || 'Gift with Purchase', productName: document.getElementById('lever-giftWithPurchase-product')?.value || '' },
+                upsell: { ...readLeverMarketFlags('upsell'), title: document.getElementById('lever-upsell-title')?.value || 'Upsell', productName: document.getElementById('lever-upsell-product')?.value || '', discountPercent: Number(document.getElementById('lever-upsell-discount')?.value || 0) },
+                competition: { ...readLeverMarketFlags('competition'), title: document.getElementById('lever-competition-title')?.value || 'Competition', startDate: document.getElementById('lever-competition-start-date')?.value || '', startTime: document.getElementById('lever-competition-start-time')?.value || '', endDate: document.getElementById('lever-competition-end-date')?.value || '', endTime: document.getElementById('lever-competition-end-time')?.value || '', prize: document.getElementById('lever-competition-prize')?.value || '', npnSignups: Number(document.getElementById('lever-competition-npn')?.value || 0) },
+                sale: { ...readLeverMarketFlags('sale'), title: document.getElementById('lever-sale-title')?.value || 'Sale', notes: document.getElementById('lever-sale-notes')?.value || '', startDate: document.getElementById('lever-sale-start-date')?.value || '', startTime: document.getElementById('lever-sale-start-time')?.value || '', endDate: document.getElementById('lever-sale-end-date')?.value || '', endTime: document.getElementById('lever-sale-end-time')?.value || '', saleProducts: getLeverSaleProducts() },
+                signed: { ...readLeverMarketFlags('signed'), title: document.getElementById('lever-signed-title')?.value || 'Signed', mode: signedModeEl?.value || 'signed_formats' }
             };
         }
         function applyLeversConfigToForm(cfg) {
@@ -1296,14 +1442,17 @@
             const set = (id, val, isCheck) => { const el = document.getElementById(id); if(!el) return; if(isCheck) el.checked = !!val; else el.value = val ?? ''; };
             LEVER_KEYS.forEach(key => {
                 const c = cfg[key]; if(!c) return;
-                set(`lever-${key}-uk`, c.ukEnabled, true); set(`lever-${key}-eu`, c.euEnabled, true); set(`lever-${key}-title`, c.title, false);
+                LEVER_MARKET_CODES.forEach(code => set(`lever-${key}-${code}`, c[`${code}Enabled`], true));
+                set(`lever-${key}-title`, c.title, false);
                 if(key === 'giftWithPurchase') set('lever-giftWithPurchase-product', c.productName, false);
+                if(key === 'upsell') { set('lever-upsell-product', c.productName, false); set('lever-upsell-discount', c.discountPercent ?? 0, false); }
                 if(key === 'competition') { set('lever-competition-prize', c.prize, false); set('lever-competition-npn', c.npnSignups, false); }
+                if(key === 'sale') { set('lever-sale-notes', c.notes, false); setLeverSaleProducts(c.saleProducts || []); }
                 if(key === 'signed' && c.mode) { const r = document.querySelector(`input[name="lever-signed-mode"][value="${c.mode}"]`); if(r) r.checked = true; }
-                if(key === 'preOrder1' || key === 'preOrder2' || key === 'competition') {
+                if(key === 'preOrder1' || key === 'preOrder2' || key === 'competition' || key === 'sale') {
                     set(`lever-${key}-start-date`, c.startDate, false); set(`lever-${key}-start-time`, c.startTime, false);
                     set(`lever-${key}-end-date`, c.endDate, false); set(`lever-${key}-end-time`, c.endTime, false);
-                    if(key !== 'competition') { set(`lever-${key}-npn`, c.npnSignups, false); renderShowRowsToDom(key, c.shows || []); }
+                    if(key === 'preOrder1' || key === 'preOrder2') { set(`lever-${key}-npn`, c.npnSignups, false); renderShowRowsToDom(key, c.shows || []); }
                     if(key === 'competition') set('lever-competition-npn', c.npnSignups, false);
                 }
             });
@@ -1316,6 +1465,72 @@
             const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
             sel.innerHTML = '<option value="">— Select gift product —</option>' + sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
             if(prev && sorted.includes(prev)) sel.value = prev;
+        }
+        function populateUpsellProductDropdown() {
+            const sel = document.getElementById('lever-upsell-product'); if(!sel) return;
+            const prev = sel.value;
+            const names = new Set();
+            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
+            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
+            sel.innerHTML = '<option value="">— Select upsell product —</option>' + sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+            if(prev && sorted.includes(prev)) sel.value = prev;
+        }
+        function populateLeverProductDropdowns() {
+            populateGwpProductDropdown();
+            populateUpsellProductDropdown();
+        }
+        function getLeverSaleProducts() {
+            try {
+                const raw = document.getElementById('input-lever-sale-products')?.value || '[]';
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            } catch (_err) { return []; }
+        }
+        function setLeverSaleProducts(names) {
+            const input = document.getElementById('input-lever-sale-products');
+            if(input) input.value = JSON.stringify(names || []);
+            const label = document.getElementById('lever-sale-products-label');
+            if(!label) return;
+            if(!names || names.length === 0) label.textContent = 'None selected';
+            else if(names.length === 1) label.textContent = names[0].length > 42 ? names[0].slice(0, 42) + '…' : names[0];
+            else label.textContent = `${names.length} products selected`;
+        }
+        function populateLeverSaleProductModal() {
+            const list = document.getElementById('lever-sale-products-list');
+            if(!list) return;
+            const selected = new Set(getLeverSaleProducts());
+            const names = new Set();
+            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
+            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
+            if(sorted.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 italic p-2">Upload a sales CSV first.</p>';
+                return;
+            }
+            list.innerHTML = sorted.map(n => {
+                const safe = n.replace(/"/g, '&quot;');
+                const checked = selected.has(n) ? 'checked' : '';
+                return `<label class="flex items-start gap-2 p-1.5 rounded hover:bg-gray-800 cursor-pointer"><input type="checkbox" class="lever-sale-product-cb mt-0.5 rounded" value="${safe}" ${checked}><span class="leading-tight">${n}</span></label>`;
+            }).join('');
+        }
+        function openLeverSaleProductModal() {
+            populateLeverSaleProductModal();
+            document.getElementById('lever-sale-products-modal')?.classList.remove('hidden');
+        }
+        function closeLeverSaleProductModal() {
+            document.getElementById('lever-sale-products-modal')?.classList.add('hidden');
+        }
+        function lineUnitPrice(line) {
+            if(!line || !line.units) return 0;
+            return Math.abs(line.rev / line.units);
+        }
+        function lineIsDiscounted(line, discountPct) {
+            if(!line) return false;
+            if(line.isDiscountedFromCsv) return true;
+            if(discountPct > 0 && line.referenceUnitPrice > 0 && line.units) {
+                const threshold = line.referenceUnitPrice * (1 - discountPct / 100) + 0.015;
+                return lineUnitPrice(line) <= threshold;
+            }
+            return false;
         }
         function getMarketChartUnits(market) {
             return Object.values(storeData[market]?.musicProducts || {}).reduce((sum, p) => sum + (Number(p.units) || 0), 0);
@@ -1388,11 +1603,10 @@
         }
         function enrichLeversGlobalCombined(computed, config) {
             ['preOrder1', 'preOrder2', 'competition'].forEach(key => {
-                const ukC = computed.uk?.[key]?.customers || 0;
-                const euC = computed.eu?.[key]?.customers || 0;
                 const npn = Number(config[key]?.npnSignups || 0);
-                const globalCombinedSend = ukC + euC + npn;
-                ['uk', 'eu'].forEach(m => {
+                const orderSum = LEVER_MARKET_CODES.reduce((sum, m) => sum + (computed[m]?.[key]?.customers || 0), 0);
+                const globalCombinedSend = orderSum + npn;
+                LEVER_MARKET_CODES.forEach(m => {
                     if(computed[m]?.[key]) {
                         computed[m][key].globalCombinedSend = globalCombinedSend;
                         computed[m][key].npnSignups = npn;
@@ -1410,6 +1624,79 @@
                 if(ord.lines.some(l => l.name === gift)) { orders += 1; revenue += ord.totalRev; }
             });
             return { orders, revenue, productName: gift };
+        }
+        function aggregateUpsellLever(market, cfg) {
+            const product = cfg.productName || '';
+            const discountPct = Number(cfg.discountPercent || 0);
+            if(!product) return { productName: '', discountPercent: discountPct, discountedUnits: 0, discountedRevenue: 0, totalUnits: 0, totalRevenue: 0, emptyReason: 'Select an upsell product.' };
+            let refUnitPrice = 0;
+            aggregatedLineRows.forEach(l => {
+                if(l.market !== market || l.name !== product || !l.units) return;
+                const up = lineUnitPrice(l);
+                if(up > refUnitPrice) refUnitPrice = up;
+            });
+            let discountedUnits = 0, discountedRevenue = 0, totalUnits = 0, totalRevenue = 0;
+            aggregatedLineRows.forEach(l => {
+                if(l.market !== market || l.name !== product) return;
+                totalUnits += l.units;
+                totalRevenue += l.rev;
+                const threshold = refUnitPrice > 0 && discountPct > 0 ? refUnitPrice * (1 - discountPct / 100) + 0.015 : null;
+                const isDiscounted = l.isDiscountedFromCsv || (threshold !== null && l.units && lineUnitPrice(l) <= threshold);
+                if(isDiscounted) {
+                    discountedUnits += l.units;
+                    discountedRevenue += l.rev;
+                }
+            });
+            return { productName: product, discountPercent: discountPct, discountedUnits, discountedRevenue, totalUnits, totalRevenue, refUnitPrice, emptyReason: totalUnits === 0 ? 'No sales for this upsell product in the selected market.' : '' };
+        }
+        function aggregateSaleLever(market, cfg) {
+            const saleProducts = new Set(cfg.saleProducts || []);
+            const startMs = parseLondonDateTimeMs(cfg.startDate, cfg.startTime || '00:00');
+            const endMs = parseLondonDateTimeMs(cfg.endDate, cfg.endTime || '23:59');
+            const windowLabel = formatLondonWindow(cfg.startDate, cfg.startTime, cfg.endDate, cfg.endTime);
+            if(!cfg.startDate || !cfg.endDate) {
+                return { windowLabel, notes: cfg.notes || '', totalOrders: 0, saleUnits: 0, aov: 0, totalRevenue: 0, saleRevenue: 0, saleRevenuePct: 0, saleMusicRev: 0, saleMerchRev: 0, top5: [], emptyReason: 'Set start and end date/time for the sale.' };
+            }
+            if(saleProducts.size === 0) {
+                return { windowLabel, notes: cfg.notes || '', totalOrders: 0, saleUnits: 0, aov: 0, totalRevenue: 0, saleRevenue: 0, saleRevenuePct: 0, saleMusicRev: 0, saleMerchRev: 0, top5: [], emptyReason: 'Select sale products to measure sale performance.' };
+            }
+            const lines = (startMs !== null && endMs !== null) ? linesInWindow(market, startMs, endMs) : linesInDateWindow(market, cfg.startDate, cfg.endDate);
+            if(lines.length === 0) {
+                return { windowLabel, notes: cfg.notes || '', totalOrders: 0, saleUnits: 0, aov: 0, totalRevenue: 0, saleRevenue: 0, saleRevenuePct: 0, saleMusicRev: 0, saleMerchRev: 0, top5: [], emptyReason: 'No sales rows fall inside this sale window for the selected market.' };
+            }
+            const orderIds = new Set();
+            let totalUnits = 0, totalRevenue = 0, saleUnits = 0, saleRevenue = 0, saleMusicRev = 0, saleMerchRev = 0;
+            const products = {};
+            lines.forEach(l => {
+                if(l.orderId) orderIds.add(l.orderId);
+                totalUnits += l.units;
+                totalRevenue += l.rev;
+                if(!saleProducts.has(l.name)) return;
+                saleUnits += l.units;
+                saleRevenue += l.rev;
+                if(l.isMusic) saleMusicRev += l.rev;
+                if(l.isMerch) saleMerchRev += l.rev;
+                if(!products[l.name]) products[l.name] = { units: 0, revenue: 0 };
+                products[l.name].units += l.units;
+                products[l.name].revenue += l.rev;
+            });
+            const totalOrders = orderIds.size;
+            const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            const top5 = sortTopProductsByRevenue(Object.entries(products)).slice(0, 5);
+            return {
+                windowLabel,
+                notes: cfg.notes || '',
+                totalOrders,
+                saleUnits,
+                aov,
+                totalRevenue,
+                saleRevenue,
+                saleRevenuePct: totalRevenue > 0 ? (saleRevenue / totalRevenue) * 100 : 0,
+                saleMusicRev,
+                saleMerchRev,
+                top5,
+                emptyReason: saleUnits === 0 ? 'No sale product units sold in this window.' : ''
+            };
         }
         function aggregateSignedLever(market, cfg) {
             const products = {};
@@ -1443,13 +1730,15 @@
         }
         function buildLeversComputed(config) {
             const gwpNames = getGwpProductNames(config);
-            const out = { uk: {}, eu: {} };
-            ['uk', 'eu'].forEach(market => {
-                if(config.preOrder1?.[market === 'uk' ? 'ukEnabled' : 'euEnabled']) out[market].preOrder1 = { ...aggregateTimedLever(market, config.preOrder1, gwpNames), title: config.preOrder1.title };
-                if(config.preOrder2?.[market === 'uk' ? 'ukEnabled' : 'euEnabled']) out[market].preOrder2 = { ...aggregateTimedLever(market, config.preOrder2, gwpNames), title: config.preOrder2.title };
-                if(config.giftWithPurchase?.[market === 'uk' ? 'ukEnabled' : 'euEnabled']) out[market].giftWithPurchase = { ...aggregateGwpLever(market, config.giftWithPurchase), title: config.giftWithPurchase.title };
-                if(config.competition?.[market === 'uk' ? 'ukEnabled' : 'euEnabled']) out[market].competition = { ...aggregateTimedLever(market, config.competition, gwpNames), title: config.competition.title };
-                if(config.signed?.[market === 'uk' ? 'ukEnabled' : 'euEnabled']) out[market].signed = { ...aggregateSignedLever(market, config.signed), title: config.signed.title };
+            const out = { uk: {}, eu: {}, us: {}, int: {} };
+            LEVER_MARKET_CODES.forEach(market => {
+                if(leverEnabledForMarket(config.preOrder1, market)) out[market].preOrder1 = { ...aggregateTimedLever(market, config.preOrder1, gwpNames), title: config.preOrder1.title };
+                if(leverEnabledForMarket(config.preOrder2, market)) out[market].preOrder2 = { ...aggregateTimedLever(market, config.preOrder2, gwpNames), title: config.preOrder2.title };
+                if(leverEnabledForMarket(config.giftWithPurchase, market)) out[market].giftWithPurchase = { ...aggregateGwpLever(market, config.giftWithPurchase), title: config.giftWithPurchase.title };
+                if(leverEnabledForMarket(config.upsell, market)) out[market].upsell = { ...aggregateUpsellLever(market, config.upsell), title: config.upsell.title };
+                if(leverEnabledForMarket(config.competition, market)) out[market].competition = { ...aggregateTimedLever(market, config.competition, gwpNames), title: config.competition.title };
+                if(leverEnabledForMarket(config.sale, market)) out[market].sale = { ...aggregateSaleLever(market, config.sale), title: config.sale.title };
+                if(leverEnabledForMarket(config.signed, market)) out[market].signed = { ...aggregateSignedLever(market, config.signed), title: config.signed.title };
             });
             return enrichLeversGlobalCombined(out, config);
         }
@@ -1467,18 +1756,72 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, position: 'left', ticks: { font: { size: 9 } } }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 8 }, maxRotation: 45 } } } }
             });
         }
+        function renderSaleTop5Chart(canvasId, top5) {
+            if(typeof Chart === 'undefined') return;
+            if(chartInstances[canvasId]) { chartInstances[canvasId].destroy(); delete chartInstances[canvasId]; }
+            const el = document.getElementById(canvasId); if(!el || !top5?.length) return;
+            const styles = getSidebarFormStyles();
+            const fullLabels = top5.map(x => x[0]);
+            const shortLabel = (n) => { const s = String(n || ''); return s.length > 42 ? s.slice(0, 41) + '…' : s; };
+            chartInstances[canvasId] = new Chart(el.getContext('2d'), {
+                type: 'bar',
+                data: { labels: fullLabels.map(shortLabel), datasets: [
+                    { label: 'Units', data: top5.map(x => x[1].units), backgroundColor: styles.primary, borderRadius: 3, xAxisID: 'x' },
+                    { label: 'Revenue (£)', data: top5.map(x => x[1].revenue), backgroundColor: styles.secondary, borderRadius: 3, xAxisID: 'x1' }
+                ]},
+                options: {
+                    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', align: 'end', labels: { font: { size: 11 }, boxWidth: 12, padding: 14 } },
+                        tooltip: { callbacks: { title: (items) => fullLabels[items[0]?.dataIndex] || items[0]?.label || '' } }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, position: 'bottom', ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
+                        x1: { beginAtZero: true, position: 'top', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+                        y: { ticks: { font: { size: 11 }, autoSkip: false, padding: 6 }, grid: { display: false } }
+                    },
+                    datasets: { bar: { barPercentage: 0.75, categoryPercentage: 0.82 } }
+                }
+            });
+        }
         function renderTimedLeverCard(market, key, data, panePrefix) {
             if(!data) return '';
             const chartId = `${panePrefix}-chart-${key}`;
             const showsHtml = (data.shows || []).length ? `<div class="dashboard-card"><p class="preview-header-label mb-2">Shows</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Date</th><th class="text-left py-1">Venue</th><th class="text-left py-1">Country</th></tr></thead><tbody>${data.shows.map(s => `<tr class="border-b"><td class="py-1">${s.date || '—'}</td><td class="py-1">${s.venue || '—'}</td><td class="py-1">${s.country || '—'}</td></tr>`).join('')}</tbody></table></div>` : '';
             const prizeHtml = data.prize ? `<div class="dashboard-card"><p class="preview-header-label mb-1">Prize</p><p class="preview-body-data text-sm">${data.prize}</p></div>` : '';
             const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
-            const sendHtml = (data.globalCombinedSend !== undefined) ? `<p class="text-xs font-semibold text-indigo-700 mt-1">Global Combined Send: ${Number(data.globalCombinedSend||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">UK + EU orders + NPN (driver dates)</p>` : '';
-            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: var(--rep-v-prim)"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${data.windowLabel}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="preview-body-data">£${Number(data.musicRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="preview-body-data">£${Number(data.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${market === 'uk' ? 'UK' : market === 'eu' ? 'EU' : ''} Orders</p><p class="preview-body-data">${Number(data.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(data.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${showsHtml}${prizeHtml}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No products in window</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
+            const sendHtml = (data.globalCombinedSend !== undefined) ? `<p class="text-xs font-semibold text-indigo-700 mt-1">Global Combined Send: ${Number(data.globalCombinedSend||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">All market orders + NPN (driver dates)</p>` : '';
+            const marketOrdersLabel = leverMarketLabel(market) ? `${leverMarketLabel(market)} Orders` : 'Orders';
+            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: var(--rep-v-prim)"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${data.windowLabel}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="preview-body-data">£${Number(data.musicRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="preview-body-data">£${Number(data.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketOrdersLabel}</p><p class="preview-body-data">${Number(data.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(data.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${showsHtml}${prizeHtml}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No products in window</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
         }
         function renderGwpLeverCard(key, data, panePrefix) {
             if(!data) return '';
             return `<div class="dashboard-card border-l-4 space-y-2" style="border-color: var(--rep-v-sec)"><h3 class="preview-header-label text-base">${data.title || key}</h3><p class="text-xs text-gray-500">Gift product: <strong>${data.productName || '—'}</strong></p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Orders with gift</p><p class="preview-body-data text-xl font-bold">${Number(data.orders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Full order revenue</p><p class="preview-body-data text-xl font-bold">£${Number(data.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div></div></div>`;
+        }
+        function renderUpsellLeverCard(key, data, panePrefix) {
+            if(!data) return '';
+            const discLabel = Number(data.discountPercent || 0) > 0 ? `${Number(data.discountPercent).toFixed(1)}% discount threshold` : 'Discounted lines (from CSV or unit price)';
+            return `<div class="dashboard-card border-l-4 space-y-2" style="border-color: var(--rep-v-quat)"><h3 class="preview-header-label text-base">${data.title || key}</h3><p class="text-xs text-gray-500">Product: <strong>${data.productName || '—'}</strong> · ${discLabel}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Discounted units</p><p class="preview-body-data text-xl font-bold">${Number(data.discountedUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Discounted net rev</p><p class="preview-body-data text-lg font-bold">£${Number(data.discountedRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total product units</p><p class="preview-body-data text-xl font-bold">${Number(data.totalUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total product net rev</p><p class="preview-body-data text-lg font-bold">£${Number(data.totalRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div></div></div>`;
+        }
+        function renderSaleLeverCard(market, key, data, panePrefix) {
+            if(!data) return '';
+            const chartId = `${panePrefix}-chart-${key}`;
+            const pieId = `${panePrefix}-pie-${key}`;
+            const notesHtml = data.notes ? `<p class="text-sm text-gray-600 whitespace-pre-wrap">${String(data.notes).replace(/</g, '&lt;')}</p>` : '';
+            const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
+            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: #ea580c"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Sale window:</strong> ${data.windowLabel || '—'}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total orders</p><p class="preview-body-data text-xl font-bold">${Number(data.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale units</p><p class="preview-body-data text-xl font-bold">${Number(data.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="preview-body-data text-xl font-bold">£${Number(data.aov||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="preview-body-data text-lg font-bold">£${Number(data.totalRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale revenue</p><p class="preview-body-data text-lg font-bold">£${Number(data.saleRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from sale items</p><p class="preview-body-data text-xl font-bold">${Number(data.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 sale products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No sale products in window</td></tr>'}</tbody></table></div><div><p class="preview-header-label mb-2">Music vs merch (sale items)</p><div class="chart-shell chart-h-pie h-48"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="preview-header-label mb-2">Top 5 chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
+        }
+        function renderSalePieChart(canvasId, musicRev, merchRev, styles) {
+            if(typeof Chart === 'undefined') return;
+            if(chartInstances[canvasId]) { chartInstances[canvasId].destroy(); delete chartInstances[canvasId]; }
+            const el = document.getElementById(canvasId); if(!el) return;
+            const m = Number(musicRev || 0), me = Number(merchRev || 0);
+            if(m <= 0 && me <= 0) return;
+            chartInstances[canvasId] = new Chart(el.getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: ['Music', 'Merch'], datasets: [{ data: [m, me], backgroundColor: [styles.primary, styles.secondary], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } } }
+            });
         }
         function renderSignedLeverCard(key, data, panePrefix) {
             if(!data) return '';
@@ -1497,16 +1840,23 @@
             if(data.preOrder1) html += renderTimedLeverCard(market, 'preOrder1', data.preOrder1, prefix);
             if(data.preOrder2) html += renderTimedLeverCard(market, 'preOrder2', data.preOrder2, prefix);
             if(data.giftWithPurchase) html += renderGwpLeverCard('giftWithPurchase', data.giftWithPurchase, prefix);
+            if(data.upsell) html += renderUpsellLeverCard('upsell', data.upsell, prefix);
             if(data.competition) html += renderTimedLeverCard(market, 'competition', data.competition, prefix);
+            if(data.sale) html += renderSaleLeverCard(market, 'sale', data.sale, prefix);
             if(data.signed) html += renderSignedLeverCard('signed', data.signed, prefix);
             pane.innerHTML = html;
             setTimeout(() => {
+                const styles = getSidebarFormStyles();
                 ['preOrder1', 'preOrder2', 'competition', 'signed'].forEach(k => { if(data[k]?.top5?.length) renderLeverChart(`${prefix}-chart-${k}`, data[k].top5); });
+                if(data.sale) {
+                    renderSalePieChart(`${prefix}-pie-sale`, data.sale.saleMusicRev, data.sale.saleMerchRev, styles);
+                    if(data.sale.top5?.length) renderSaleTop5Chart(`${prefix}-chart-sale`, data.sale.top5);
+                }
             }, 50);
         }
         function buildLeversPayload() {
             const config = getLeversConfigFromForm();
-            const computed = aggregatedLineRows.length ? buildLeversComputed(config) : (loadedLeversPayload?.computed || { uk: {}, eu: {} });
+            const computed = aggregatedLineRows.length ? buildLeversComputed(config) : (loadedLeversPayload?.computed || { uk: {}, eu: {}, us: {}, int: {} });
             return { config, computed };
         }
         function buildComparisonPayload() {
@@ -1602,15 +1952,20 @@
         };
         function resetLeversToDefaults() {
             applyLeversConfigToForm({
-                preOrder1: { ukEnabled: false, euEnabled: false, title: 'Pre-order for Pre-sale', startDate: '', startTime: '', endDate: '', endTime: '', npnSignups: 0, shows: [] },
-                preOrder2: { ukEnabled: false, euEnabled: false, title: 'Second Pre-order for Pre-sale', startDate: '', startTime: '', endDate: '', endTime: '', npnSignups: 0, shows: [] },
-                giftWithPurchase: { ukEnabled: false, euEnabled: false, title: 'Gift with Purchase', productName: '' },
-                competition: { ukEnabled: false, euEnabled: false, title: 'Competition', startDate: '', startTime: '', endDate: '', endTime: '', prize: '', npnSignups: 0 },
-                signed: { ukEnabled: false, euEnabled: false, title: 'Signed', mode: 'signed_formats' }
+                preOrder1: { ...LEVER_MARKETS_OFF, title: 'Pre-order for Pre-sale', startDate: '', startTime: '', endDate: '', endTime: '', npnSignups: 0, shows: [] },
+                preOrder2: { ...LEVER_MARKETS_OFF, title: 'Second Pre-order for Pre-sale', startDate: '', startTime: '', endDate: '', endTime: '', npnSignups: 0, shows: [] },
+                giftWithPurchase: { ...LEVER_MARKETS_OFF, title: 'Gift with Purchase', productName: '' },
+                upsell: { ...LEVER_MARKETS_OFF, title: 'Upsell', productName: '', discountPercent: 0 },
+                competition: { ...LEVER_MARKETS_OFF, title: 'Competition', startDate: '', startTime: '', endDate: '', endTime: '', prize: '', npnSignups: 0 },
+                sale: { ...LEVER_MARKETS_OFF, title: 'Sale', notes: '', startDate: '', startTime: '', endDate: '', endTime: '', saleProducts: [] },
+                signed: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' }
             });
             LEVER_SHOW_KEYS.forEach(k => renderShowRowsToDom(k, []));
             const gwpSel = document.getElementById('lever-giftWithPurchase-product');
             if(gwpSel) gwpSel.innerHTML = '<option value="">— Select after CSV upload —</option>';
+            const upsellSel = document.getElementById('lever-upsell-product');
+            if(upsellSel) upsellSel.innerHTML = '<option value="">— Select after CSV upload —</option>';
+            setLeverSaleProducts([]);
         }
         function clearSegmentPreview(prefix) {
             ['device', 'mm', 'size', 'cat'].forEach(t => {
@@ -1951,9 +2306,7 @@
             
             updateInlineCSSInjection(styles, document.getElementById('input-font-size-header').value, document.getElementById('input-font-size-accordion').value, document.getElementById('input-font-size-body').value, document.getElementById('input-font').value);
 
-            let weeksSet = new Set();
-            Object.values(storeData).forEach(d => { if(d.weekly) Object.keys(d.weekly).forEach(w => weeksSet.add(w)); });
-            let sortedWeeks = sortWeekKeys(Array.from(weeksSet));
+            const timelineChart = resolveTimelineChart(m => storeData[m]);
 
             Object.entries(storeData).forEach(([k, d]) => {
                 if(d.loaded) {
@@ -1995,29 +2348,29 @@
 
             if(globalTimelineChart) {
                 const hasUs = storeHasDedicatedUsMarket();
-                globalTimelineChart.data.labels = sortedWeeks;
-                globalTimelineChart.data.datasets[0].data = sortedWeeks.map(w => storeData.uk.weekly?.[w] || 0);
+                const labels = timelineChart.labels;
+                const pointCount = timelineChart.pointCount || labels.length;
+                globalTimelineChart.data.labels = labels;
+                globalTimelineChart.data.datasets[0].data = timelineChart.getSeries('uk');
                 globalTimelineChart.data.datasets[0].borderColor = styles.primary; globalTimelineChart.data.datasets[0].backgroundColor = styles.primary;
 
-                globalTimelineChart.data.datasets[1].data = sortedWeeks.map(w => storeData.eu.weekly?.[w] || 0);
+                globalTimelineChart.data.datasets[1].data = timelineChart.getSeries('eu');
                 globalTimelineChart.data.datasets[1].borderColor = styles.tertiary; globalTimelineChart.data.datasets[1].backgroundColor = styles.tertiary;
 
-                globalTimelineChart.data.datasets[2].data = sortedWeeks.map(w => storeData.us.weekly?.[w] || 0);
+                globalTimelineChart.data.datasets[2].data = timelineChart.getSeries('us');
                 globalTimelineChart.data.datasets[2].borderColor = styles.secondary; globalTimelineChart.data.datasets[2].backgroundColor = styles.secondary;
                 globalTimelineChart.data.datasets[2].hidden = !hasUs;
 
-                globalTimelineChart.data.datasets[3].data = sortedWeeks.map(w => storeData.int.weekly?.[w] || 0);
+                globalTimelineChart.data.datasets[3].data = timelineChart.getSeries('int');
                 globalTimelineChart.data.datasets[3].borderColor = styles.quaternary; globalTimelineChart.data.datasets[3].backgroundColor = styles.quaternary;
-                const pointRadius = sortedWeeks.length > 24 ? 1.5 : (sortedWeeks.length > 12 ? 2.5 : 4);
-                globalTimelineChart.data.datasets.forEach(ds => { ds.pointRadius = pointRadius; ds.tension = sortedWeeks.length > 24 ? 0.2 : 0.4; });
+                const pointRadius = pointCount > 24 ? 1.5 : (pointCount > 12 ? 2.5 : 4);
+                globalTimelineChart.data.datasets.forEach(ds => { ds.pointRadius = pointRadius; ds.tension = pointCount > 24 ? 0.2 : 0.4; });
 
                 globalTimelineChart.update();
-                if(document.getElementById('timeline-date-range') && sortedWeeks.length > 0) {
-                    if(sortedWeeks.length === 1) {
-                        document.getElementById('timeline-date-range').textContent = sortedWeeks[0];
-                    } else {
-                        document.getElementById('timeline-date-range').textContent = `${sortedWeeks[0]} – ${sortedWeeks[sortedWeeks.length-1]}`;
-                    }
+                const rangeEl = document.getElementById('timeline-date-range');
+                if(rangeEl) {
+                    if(!timelineChart.rangeText) rangeEl.textContent = 'Awaiting Data...';
+                    else rangeEl.textContent = timelineChart.granularity === 'daily' ? `Daily · ${timelineChart.rangeText}` : timelineChart.rangeText;
                 }
             }
 
@@ -2030,8 +2383,7 @@
             })();
             renderTopCountriesPreview(countryPayload);
             const leversPayload = buildLeversPayload();
-            renderLeversPane('uk', leversPayload.computed, 'uk-levers-slot');
-            renderLeversPane('eu', leversPayload.computed, 'eu-levers-slot');
+            LEVER_MARKET_CODES.forEach(m => renderLeversPane(m, leversPayload.computed, `${m}-levers-slot`));
             syncUsMarketDerivedUi();
         }
 
@@ -2176,6 +2528,7 @@
                     const loadedAtcRate = parseFloat(safeStr(mData.atcRate).replace(/[^0-9.-]+/g, '')) || 4;
                     const calcAtc = Math.round((loadedAtcRate / 100) * loadedSess) || (ordCount * 4);
                     storeData[m].weekly = mData.weekly || mData.monthly || { 'Period 1': storeData[m].revenue * 0.25, 'Period 2': storeData[m].revenue * 0.25, 'Period 3': storeData[m].revenue * 0.25, 'Period 4': storeData[m].revenue * 0.25 };
+                    storeData[m].daily = mData.daily || {};
                     storeData[m].traffic = { sessions: loadedSess, atc: calcAtc, mobile: parseInt(mData.mobilePerc, 10) || 85, desktop: parseInt(mData.desktopPct, 10) || 15 };
                     storeData[m].merch = mData.merch || { musicRev: storeData[m].revenue, merchRev: 0, sizes: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL+': 0 }, categories: {} };
                 } else {
@@ -2261,7 +2614,7 @@
 
             Object.keys(storeData).forEach(m => {
                 storeData[m].loaded = true; storeData[m].revenue = 0; storeData[m].items = 0; storeData[m].orders.clear();
-                storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].weekly = {};
+                storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {};
                 storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
             });
 
@@ -2287,7 +2640,7 @@
             const acceptedRowsByMarket = { uk: 0, eu: 0, us: 0, int: 0 };
             const acceptedRevenueByMarket = { uk: 0, eu: 0, us: 0, int: 0 };
             windowCurrentCSVData.forEach((row, rowIdx) => {
-                let name = '', variant = '', pType = '', id = '', rev = 0, rawQty = 1, netItemsSold = null, marketVal = '', dayVal = null, hourVal = null, shippingCountry = '';
+                let name = '', variant = '', pType = '', id = '', rev = 0, rawQty = 1, netItemsSold = null, marketVal = '', dayVal = null, hourVal = null, shippingCountry = '', compareAtPrice = null, lineDiscount = null;
                 Object.keys(row).forEach(k => {
                     if (!k) return;
                     const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -2302,6 +2655,8 @@
                         const parsedUnits = parseFloat(row[k]);
                         if(!isNaN(parsedUnits)) netItemsSold = parsedUnits;
                     }
+                    else if (cleanK.includes('compareatprice') || cleanK.includes('compareprice')) { const p = parseFloat(row[k]); if(!isNaN(p)) compareAtPrice = p; }
+                    else if (cleanK.includes('linediscount') || cleanK.includes('discountamount') || cleanK === 'discount') { const p = parseFloat(row[k]); if(!isNaN(p)) lineDiscount = p; }
                     else if (cleanK.includes('shippingcountry') || cleanK === 'shipcountry') shippingCountry = String(row[k] || '');
                     else if (cleanK === 'market') marketVal = String(row[k] || '').toLowerCase();
                     else if (cleanK === 'day' || cleanK === 'reportingday') dayVal = row[k];
@@ -2335,7 +2690,9 @@
                 const isMerch = !isMusic;
                 const rowTs = rowTimestampWithHour(dayVal, hourVal, id, minOrder, maxOrder);
                 const orderKey = id || `row_${rowIdx}`;
-                const lineRec = { orderId: orderKey, market: tMk, timestamp: rowTs, name, upperName, rev, units: derivedQty, isMusic, isMerch, isSignedArtCard: isSignedArtCard(name), isSignedFormat: isMusic && upperName.includes('SIGNED') && !isSignedArtCard(name) };
+                const unitPrice = derivedQty ? Math.abs(rev / derivedQty) : 0;
+                const isDiscountedFromCsv = (lineDiscount !== null && Math.abs(lineDiscount) > 0.001) || (compareAtPrice !== null && compareAtPrice > 0 && derivedQty && unitPrice < compareAtPrice * 0.995);
+                const lineRec = { orderId: orderKey, market: tMk, timestamp: rowTs, name, upperName, rev, units: derivedQty, unitPrice, compareAtPrice, lineDiscount, isDiscountedFromCsv, isMusic, isMerch, isSignedArtCard: isSignedArtCard(name), isSignedFormat: isMusic && upperName.includes('SIGNED') && !isSignedArtCard(name) };
                 aggregatedLineRows.push(lineRec);
                 if(!orderIndex[orderKey]) orderIndex[orderKey] = { market: tMk, timestamp: rowTs, lines: [], totalRev: 0 };
                 orderIndex[orderKey].lines.push(lineRec);
@@ -2358,6 +2715,11 @@
                 storeData[tMk].products[name].units += derivedQty; storeData[tMk].products[name].revenue += rev;
                 if (!storeData[tMk].weekly[weekKey]) storeData[tMk].weekly[weekKey] = 0;
                 storeData[tMk].weekly[weekKey] += rev;
+                const dayKey = dayKeyForRow(dayVal, id, minOrder, maxOrder) || (rowTs !== null ? lineLondonDateKey(rowTs) : null);
+                if(dayKey) {
+                    if(!storeData[tMk].daily[dayKey]) storeData[tMk].daily[dayKey] = 0;
+                    storeData[tMk].daily[dayKey] += rev;
+                }
 
                 const cmpBucket = ensureComparisonBucket(tMk, weekKey);
                 cmpBucket.revenue += rev;
@@ -2411,11 +2773,19 @@
                 if(fromIdx >= 0 && toIdx >= 0 && toIdx >= fromIdx) {
                     Object.keys(storeData).forEach(m => {
                         const weekly = storeData[m].weekly || {};
+                        const daily = storeData[m].daily || {};
                         const narrowed = {};
+                        const narrowedDaily = {};
                         sorted.forEach((period, idx) => {
-                            if(idx >= fromIdx && idx <= toIdx && weekly[period]) narrowed[period] = weekly[period];
+                            if(idx >= fromIdx && idx <= toIdx) {
+                                if(weekly[period]) narrowed[period] = weekly[period];
+                                Object.entries(daily).forEach(([dayKey, val]) => {
+                                    if(weekKeyForIsoDay(dayKey) === period) narrowedDaily[dayKey] = val;
+                                });
+                            }
                         });
                         storeData[m].weekly = narrowed;
+                        storeData[m].daily = narrowedDaily;
                     });
                 }
             }
@@ -2440,7 +2810,7 @@
             ingestionWarnings.push(`Post-filter ingest counts — UK: ${acceptedRowsByMarket.uk}, EU: ${acceptedRowsByMarket.eu}, US: ${acceptedRowsByMarket.us}, INT: ${acceptedRowsByMarket.int}`);
             ingestionWarnings.push(`Post-filter ingest revenue — UK: £${acceptedRevenueByMarket.uk.toFixed(2)}, EU: £${acceptedRevenueByMarket.eu.toFixed(2)}, US: £${acceptedRevenueByMarket.us.toFixed(2)}, INT: £${acceptedRevenueByMarket.int.toFixed(2)}`);
             renderWarnings();
-            populateGwpProductDropdown();
+            populateLeverProductDropdowns();
             calculateGlobalDashboard();
         }
 
@@ -2535,6 +2905,17 @@
                 closeCampaignChartProductModal();
                 if(windowCurrentCSVData) runDataAggregation();
             });
+            document.getElementById('btn-lever-sale-products')?.addEventListener('click', openLeverSaleProductModal);
+            document.getElementById('btn-lever-sale-products-close')?.addEventListener('click', closeLeverSaleProductModal);
+            document.getElementById('btn-lever-sale-products-cancel')?.addEventListener('click', closeLeverSaleProductModal);
+            document.getElementById('btn-lever-sale-select-all')?.addEventListener('click', () => { document.querySelectorAll('.lever-sale-product-cb').forEach(cb => { cb.checked = true; }); });
+            document.getElementById('btn-lever-sale-clear-all')?.addEventListener('click', () => { document.querySelectorAll('.lever-sale-product-cb').forEach(cb => { cb.checked = false; }); });
+            document.getElementById('btn-lever-sale-products-apply')?.addEventListener('click', () => {
+                const selected = Array.from(document.querySelectorAll('.lever-sale-product-cb:checked')).map(cb => cb.value);
+                setLeverSaleProducts(selected);
+                closeLeverSaleProductModal();
+                calculateGlobalDashboard();
+            });
             document.getElementById('input-store-has-us-market')?.addEventListener('change', () => { syncUsMarketDerivedUi(); if(windowCurrentCSVData) runDataAggregation(); });
             document.getElementById('report-section-countries-preview')?.querySelector('details')?.addEventListener('toggle', (e) => {
                 if(!e.target.open || !lastTopCountriesPayload) return;
@@ -2578,12 +2959,9 @@
                     if(!dataUrl) { resolve(dataUrl); return; }
                     const img = new Image();
                     img.onload = () => {
-                        const canvas = useOverlay ? drawImageToCanvasWithBg(img, 2048, 2048, null) : drawImageToCanvasWithBg(img, 2048, 2048, cardBg);
-                        let quality = 0.92;
-                        let out = useOverlay ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', quality);
-                        if(!useOverlay) {
-                            while(out.length > maxChars && quality > 0.72) { quality -= 0.04; out = canvas.toDataURL('image/jpeg', quality); }
-                        } else if(out.length > maxChars) {
+                        const canvas = drawImageToCanvasWithBg(img, 2048, 2048, null);
+                        let out = canvas.toDataURL('image/png');
+                        if(out.length > maxChars) {
                             let w = canvas.width, h = canvas.height;
                             while(out.length > maxChars && w > 640) {
                                 w = Math.round(w * 0.85); h = Math.round(h * 0.85);
@@ -2653,15 +3031,17 @@
 
                     const revNum = Number(d.revenue) || 0; const itemsNum = Number(d.items) || 0; const aovNum = ordersCount > 0 ? (revNum / ordersCount) : 0; const atcRate = sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%'; const convRate = sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%'; const upt = ordersCount > 0 ? (itemsNum / ordersCount).toFixed(2) : '0.00';
                     const campaignChartUnits = Object.values(d.musicProducts || {}).reduce((sum, p) => sum + (Number(p?.units) || 0), 0);
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), weekly: d.weekly || {}, campaignChartUnits, merch: safeMerch };
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), weekly: d.weekly || {}, daily: d.daily || {}, campaignChartUnits, merch: safeMerch };
                 };
 
+                const timelineForPublish = resolveTimelineChart(m => storeData[m]);
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
                     sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only' },
                     title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
                     sectionNames: { global: document.getElementById('input-name-global')?.value || '1. Global Dashboard Summary', uk: document.getElementById('input-name-uk')?.value || '2. United Kingdom Market Insights', eu: document.getElementById('input-name-eu')?.value || '3. European Union Market Insights', us: document.getElementById('input-name-us')?.value || '4. United States Market Insights', int: document.getElementById('input-name-int')?.value || '5. Rest of World / International Insights', countries: document.getElementById('input-name-countries')?.value || '6. Top Countries' },
                     campaignDates: getCampaignDates(),
+                    timelineGranularity: timelineForPublish.granularity,
                     sectionVisibility: getResolvedSectionVisibility(),
                     levers: buildLeversPayload(),
                     colors: { logo: document.getElementById('color-logo')?.value || '#202223', accordion: document.getElementById('color-accordion')?.value || '#202223', bg: document.getElementById('color-bg')?.value || '#f6f6f7', cardBg: document.getElementById('color-card')?.value || '#ffffff', primary: document.getElementById('color-primary')?.value || '#008060', secondary: document.getElementById('color-secondary')?.value || '#5c6ac4', tertiary: document.getElementById('color-tertiary')?.value || '#9c6ade', quaternary: document.getElementById('color-quaternary')?.value || '#47c1bf', toteBag: document.getElementById('color-tote-bag')?.value || '#6371c7', mapGradientDark: document.getElementById('color-map-gradient-dark')?.value || '#005bd3', cardHeaderText: document.getElementById('color-card-header-text')?.value || '#6d7175', accordionHeaderText: document.getElementById('color-accordion-header-text')?.value || '#ffffff', textColor: document.getElementById('color-body-font')?.value || '#202223' },
