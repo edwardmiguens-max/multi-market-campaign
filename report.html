@@ -28,7 +28,7 @@
         body { background-color: var(--rep-v-bg) !important; color: var(--rep-v-body-txt) !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow-x: hidden; }
         #dashboard-area, #dashboard-area * { font-family: var(--rep-v-font) !important; box-sizing: border-box; }
         #dashboard-area { color: var(--rep-v-body-txt) !important; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
-        #dashboard-area #display-title { color: var(--rep-v-logo-col) !important; font-size: calc(1.5rem * var(--rep-v-h-scale)) !important; line-height: calc(2rem * var(--rep-v-h-scale)) !important; font-weight: 600 !important; letter-spacing: -0.02em; }
+        #dashboard-area #display-title { font-family: var(--rep-v-font) !important; color: var(--rep-v-logo-col) !important; font-size: calc(1.5rem * var(--rep-v-h-scale)) !important; line-height: calc(2rem * var(--rep-v-h-scale)) !important; font-weight: 600 !important; letter-spacing: -0.02em; }
         #dashboard-area summary span.text-lg, #dashboard-area .accordion-title-text { font-size: calc(0.9375rem * var(--rep-v-acc-scale)) !important; line-height: calc(1.375rem * var(--rep-v-acc-scale)) !important; color: var(--rep-v-acc-txt) !important; font-weight: 600 !important; }
         #dashboard-area .card-header-custom { font-size: calc(0.8125rem * var(--rep-v-h-scale)) !important; line-height: calc(1.125rem * var(--rep-v-h-scale)) !important; color: var(--rep-v-hdr-txt) !important; font-weight: 500 !important; text-transform: none !important; letter-spacing: normal !important; }
         #dashboard-area .text-xs:not(.card-header-custom) { font-size: calc(0.75rem * var(--rep-v-b-scale)) !important; line-height: calc(1rem * var(--rep-v-b-scale)) !important; }
@@ -97,7 +97,7 @@
 
     <main id="dashboard-area" class="w-full max-w-5xl hidden space-y-6">
         <div id="logo-container" style="display: none;" class="justify-center mb-6"><div id="display-logo" class="logo-mask"></div><img id="display-logo-img" alt="" class="object-contain" style="display: none;"></div>
-        <header class="border-b pb-4 mb-2"><h1 id="display-title" class="text-2xl font-semibold tracking-tight">--</h1><p id="display-setup-by" class="text-xs card-header-custom mt-1 hidden"></p></header>
+        <header class="border-b pb-4 mb-2"><h1 id="display-title">--</h1><p id="display-setup-by" class="text-xs card-header-custom mt-1 hidden"></p></header>
 
         <div id="products-grid" style="display: none;" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="dashboard-card product-image-slot flex items-center justify-center aspect-square p-2 overflow-hidden"><img id="view-p1" style="display: none;" class="w-full h-full max-h-64 lg:max-h-80 object-contain rounded"></div>
@@ -361,6 +361,14 @@
                     datasets: { bar: { barPercentage: 0.75, categoryPercentage: 0.82 } }
                 }
             };
+        }
+        function renderEuTopCountriesSection(rows, salesforcePriorUnits) {
+            if(!rows?.length) {
+                return `<div class="dashboard-card w-full"><h3 class="text-xs font-bold card-header-custom mb-2">Top 10 EU countries</h3><p class="text-xs text-gray-500 italic">No EU country breakdown in this report.</p></div>`;
+            }
+            const body = rows.map(r => `<tr class="border-b"><td class="py-1.5 font-medium">${r.country}</td><td class="py-1.5 text-right">${Number(r.musicUnits || 0).toLocaleString()}${r.salesforceUnits ? `<span class="text-[10px] text-gray-400 block">incl. ${Number(r.salesforceUnits).toLocaleString()} SF</span>` : ''}</td><td class="py-1.5 text-right">${formatGBP(r.revenue)}</td></tr>`).join('');
+            const sfNote = salesforcePriorUnits?.totalUnits ? `<p class="text-[10px] text-gray-400 mt-2">Music units include ${Number(salesforcePriorUnits.totalUnits).toLocaleString()} prior Salesforce vinyl units (no revenue).</p>` : '';
+            return `<div class="dashboard-card w-full"><h3 class="text-xs font-bold card-header-custom mb-2">Top 10 EU countries</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[280px]"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Music units</th><th class="text-right py-1">Net revenue</th></tr></thead><tbody>${body}</tbody></table></div>${sfNote}</div>`;
         }
         function renderLeversLive(market, computed, slotId, colors) {
             const pane = document.getElementById(slotId); if(!pane) return;
@@ -700,6 +708,7 @@
                         </div>
                         <div class="space-y-4 flex flex-col justify-between"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><span class="text-[10px] font-bold card-header-custom">Music vs merch (net rev)</span><span class="text-[11px] font-medium text-gray-500">Merch: £${(merch.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</span></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-mm-pie"></canvas></div></div><div class="dashboard-card"><div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold card-header-custom">Garment sizing (units)</span></div><div class="chart-shell chart-h-bar"><canvas id="${prefix}-size-bar"></canvas></div></div><div class="dashboard-card flex-1"><span class="text-[10px] font-bold card-header-custom block mb-2">Top merch categories</span><div class="chart-shell chart-h-cat"><canvas id="${prefix}-cat-bar"></canvas></div></div></div>
                         </div>
+                        ${prefix === 'eu' ? renderEuTopCountriesSection(d.euTopCountries || [], payload.salesforcePriorUnits) : ''}
                         <div id="${prefix}-levers-slot" class="space-y-4 border-t border-gray-200 pt-6"></div>
                     `;
 

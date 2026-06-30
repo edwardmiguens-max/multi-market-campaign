@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -48,7 +49,7 @@
         #shopify-theme-sidebar .bg-gray-800, #shopify-theme-sidebar .bg-gray-800\/60, #shopify-theme-sidebar .bg-gray-900 { background: var(--se-surface-raised) !important; }
         #shopify-theme-sidebar .border-gray-700, #shopify-theme-sidebar .border-gray-600, #shopify-theme-sidebar .border-blue-500, #shopify-theme-sidebar .border-cyan-700, #shopify-theme-sidebar .border-indigo-700, #shopify-theme-sidebar .border-green-600\/50, #shopify-theme-sidebar .border-purple-600\/50 { border-color: var(--se-border) !important; }
         #preview-workspace-pane { background: var(--se-canvas) !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }
-        #preview-workspace-pane #display-title { font-size: 1.5rem !important; font-weight: 600 !important; color: var(--rep-v-logo-col) !important; letter-spacing: -0.02em; }
+        #preview-workspace-pane #display-title { font-family: var(--rep-v-font) !important; font-size: calc(1.5rem * var(--rep-v-h-scale)) !important; line-height: calc(2rem * var(--rep-v-h-scale)) !important; font-weight: 600 !important; color: var(--rep-v-logo-col) !important; letter-spacing: -0.02em; }
         #preview-workspace-pane header { border-bottom-color: var(--shopify-border) !important; }
         #preview-workspace-pane details.group { background: #fff !important; border: 1px solid var(--shopify-border) !important; border-radius: 0.75rem !important; box-shadow: none !important; overflow: hidden; }
         #preview-workspace-pane .accordion-summary-bar { background-color: var(--rep-v-acc-col) !important; color: var(--rep-v-acc-txt) !important; border-bottom: none; }
@@ -60,7 +61,7 @@
         #preview-workspace-pane .kpi-card-label, #preview-workspace-pane .preview-header-label { color: #6d7175 !important; font-weight: 500 !important; text-transform: none !important; letter-spacing: normal !important; font-size: 0.8125rem !important; }
         #dashboard-area, #dashboard-area * { font-family: var(--rep-v-font) !important; }
         #dashboard-area { color: var(--rep-v-body-txt) !important; }
-        #display-title { font-size: calc(2.25rem * var(--rep-v-h-scale)) !important; line-height: calc(2.5rem * var(--rep-v-h-scale)) !important; color: var(--rep-v-logo-col) !important; font-weight: 700; letter-spacing: -0.025em; }
+        #display-title { font-family: var(--rep-v-font) !important; font-size: calc(1.5rem * var(--rep-v-h-scale)) !important; line-height: calc(2rem * var(--rep-v-h-scale)) !important; color: var(--rep-v-logo-col) !important; font-weight: 600 !important; letter-spacing: -0.02em; }
         #dashboard-area summary .accordion-title-text { font-size: calc(1.125rem * var(--rep-v-acc-scale)) !important; line-height: calc(1.75rem * var(--rep-v-acc-scale)) !important; color: var(--rep-v-acc-txt) !important; }
         #dashboard-area .card-header-custom, #dashboard-area .preview-header-label { font-size: calc(0.75rem * var(--rep-v-h-scale)) !important; line-height: calc(1rem * var(--rep-v-h-scale)) !important; color: var(--rep-v-hdr-txt) !important; }
         #dashboard-area .kpi-card-label, #dashboard-area .global-kpi-grid .preview-header-label { font-weight: 800 !important; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -148,6 +149,15 @@
                                 <div><span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Start Date</span><input type="date" id="input-campaign-start" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"></div>
                                 <div><span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">End Date</span><input type="date" id="input-campaign-end" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"></div>
                             </div>
+                        </div>
+                        <div class="pt-2 border-t border-gray-700 bg-gray-800/60 p-2 rounded border border-orange-700/80">
+                            <label class="block text-xs font-bold text-orange-300 uppercase tracking-wider mb-2">Prior Salesforce country sales</label>
+                            <p class="text-[10px] text-gray-400 mb-2 leading-tight">Upload a Salesforce EU country export (.xlsx). Vinyl units are added to EU music chart units and the EU country table — revenue is ignored.</p>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <input type="file" id="upload-salesforce-country" accept=".xlsx,.xls" class="block text-[10px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600">
+                                <button type="button" id="btn-clear-salesforce-country" class="text-[10px] px-2 py-1 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 hidden">Clear</button>
+                            </div>
+                            <p id="salesforce-country-summary" class="text-[10px] text-gray-400 mt-2 leading-tight">No prior Salesforce units loaded.</p>
                         </div>
                     </div>
                 </details>
@@ -818,11 +828,20 @@
         let regionPieChart, globalTimelineChart;
         let chartInstances = {}; 
         let loadedTopCountriesPayload = null;
+        let loadedEuTopCountriesPayload = null;
         let globalLogoBase64 = null;
         let activeLoadedReportId = window.__bootLoadedReportId || window.activeLoadedReportId || null; 
         const productImages = { p1: null, p2: null, p3: null, p4: null };
         let comparisonModel = { markets: {}, periodOrder: [] };
         let globalCountryStats = {};
+        let marketCountryMusicStats = { uk: {}, eu: {}, us: {}, int: {} };
+        let salesforcePriorUnits = null;
+        const VAT_COUNTRY_CODES = {
+            AD: 'Andorra', AT: 'Austria', BE: 'Belgium', BG: 'Bulgaria', CH: 'Switzerland', CN: 'China', CZ: 'Czech Republic',
+            DE: 'Germany', DK: 'Denmark', ES: 'Spain', FR: 'France', GB: 'United Kingdom', HU: 'Hungary', IE: 'Ireland',
+            IT: 'Italy', LU: 'Luxembourg', LV: 'Latvia', NL: 'Netherlands', NO: 'Norway', PL: 'Poland', PT: 'Portugal',
+            RO: 'Romania', SE: 'Sweden', SG: 'Singapore', SI: 'Slovenia', SK: 'Slovakia', US: 'United States'
+        };
         let ingestionWarnings = [];
 
         // Globals to store raw CSV data for instant hot-swapping Filters
@@ -1253,6 +1272,8 @@
         function normalizeCountryName(raw) {
             const c = String(raw || '').trim();
             if(!c) return '';
+            const upper = c.toUpperCase();
+            if(upper.length === 2 && VAT_COUNTRY_CODES[upper]) return VAT_COUNTRY_CODES[upper];
             const lower = c.toLowerCase();
             const hasUsMarket = document.getElementById('input-store-has-us-market')?.checked !== false;
             if(!hasUsMarket && ['united states','usa','us','u.s.','u.s.a.','puerto rico','guam','american samoa'].includes(lower)) {
@@ -1264,11 +1285,106 @@
                 'u.s.': 'United States',
                 'u.s.a.': 'United States',
                 uk: 'United Kingdom',
-                'u.k.': 'United Kingdom'
+                'u.k.': 'United Kingdom',
+                gb: 'United Kingdom'
             };
             if(aliases[lower]) return aliases[lower];
             if(['europe','eu','international','rest of world','int','row'].includes(lower)) return '';
             return c.split(' ').map(x => x ? (x.charAt(0).toUpperCase() + x.slice(1).toLowerCase()) : x).join(' ');
+        }
+        function buildEuTopCountriesPayload() {
+            const merged = {};
+            Object.entries(marketCountryMusicStats.eu || {}).forEach(([country, obj]) => {
+                merged[country] = { musicUnits: Number(obj.musicUnits || 0), revenue: Number(obj.revenue || 0), salesforceUnits: 0 };
+            });
+            if(salesforcePriorUnits?.byCountry) {
+                Object.entries(salesforcePriorUnits.byCountry).forEach(([country, units]) => {
+                    const u = Number(units) || 0;
+                    if(!merged[country]) merged[country] = { musicUnits: 0, revenue: 0, salesforceUnits: 0 };
+                    merged[country].musicUnits += u;
+                    merged[country].salesforceUnits += u;
+                });
+            }
+            return Object.entries(merged)
+                .map(([country, o]) => ({ country, musicUnits: o.musicUnits, revenue: o.revenue, salesforceUnits: o.salesforceUnits || 0 }))
+                .filter(r => r.musicUnits > 0 || r.revenue > 0)
+                .sort((a, b) => b.musicUnits - a.musicUnits || b.revenue - a.revenue)
+                .slice(0, 10);
+        }
+        function getEuTopCountriesForDisplay() {
+            const live = buildEuTopCountriesPayload();
+            if(live.length > 0) return live;
+            return Array.isArray(loadedEuTopCountriesPayload) ? loadedEuTopCountriesPayload : [];
+        }
+        function renderEuTopCountriesTableHtml(rows) {
+            if(!rows?.length) {
+                return `<div class="dashboard-card w-full"><h3 class="preview-header-label mb-2">Top 10 EU countries</h3><p class="text-xs text-gray-500 italic">Awaiting EU country data from CSV upload (and optional Salesforce import).</p></div>`;
+            }
+            const body = rows.map(r => `<tr class="border-b"><td class="py-1.5 font-medium">${r.country}</td><td class="py-1.5 text-right">${Number(r.musicUnits || 0).toLocaleString()}${r.salesforceUnits ? `<span class="text-[10px] text-gray-400 block">incl. ${Number(r.salesforceUnits).toLocaleString()} SF</span>` : ''}</td><td class="py-1.5 text-right">£${Number(r.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join('');
+            const sfNote = salesforcePriorUnits?.totalUnits ? `<p class="text-[10px] text-gray-400 mt-2">Music units include ${Number(salesforcePriorUnits.totalUnits).toLocaleString()} prior Salesforce vinyl units (no revenue).</p>` : '';
+            return `<div class="dashboard-card w-full"><h3 class="preview-header-label mb-2">Top 10 EU countries</h3><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Music units</th><th class="text-right py-1">Net revenue</th></tr></thead><tbody>${body}</tbody></table>${sfNote}</div>`;
+        }
+        function updateSalesforceSummary() {
+            const el = document.getElementById('salesforce-country-summary');
+            const clearBtn = document.getElementById('btn-clear-salesforce-country');
+            if(!el) return;
+            if(!salesforcePriorUnits?.totalUnits) {
+                el.textContent = 'No prior Salesforce units loaded.';
+                if(clearBtn) clearBtn.classList.add('hidden');
+                return;
+            }
+            const name = salesforcePriorUnits.productName ? ` · ${salesforcePriorUnits.productName}` : '';
+            el.textContent = `${Number(salesforcePriorUnits.totalUnits).toLocaleString()} vinyl units across ${Object.keys(salesforcePriorUnits.byCountry || {}).length} countries${name}`;
+            if(clearBtn) clearBtn.classList.remove('hidden');
+        }
+        function parseSalesforceCountryWorkbook(wb) {
+            if(typeof XLSX === 'undefined') throw new Error('Spreadsheet parser not loaded.');
+            const ws = wb.Sheets[wb.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+            let codeCols = [];
+            let headerRowIdx = -1;
+            for(let i = 0; i < rows.length; i++) {
+                const label = String(rows[i][1] || '').trim();
+                if(!label.includes('VAT Country')) continue;
+                headerRowIdx = i;
+                for(let c = 3; c < rows[i].length; c++) {
+                    const code = String(rows[i][c] || '').trim().toUpperCase();
+                    if(!code || code === 'TOTAL') break;
+                    codeCols.push({ col: c, code });
+                }
+                break;
+            }
+            if(headerRowIdx < 0 || !codeCols.length) throw new Error('Could not find VAT Country header row in Salesforce export.');
+            let dataRow = null;
+            for(let i = headerRowIdx + 1; i < rows.length; i++) {
+                const sku = String(rows[i][1] || '').trim();
+                const lower = sku.toLowerCase();
+                if(!sku || lower === 'total' || lower.includes('product: sku')) continue;
+                if(/^\d+$/.test(sku)) { dataRow = rows[i]; break; }
+            }
+            if(!dataRow) throw new Error('Could not find vinyl product row in Salesforce export.');
+            const byCountry = {};
+            let totalUnits = 0;
+            codeCols.forEach(({ col, code }) => {
+                const country = normalizeCountryName(code);
+                if(!country) return;
+                const units = Number(String(dataRow[col] || '').replace(/[^0-9.-]/g, '')) || 0;
+                if(units <= 0) return;
+                byCountry[country] = (byCountry[country] || 0) + units;
+                totalUnits += units;
+            });
+            if(totalUnits <= 0) throw new Error('No unit quantities found in Salesforce export.');
+            return {
+                byCountry,
+                totalUnits,
+                sku: String(dataRow[1] || '').trim(),
+                productName: String(dataRow[2] || '').trim()
+            };
+        }
+        function setSalesforcePriorUnits(data, refreshDashboard = true) {
+            salesforcePriorUnits = data && data.totalUnits > 0 ? data : null;
+            updateSalesforceSummary();
+            if(refreshDashboard) calculateGlobalDashboard();
         }
         function buildTopCountriesPayload() {
             const rows = Object.entries(globalCountryStats).map(([country, obj]) => ({
@@ -1540,7 +1656,9 @@
             return false;
         }
         function getMarketChartUnits(market) {
-            return Object.values(storeData[market]?.musicProducts || {}).reduce((sum, p) => sum + (Number(p.units) || 0), 0);
+            let units = Object.values(storeData[market]?.musicProducts || {}).reduce((sum, p) => sum + (Number(p.units) || 0), 0);
+            if(market === 'eu' && salesforcePriorUnits?.totalUnits) units += Number(salesforcePriorUnits.totalUnits) || 0;
+            return units;
         }
         function lineLondonDateKey(ts) {
             if(ts === null || ts === undefined) return '';
@@ -1985,6 +2103,7 @@
             activeLoadedReportId = null;
             loadedLeversPayload = null;
             loadedTopCountriesPayload = null;
+            loadedEuTopCountriesPayload = null;
 
             const dropdown = document.getElementById('select-campaign-directory');
             if(dropdown) dropdown.value = '';
@@ -2071,6 +2190,9 @@
 
             resetLeversToDefaults();
             storeData = getEmptyStoreData();
+            setSalesforcePriorUnits(null);
+            const sfUpload = document.getElementById('upload-salesforce-country');
+            if(sfUpload) sfUpload.value = '';
 
             if(windowCurrentCSVData) {
                 runDataAggregation();
@@ -2229,7 +2351,8 @@
             const pane = document.getElementById(`${prefix}-pane`); if(!pane) return; 
             
             let musicUnitsCount = 0;
-            if(d.musicProducts) { Object.values(d.musicProducts).forEach(m => { musicUnitsCount += m.units; }); }
+            if(typeof d.campaignChartUnits === 'number') musicUnitsCount = d.campaignChartUnits;
+            else if(d.musicProducts) { Object.values(d.musicProducts).forEach(m => { musicUnitsCount += m.units; }); }
 
             ['device', 'mm', 'size', 'cat'].forEach(t => { if(chartInstances[`${prefix}_${t}`]) chartInstances[`${prefix}_${t}`].destroy(); });
 
@@ -2272,6 +2395,7 @@
                     </div>
                 </div>
                 </div>
+                ${prefix === 'eu' ? renderEuTopCountriesTableHtml(d.euTopCountries || []) : ''}
                 <div id="${prefix}-levers-slot" class="space-y-4 border-t border-gray-200 pt-6"></div>
             `;
             
@@ -2328,7 +2452,7 @@
                         revenue: `£${d.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}`,
                         items: d.items.toLocaleString(), orders: ordersCount.toLocaleString(),
                         aov: `£${(ordersCount > 0 ? d.revenue/ordersCount : 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`,
-                        sessions: sessions, atcRate: sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%', conversionRate: sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%', upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00', mobilePerc: d.traffic.mobile, desktopPct: d.traffic.desktop, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), musicProducts: d.musicProducts, merch: d.merch
+                        sessions: sessions, atcRate: sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%', conversionRate: sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%', upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00', mobilePerc: d.traffic.mobile, desktopPct: d.traffic.desktop, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined
                     };
                     renderSegmentPreview(k, segmentPayload);
                     gRev += d.revenue; gItems += d.items; gOrders += ordersCount;
@@ -2507,6 +2631,8 @@
             applyLogoBase64(old.logoBase64 ? old.logoBase64 : null);
             for (const slot of ['p1', 'p2', 'p3', 'p4']) applyProductImage(slot, old.productImages?.[slot] || null);
             loadedTopCountriesPayload = old.topCountries || null;
+            loadedEuTopCountriesPayload = old.eu?.euTopCountries || null;
+            setSalesforcePriorUnits(old.salesforcePriorUnits || null, false);
 
             ['uk', 'eu', 'us', 'int'].forEach(m => {
                 const mData = getLegacyMarket(old, m);
@@ -2614,6 +2740,7 @@
             ingestionWarnings = preservedWarnings;
             comparisonModel = { markets: {}, periodOrder: [] };
             globalCountryStats = {};
+            marketCountryMusicStats = { uk: {}, eu: {}, us: {}, int: {} };
             loadedTopCountriesPayload = null;
             aggregatedLineRows = [];
             orderIndex = {};
@@ -2722,6 +2849,10 @@
                     if(!globalCountryStats[normalizedCountry]) globalCountryStats[normalizedCountry] = { revenue: 0, orders: new Set() };
                     globalCountryStats[normalizedCountry].revenue += rev;
                     globalCountryStats[normalizedCountry].orders.add(id || `${normalizedCountry}_${rowIdx}`);
+                    if(!marketCountryMusicStats[tMk]) marketCountryMusicStats[tMk] = {};
+                    if(!marketCountryMusicStats[tMk][normalizedCountry]) marketCountryMusicStats[tMk][normalizedCountry] = { musicUnits: 0, revenue: 0 };
+                    marketCountryMusicStats[tMk][normalizedCountry].revenue += rev;
+                    if(isMusic) marketCountryMusicStats[tMk][normalizedCountry].musicUnits += derivedQty;
                 }
                 if(!storeData[tMk].products[name]) storeData[tMk].products[name] = { units: 0, revenue: 0 };
                 storeData[tMk].products[name].units += derivedQty; storeData[tMk].products[name].revenue += rev;
@@ -2905,6 +3036,26 @@
             document.getElementById('input-logo-color-overlay')?.addEventListener('change', () => { applyLogoBase64(globalLogoBase64); });
             ['color-bg','color-card','color-logo','color-accordion','color-primary','color-secondary','color-tertiary','color-quaternary','color-map-gradient-dark','color-tote-bag','color-card-header-text','color-accordion-header-text','color-body-font'].forEach(id => { document.getElementById(id)?.addEventListener('input', () => { calculateGlobalDashboard(); }); });
             document.getElementById('input-title')?.addEventListener('input', (e) => { document.getElementById('display-title').textContent = e.target.value; });
+            document.getElementById('upload-salesforce-country')?.addEventListener('change', (e) => {
+                const file = e.target.files?.[0];
+                if(!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const wb = XLSX.read(ev.target.result, { type: 'array' });
+                        setSalesforcePriorUnits(parseSalesforceCountryWorkbook(wb));
+                    } catch (err) {
+                        alert('Could not read Salesforce export: ' + (err.message || 'Unknown error'));
+                        e.target.value = '';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+            document.getElementById('btn-clear-salesforce-country')?.addEventListener('click', () => {
+                const uploadEl = document.getElementById('upload-salesforce-country');
+                if(uploadEl) uploadEl.value = '';
+                setSalesforcePriorUnits(null);
+            });
             ['global', 'uk', 'eu', 'us', 'int', 'countries'].forEach(mk => { document.getElementById(`input-name-${mk}`)?.addEventListener('input', (e) => { const titleTarget = document.getElementById(`preview-title-${mk}`); if(titleTarget) titleTarget.textContent = e.target.value; }); });
             REPORT_SECTION_KEYS.forEach(k => { document.getElementById(`section-toggle-${k}`)?.addEventListener('change', () => applySectionVisibility(getSectionVisibility(), true)); });
             document.querySelectorAll('[data-add-show]').forEach(btn => { btn.addEventListener('click', () => { addShowRow(btn.getAttribute('data-add-show'), {}); calculateGlobalDashboard(); }); });
@@ -3046,8 +3197,9 @@
                     }
 
                     const revNum = Number(d.revenue) || 0; const itemsNum = Number(d.items) || 0; const aovNum = ordersCount > 0 ? (revNum / ordersCount) : 0; const atcRate = sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%'; const convRate = sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%'; const upt = ordersCount > 0 ? (itemsNum / ordersCount).toFixed(2) : '0.00';
-                    const campaignChartUnits = Object.values(d.musicProducts || {}).reduce((sum, p) => sum + (Number(p?.units) || 0), 0);
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), weekly: d.weekly || {}, daily: d.daily || {}, campaignChartUnits, merch: safeMerch };
+                    const campaignChartUnits = getMarketChartUnits(prefix);
+                    const euTopCountries = prefix === 'eu' ? getEuTopCountriesForDisplay() : undefined;
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), weekly: d.weekly || {}, daily: d.daily || {}, campaignChartUnits, euTopCountries, merch: safeMerch };
                 };
 
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);
@@ -3064,7 +3216,8 @@
                     globalChartData: [ Number(storeData.uk?.revenue || 0), Number(storeData.eu?.revenue || 0), Number(storeData.us?.revenue || 0), Number(storeData.int?.revenue || 0) ],
                     global: { revenue: document.getElementById('kpi-revenue')?.textContent || '£0.00', items: document.getElementById('kpi-items')?.textContent || '0', orders: document.getElementById('kpi-orders')?.textContent || '0', aov: document.getElementById('kpi-aov')?.textContent || '£0.00' },
                     uk: packageMarketSegment('uk'), eu: packageMarketSegment('eu'), us: packageMarketSegment('us'), int: packageMarketSegment('int'),
-                    topCountries: buildTopCountriesPayload()
+                    topCountries: buildTopCountriesPayload(),
+                    salesforcePriorUnits: salesforcePriorUnits || null
                 };
 
                 try {
