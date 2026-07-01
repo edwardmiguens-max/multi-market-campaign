@@ -54,6 +54,10 @@
         .analytics-panel { background: #fff !important; border: 1px solid var(--shopify-border) !important; border-radius: 0.75rem !important; box-shadow: none !important; overflow: hidden; max-width: 100%; }
         .accordion-summary-bar { background-color: var(--rep-v-acc-col) !important; color: var(--rep-v-acc-txt) !important; border-bottom: none; }
         #dashboard-area summary span.text-lg, #dashboard-area .accordion-title-text { color: var(--rep-v-acc-txt) !important; }
+        .accordion-chevron { color: var(--rep-v-acc-txt); flex-shrink: 0; margin-left: 0.75rem; display: inline-flex; align-items: center; justify-content: center; }
+        .accordion-chevron svg { transition: transform 0.2s ease; stroke: currentColor; }
+        details:not([open]) > summary .accordion-chevron svg { transform: rotate(-90deg); }
+        details[open] > summary .accordion-chevron svg { transform: rotate(0deg); }
         .analytics-panel > div { background: var(--rep-v-bg) !important; }
         details > summary { list-style: none; } details > summary::-webkit-details-marker { display: none; }
         .chart-shell { position: relative; width: 100%; max-width: 100%; overflow: hidden; min-width: 0; }
@@ -67,6 +71,9 @@
         #loader { position: fixed; inset: 0; background: #f6f6f7; display: flex; align-items: center; justify-content: center; font-weight: 600; z-index: 50; color: #202223; }
         .report-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
         header { border-bottom-color: var(--shopify-border) !important; max-width: 100%; }
+        #report-currency-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+        #report-currency-select { font-size: calc(0.875rem * var(--rep-v-b-scale)); border: 1px solid var(--shopify-border); border-radius: 0.5rem; padding: 0.375rem 0.625rem; background: var(--rep-v-card-bg); color: var(--rep-v-body-txt); min-width: 9rem; }
+        #report-currency-note { font-size: calc(0.625rem * var(--rep-v-b-scale)); color: var(--rep-v-hdr-txt); }
         @media (max-width: 768px) {
             body { padding: 0.75rem !important; }
             #dashboard-area { max-width: 100% !important; }
@@ -97,7 +104,14 @@
 
     <main id="dashboard-area" class="w-full max-w-5xl hidden space-y-6">
         <div id="logo-container" style="display: none;" class="justify-center mb-6"><div id="display-logo" class="logo-mask"></div><img id="display-logo-img" alt="" class="object-contain" style="display: none;"></div>
-        <header class="border-b pb-4 mb-2"><h1 id="display-title">--</h1><p id="display-setup-by" class="text-xs card-header-custom mt-1 hidden"></p></header>
+        <header class="border-b pb-4 mb-2 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+            <div class="min-w-0"><h1 id="display-title">--</h1><p id="display-setup-by" class="text-xs card-header-custom mt-1 hidden"></p></div>
+            <div id="report-currency-bar" class="shrink-0">
+                <label for="report-currency-select" class="text-xs card-header-custom whitespace-nowrap">View in</label>
+                <select id="report-currency-select" aria-label="Report currency"></select>
+                <span id="report-currency-note" class="hidden">Converted from GBP · ECB rates</span>
+            </div>
+        </header>
 
         <div id="products-grid" style="display: none;" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="dashboard-card product-image-slot flex items-center justify-center aspect-square p-2 overflow-hidden"><img id="view-p1" style="display: none;" class="w-full h-full max-h-64 lg:max-h-80 object-contain rounded"></div>
@@ -108,10 +122,10 @@
 
         <div class="space-y-4">
             <div id="report-section-global">
-            <details class="group analytics-panel" open>
+            <details class="analytics-panel" open>
                 <summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-global">
-                    <span class="text-lg" id="title-global">1. Global Dashboard Summary</span>
-                    <span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span>
+                    <span class="accordion-title-text" id="title-global">1. Global Dashboard Summary</span>
+                    <span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span>
                 </summary>
                 <div class="p-6 space-y-6 rounded-b-lg">
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 global-kpi-grid"><div class="dashboard-card"><p class="text-xs card-header-custom">Global revenue</p><p id="g-rev" class="text-2xl font-semibold">--</p></div><div class="dashboard-card"><p class="text-xs card-header-custom">Global units sold</p><p id="g-items" class="text-2xl font-semibold">--</p></div><div class="dashboard-card"><p class="text-xs card-header-custom">Total orders</p><p id="g-orders" class="text-2xl font-semibold">--</p></div><div class="dashboard-card"><p class="text-xs card-header-custom">Blended AOV</p><p id="g-aov" class="text-2xl font-semibold">--</p></div></div>
@@ -127,15 +141,20 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 split-grid-2"><div class="dashboard-card"><h3 class="text-xs card-header-custom mb-4">Market revenue split</h3><div class="chart-shell chart-h-pie"><canvas id="globalPie"></canvas></div></div><div class="dashboard-card"><h3 class="text-xs card-header-custom mb-2">Global top leaders</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><tbody id="g-table"></tbody></table></div></div></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="global-merch-row">
+                        <div class="dashboard-card"><div class="flex justify-between items-center mb-2"><h3 class="text-xs card-header-custom mb-0">Music vs merch (net rev)</h3><span class="text-[11px] font-medium text-gray-500" id="global-merch-rev-label">Merch: £0.00</span></div><div class="chart-shell chart-h-pie"><canvas id="globalMerchMmPie"></canvas></div></div>
+                        <div class="dashboard-card"><h3 class="text-xs card-header-custom mb-2">Top merch products</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><tbody id="global-merch-products-table"></tbody></table></div></div>
+                        <div class="dashboard-card"><h3 class="text-xs card-header-custom mb-2">Garment sizing (units)</h3><div class="chart-shell chart-h-bar"><canvas id="globalMerchSizeBar"></canvas></div></div>
+                    </div>
                 </div>
             </details>
             </div>
 
-            <div id="report-section-uk"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-uk"><span class="text-lg" id="title-uk">2. United Kingdom Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="uk-pane"></div></details></div>
-            <div id="report-section-eu"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-eu"><span class="text-lg" id="title-eu">3. European Union Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="eu-pane"></div></details></div>
-            <div id="report-section-us"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-us"><span class="text-lg" id="title-us">4. United States Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="us-pane"></div></details></div>
-            <div id="report-section-int"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-int"><span class="text-lg" id="title-int">5. Rest of World / International Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="int-pane"></div></details></div>
-            <div id="report-section-countries"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-countries"><span class="text-lg" id="title-countries">6. Top Countries</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-4"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><h3 class="text-xs card-header-custom mb-0">Global country distribution</h3><span id="live-top-countries-metric" class="text-xs text-gray-500">Metric: Orders</span></div><div id="live-top-countries-map" class="w-full" style="height: 440px;"></div></div><div class="dashboard-card"><h3 class="text-xs card-header-custom mb-2">Top 10 countries</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[280px]"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Orders</th><th class="text-right py-1">Net Revenue</th></tr></thead><tbody id="live-top-countries-table"></tbody></table></div></div></div></details></div>
+            <div id="report-section-uk"><details class="analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-uk"><span class="accordion-title-text" id="title-uk">2. United Kingdom Market Insights</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="uk-pane"></div></details></div>
+            <div id="report-section-eu"><details class="analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-eu"><span class="accordion-title-text" id="title-eu">3. European Union Market Insights</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="eu-pane"></div></details></div>
+            <div id="report-section-us"><details class="analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-us"><span class="accordion-title-text" id="title-us">4. United States Market Insights</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="us-pane"></div></details></div>
+            <div id="report-section-int"><details class="analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-int"><span class="accordion-title-text" id="title-int">5. Rest of World / International Insights</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="int-pane"></div></details></div>
+            <div id="report-section-countries"><details class="analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-countries"><span class="accordion-title-text" id="title-countries">6. Top Countries</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-4"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><h3 class="text-xs card-header-custom mb-0">Global country distribution</h3><span id="live-top-countries-metric" class="text-xs text-gray-500">Metric: Orders</span></div><div id="live-top-countries-map" class="w-full" style="height: 440px;"></div></div><div class="dashboard-card"><h3 class="text-xs card-header-custom mb-2">Top 10 countries</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[280px]"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Orders</th><th class="text-right py-1">Net Revenue</th></tr></thead><tbody id="live-top-countries-table"></tbody></table></div></div></div></details></div>
         </div>
     </main>
 
@@ -194,7 +213,104 @@
             return null;
         };
         const parseCurrencyLike = (v) => parseFloat(String(v ?? '').replace(/[^0-9.-]+/g, '')) || 0;
-        const formatGBP = (v) => `£${Number(v || 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+        const REPORT_BASE_CURRENCY = 'GBP';
+        const VIEWER_CURRENCIES = [
+            { code: 'GBP', label: 'GBP (£)' }, { code: 'USD', label: 'USD ($)' }, { code: 'EUR', label: 'EUR (€)' },
+            { code: 'AUD', label: 'AUD (A$)' }, { code: 'CAD', label: 'CAD (C$)' }, { code: 'JPY', label: 'JPY (¥)' },
+            { code: 'CHF', label: 'CHF' }, { code: 'SEK', label: 'SEK (kr)' }, { code: 'NOK', label: 'NOK (kr)' },
+            { code: 'DKK', label: 'DKK (kr)' }, { code: 'PLN', label: 'PLN (zł)' }
+        ];
+        const FALLBACK_GBP_RATES = { GBP: 1, USD: 1.27, EUR: 1.17, AUD: 1.95, CAD: 1.73, JPY: 191, CHF: 1.12, SEK: 13.2, NOK: 13.5, DKK: 8.72, PLN: 5.05 };
+        let viewerCurrency = 'GBP';
+        let gbpExchangeRates = { GBP: 1 };
+        let currencySelectorBound = false;
+        let countriesToggleBound = false;
+        function getViewerRate() {
+            return gbpExchangeRates[viewerCurrency] ?? FALLBACK_GBP_RATES[viewerCurrency] ?? 1;
+        }
+        function convertFromGbp(gbp) {
+            return Number(gbp || 0) * getViewerRate();
+        }
+        function formatMoney(gbpAmount) {
+            const converted = convertFromGbp(gbpAmount);
+            const digits = viewerCurrency === 'JPY' ? 0 : 2;
+            try {
+                return new Intl.NumberFormat(undefined, { style: 'currency', currency: viewerCurrency, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(converted);
+            } catch (_e) {
+                return `${viewerCurrency} ${converted.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+            }
+        }
+        function formatMoneyAxis(v) {
+            const converted = convertFromGbp(v);
+            let sym = viewerCurrency;
+            try {
+                sym = new Intl.NumberFormat(undefined, { style: 'currency', currency: viewerCurrency }).formatToParts(0).find(p => p.type === 'currency')?.value || viewerCurrency;
+            } catch (_e) {}
+            if(Math.abs(converted) >= 1000) return sym + (converted / 1000).toFixed(0) + 'K';
+            return sym + converted.toFixed(0);
+        }
+        const formatGBP = formatMoney;
+        async function loadExchangeRates() {
+            const codes = VIEWER_CURRENCIES.map(c => c.code).filter(c => c !== 'GBP');
+            try {
+                const cached = sessionStorage.getItem('rep-fx-rates');
+                const cachedAt = sessionStorage.getItem('rep-fx-rates-at');
+                if(cached && cachedAt && Date.now() - Number(cachedAt) < 86400000) {
+                    gbpExchangeRates = JSON.parse(cached);
+                    if(!gbpExchangeRates.GBP) gbpExchangeRates.GBP = 1;
+                    return;
+                }
+                const res = await fetch(`https://api.frankfurter.app/latest?from=GBP&to=${codes.join(',')}`);
+                if(!res.ok) throw new Error('FX unavailable');
+                const data = await res.json();
+                gbpExchangeRates = { GBP: 1, ...(data.rates || {}) };
+                sessionStorage.setItem('rep-fx-rates', JSON.stringify(gbpExchangeRates));
+                sessionStorage.setItem('rep-fx-rates-at', String(Date.now()));
+            } catch (_e) {
+                gbpExchangeRates = { ...FALLBACK_GBP_RATES };
+            }
+        }
+        function bindCurrencySelector(onChange) {
+            const sel = document.getElementById('report-currency-select');
+            const note = document.getElementById('report-currency-note');
+            if(!sel) return;
+            if(!currencySelectorBound) {
+                currencySelectorBound = true;
+                try { viewerCurrency = localStorage.getItem('rep-viewer-currency') || 'GBP'; } catch (_e) {}
+                VIEWER_CURRENCIES.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.code;
+                    opt.textContent = c.label;
+                    sel.appendChild(opt);
+                });
+                sel.addEventListener('change', async () => {
+                    viewerCurrency = sel.value;
+                    try { localStorage.setItem('rep-viewer-currency', viewerCurrency); } catch (_e) {}
+                    if(typeof onChange === 'function') await onChange();
+                });
+            }
+            sel.value = viewerCurrency;
+            if(note) note.classList.toggle('hidden', viewerCurrency === REPORT_BASE_CURRENCY);
+        }
+        function destroyReportCharts() {
+            if(typeof Chart !== 'undefined') {
+                document.querySelectorAll('#dashboard-area canvas').forEach(canvas => {
+                    const chart = Chart.getChart(canvas);
+                    if(chart) chart.destroy();
+                });
+            }
+            Object.keys(liveLeverCharts).forEach(k => {
+                if(liveLeverCharts[k]) { liveLeverCharts[k].destroy(); delete liveLeverCharts[k]; }
+            });
+            const mapEl = document.getElementById('live-top-countries-map');
+            if(mapEl && typeof Plotly !== 'undefined') Plotly.purge(mapEl);
+            ['uk', 'eu', 'us', 'int'].forEach(p => {
+                const pane = document.getElementById(`${p}-pane`);
+                if(pane) pane.innerHTML = '';
+            });
+            const gTable = document.getElementById('g-table');
+            if(gTable) gTable.innerHTML = '';
+        }
         const buildMapColorscale = (darkColor) => {
             const dark = darkColor || '#1e3a8a';
             const mix = (a, b, t) => {
@@ -345,7 +461,7 @@
                 type: 'bar',
                 data: { labels: fullLabels.map(shortLabel), datasets: [
                     { label: 'Units', data: top5.map(x => x[1].units), backgroundColor: prim, borderRadius: 3, xAxisID: 'x' },
-                    { label: 'Revenue (£)', data: top5.map(x => x[1].revenue), backgroundColor: sec, borderRadius: 3, xAxisID: 'x1' }
+                    { label: `Revenue (${viewerCurrency})`, data: top5.map(x => x[1].revenue), backgroundColor: sec, borderRadius: 3, xAxisID: 'x1' }
                 ]},
                 options: {
                     indexAxis: 'y', responsive: true, maintainAspectRatio: false,
@@ -355,19 +471,47 @@
                     },
                     scales: {
                         x: { beginAtZero: true, position: 'bottom', ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.06)' } },
-                        x1: { beginAtZero: true, position: 'top', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 } } },
+                        x1: { beginAtZero: true, position: 'top', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, callback: v => formatMoneyAxis(v) } },
                         y: { ticks: { font: { size: 11 }, autoSkip: false, padding: 6 }, grid: { display: false } }
                     },
                     datasets: { bar: { barPercentage: 0.75, categoryPercentage: 0.82 } }
                 }
             };
         }
+        function isSalesforceUkCountry(country) {
+            const c = String(country || '').trim();
+            return c === 'United Kingdom' || c === 'UK' || c === 'Great Britain';
+        }
+        function getSalesforceUnitsForMarket(market, sfData) {
+            const src = sfData || null;
+            if(!src) return 0;
+            if(market === 'uk' && typeof src.ukUnits === 'number') return src.ukUnits;
+            if(market === 'eu' && typeof src.euUnits === 'number') return src.euUnits;
+            if(!src.byCountry) return market === 'eu' ? (Number(src.totalUnits) || 0) : 0;
+            let total = 0;
+            Object.entries(src.byCountry).forEach(([country, units]) => {
+                const u = Number(units) || 0;
+                if(!u) return;
+                const uk = isSalesforceUkCountry(country);
+                if(market === 'uk' && uk) total += u;
+                if(market === 'eu' && !uk) total += u;
+            });
+            return total;
+        }
         function renderEuTopCountriesSection(rows, salesforcePriorUnits) {
             if(!rows?.length) {
                 return `<div class="dashboard-card w-full"><h3 class="text-xs font-bold card-header-custom mb-2">Top 10 EU countries</h3><p class="text-xs text-gray-500 italic">No EU country breakdown in this report.</p></div>`;
             }
             const body = rows.map(r => `<tr class="border-b"><td class="py-1.5 font-medium">${r.country}</td><td class="py-1.5 text-right">${Number(r.musicUnits || 0).toLocaleString()}${r.salesforceUnits ? `<span class="text-[10px] text-gray-400 block">incl. ${Number(r.salesforceUnits).toLocaleString()} SF</span>` : ''}</td><td class="py-1.5 text-right">${formatGBP(r.revenue)}</td></tr>`).join('');
-            const sfNote = salesforcePriorUnits?.totalUnits ? `<p class="text-[10px] text-gray-400 mt-2">Music units include ${Number(salesforcePriorUnits.totalUnits).toLocaleString()} prior Salesforce vinyl units (no revenue).</p>` : '';
+            const sfEu = getSalesforceUnitsForMarket('eu', salesforcePriorUnits);
+            const sfUk = getSalesforceUnitsForMarket('uk', salesforcePriorUnits);
+            let sfNote = '';
+            if(sfEu || sfUk) {
+                const parts = [];
+                if(sfEu) parts.push(`${Number(sfEu).toLocaleString()} to EU countries`);
+                if(sfUk) parts.push(`${Number(sfUk).toLocaleString()} to UK (GB)`);
+                sfNote = `<p class="text-[10px] text-gray-400 mt-2">Prior Salesforce vinyl units (no revenue): ${parts.join(' · ')}.</p>`;
+            }
             return `<div class="dashboard-card w-full"><h3 class="text-xs font-bold card-header-custom mb-2">Top 10 EU countries</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[280px]"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Music units</th><th class="text-right py-1">Net revenue</th></tr></thead><tbody>${body}</tbody></table></div>${sfNote}</div>`;
         }
         function renderLeversLive(market, computed, slotId, colors) {
@@ -384,7 +528,7 @@
                 const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
                 const marketLabel = { uk: 'UK', eu: 'EU', us: 'US', int: 'ROW' }[market] || '';
                 const sendHtml = (d.globalCombinedSend !== undefined) ? `<p class="text-xs font-semibold text-indigo-700 mt-1">Global Combined Send: ${Number(d.globalCombinedSend||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">All market orders + NPN (driver dates)</p>` : '';
-                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${prim}"><h3 class="text-base font-bold">${d.title||key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${d.windowLabel||'—'}</p><div class="grid grid-cols-2 md:grid-cols-4 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="text-lg font-bold">${formatGBP(d.musicRev)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="text-lg font-bold">${formatGBP(d.merchRev)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketLabel ? marketLabel + ' Orders' : 'Orders'}</p><p class="text-lg font-bold">${Number(d.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(d.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${shows}${prize}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${top||'<tr><td colspan="3" class="italic text-gray-400 py-2">No products</td></tr>'}</tbody></table></div></div><div class="chart-shell chart-h-lever"><canvas id="${chartId}"></canvas></div></div></div>`;
+                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${prim}"><h3 class="text-base font-bold">${d.title||key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${d.windowLabel||'—'}</p><div class="grid grid-cols-2 md:grid-cols-4 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">D2C Chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="text-lg font-bold">${formatGBP(d.musicRev)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="text-lg font-bold">${formatGBP(d.merchRev)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketLabel ? marketLabel + ' Orders' : 'Orders'}</p><p class="text-lg font-bold">${Number(d.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(d.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${shows}${prize}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${top||'<tr><td colspan="3" class="italic text-gray-400 py-2">No products</td></tr>'}</tbody></table></div></div><div class="chart-shell chart-h-lever"><canvas id="${chartId}"></canvas></div></div></div>`;
             };
             const gwp = (d) => `<div class="dashboard-card border-l-4 space-y-2" style="border-left-color:${sec}"><h3 class="text-base font-bold">${d.title||'Gift with Purchase'}</h3><p class="text-xs text-gray-500">Gift: <strong>${d.productName||'—'}</strong></p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Orders</p><p class="text-2xl font-bold">${Number(d.orders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Full order revenue</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div></div>`;
             const upsell = (d) => {
@@ -396,12 +540,12 @@
                 const pieId = `live-${slotId}-pie-sale`;
                 const notesHtml = d.notes ? `<p class="text-sm text-gray-600 whitespace-pre-wrap">${String(d.notes).replace(/</g, '&lt;')}</p>` : '';
                 const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
-                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:#ea580c"><h3 class="text-base font-bold mb-0">${d.title||'Sale'}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Sale window:</strong> ${d.windowLabel||'—'}</p>${d.emptyReason ? `<p class="text-xs text-amber-600 italic">${d.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total orders</p><p class="text-2xl font-bold">${Number(d.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale units</p><p class="text-2xl font-bold">${Number(d.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="text-2xl font-bold">${formatGBP(d.aov)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="text-lg font-bold">${formatGBP(d.totalRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale revenue</p><p class="text-lg font-bold">${formatGBP(d.saleRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from sale items</p><p class="text-2xl font-bold">${Number(d.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 sale products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${top||'<tr><td colspan="3" class="italic text-gray-400 py-2">No sale products</td></tr>'}</tbody></table></div></div><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Music vs merch (sale items)</p><div class="chart-shell chart-h-pie"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
+                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:#ea580c"><h3 class="text-base font-bold mb-0">${d.title||'Sale'}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Sale window:</strong> ${d.windowLabel||'—'}</p>${d.emptyReason ? `<p class="text-xs text-amber-600 italic">${d.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total orders</p><p class="text-2xl font-bold">${Number(d.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale units</p><p class="text-2xl font-bold">${Number(d.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="text-2xl font-bold">${formatGBP(d.aov)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="text-lg font-bold">${formatGBP(d.totalRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale revenue</p><p class="text-lg font-bold">${formatGBP(d.saleRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from sale items</p><p class="text-2xl font-bold">${Number(d.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 sale products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${top||'<tr><td colspan="3" class="italic text-gray-400 py-2">No sale products</td></tr>'}</tbody></table></div></div><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Music vs merch (sale items)</p><div class="chart-shell chart-h-pie"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 D2C Chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
             };
             const signed = (d) => {
                 const chartId = `live-${slotId}-chart-signed`;
                 const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
-                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${colors?.tertiary||'#4b5563'}"><h3 class="text-base font-bold">${d.title||'Signed'}</h3><p class="text-xs text-gray-500">${d.mode==='signed_art_card'?'Signed art card attribution':'Signed formats'}</p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed revenue</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top products</p><table class="w-full text-sm"><tbody>${top||'<tr><td class="italic text-gray-400 py-2">No signed products</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
+                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${colors?.tertiary||'#4b5563'}"><h3 class="text-base font-bold">${d.title||'Signed'}</h3><p class="text-xs text-gray-500">${d.mode==='signed_art_card'?'Signed art card attribution':'Signed formats'}</p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed D2C Chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed revenue</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top products</p><table class="w-full text-sm"><tbody>${top||'<tr><td class="italic text-gray-400 py-2">No signed products</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
             };
             let html = '';
             if(data.preOrder1) html += timed('preOrder1', data.preOrder1);
@@ -413,11 +557,12 @@
             if(data.signed) html += signed(data.signed);
             pane.innerHTML = html;
             if(typeof Chart === 'undefined') return;
+            registerPiePercentOverlayPlugin();
             ['preOrder1','preOrder2','competition','signed'].forEach(k => {
                 const top5 = data[k]?.top5; const cid = k === 'signed' ? `live-${slotId}-chart-signed` : `live-${slotId}-chart-${k}`;
                 const el = document.getElementById(cid); if(!el || !top5?.length) return;
                 if(liveLeverCharts[cid]) liveLeverCharts[cid].destroy();
-                liveLeverCharts[cid] = new Chart(el.getContext('2d'), { type: 'bar', data: { labels: top5.map(x => x[0].length>22?x[0].slice(0,22)+'…':x[0]), datasets: [{ label: 'Units', data: top5.map(x=>x[1].units), backgroundColor: prim, yAxisID:'y' }, { label: 'Revenue', data: top5.map(x=>x[1].revenue), backgroundColor: sec, yAxisID:'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, position: 'left' }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } } } });
+                liveLeverCharts[cid] = new Chart(el.getContext('2d'), { type: 'bar', data: { labels: top5.map(x => x[0].length>22?x[0].slice(0,22)+'…':x[0]), datasets: [{ label: 'Units', data: top5.map(x=>x[1].units), backgroundColor: prim, yAxisID:'y' }, { label: `Revenue (${viewerCurrency})`, data: top5.map(x=>x[1].revenue), backgroundColor: sec, yAxisID:'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 } } }, tooltip: { callbacks: { label: (ctx) => ctx.dataset.yAxisID === 'y1' ? `${ctx.dataset.label}: ${formatMoney(ctx.raw)}` : `${ctx.dataset.label}: ${ctx.raw}` } } }, scales: { y: { beginAtZero: true, position: 'left' }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => formatMoneyAxis(v) } } } } });
             });
             if(data.sale) {
                 const pieId = `live-${slotId}-pie-sale`;
@@ -445,9 +590,65 @@
                 el.style.display = (vis[k] !== false) ? '' : 'none';
             });
         }
-        function applyReportBranding(title, logoDataUrl) {
+        function registerPiePercentOverlayPlugin() {
+            if(typeof Chart === 'undefined' || window.__piePercentPluginRegistered) return;
+            window.__piePercentPluginRegistered = true;
+            Chart.register({
+                id: 'piePercentOverlay',
+                afterDraw(chart) {
+                    const type = chart.config.type;
+                    if(type !== 'pie' && type !== 'doughnut') return;
+                    const { ctx, data } = chart;
+                    const dataset = data.datasets[0];
+                    if(!dataset?.data?.length) return;
+                    const total = dataset.data.reduce((s, v) => s + (Number(v) || 0), 0);
+                    if(total <= 0) return;
+                    const meta = chart.getDatasetMeta(0);
+                    meta.data.forEach((arc, i) => {
+                        const value = Number(dataset.data[i]) || 0;
+                        if(value <= 0) return;
+                        const pct = (value / total) * 100;
+                        if(pct < 3) return;
+                        const pos = arc.tooltipPosition();
+                        ctx.save();
+                        ctx.font = 'bold 11px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+                        ctx.lineWidth = 3;
+                        const label = pct >= 10 ? Math.round(pct) + '%' : pct.toFixed(1) + '%';
+                        ctx.strokeText(label, pos.x, pos.y);
+                        ctx.fillText(label, pos.x, pos.y);
+                        ctx.restore();
+                    });
+                }
+            });
+        }
+        function renderGlobalMerchSection(merch, prim, sec) {
+            if(!merch) return;
+            const label = document.getElementById('global-merch-rev-label');
+            if(label) label.textContent = `Merch: ${formatMoney(merch.merchRev || 0)}`;
+            const tbody = document.getElementById('global-merch-products-table');
+            if(tbody) {
+                const rows = merch.topMerchProducts || [];
+                tbody.innerHTML = rows.length ? rows.map(([name, obj]) => `<tr class="border-b"><td class="py-2 font-medium">${name}</td><td class="py-2 text-gray-500">${Number(obj.units || 0).toLocaleString()} units</td><td class="py-2 text-right font-semibold">${formatMoney(obj.revenue || 0)}</td></tr>`).join('') : '<tr><td colspan="3" class="italic text-gray-400 py-2">No merch data</td></tr>';
+            }
+            if(typeof Chart === 'undefined') return;
+            registerPiePercentOverlayPlugin();
+            const mRev = Number(merch.musicRev) || 0, meRev = Number(merch.merchRev) || 0;
+            const mmEl = document.getElementById('globalMerchMmPie');
+            if(mmEl && (mRev > 0 || meRev > 0)) {
+                new Chart(mmEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev', 'Merch Rev'], datasets: [{ data: [mRev || 0.001, meRev || 0.001], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } } });
+            }
+            const szEl = document.getElementById('globalMerchSizeBar');
+            const s = merch.sizes || {};
+            if(szEl) {
+                new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
+            }
+        }
+        function applyReportBranding(title, faviconDataUrl) {
             if(title) document.title = title;
-            if(!logoDataUrl) return;
             let link = document.getElementById('report-favicon');
             if(!link) {
                 link = document.createElement('link');
@@ -455,8 +656,12 @@
                 link.id = 'report-favicon';
                 document.head.appendChild(link);
             }
-            link.href = logoDataUrl;
-            link.type = logoDataUrl.startsWith('data:image/png') ? 'image/png' : (logoDataUrl.startsWith('data:image/svg') ? 'image/svg+xml' : 'image/jpeg');
+            if(faviconDataUrl) {
+                link.href = faviconDataUrl;
+                link.type = faviconDataUrl.startsWith('data:image/png') ? 'image/png' : (faviconDataUrl.startsWith('data:image/svg') ? 'image/svg+xml' : 'image/jpeg');
+            } else {
+                link.href = 'data:,';
+            }
         }
         const chartLegendMobile = { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, padding: 8 } };
         function getChartOptions(extra = {}) {
@@ -474,15 +679,16 @@
             mapEl.style.display = '';
             mapEl.innerHTML = '';
             const mapHeight = options.height || (window.matchMedia('(max-width: 768px)').matches ? 240 : 440);
+            const displayRows = metricType === 'orders' ? mapRows : mapRows.map(r => ({ ...r, value: convertFromGbp(r.value) }));
             Plotly.newPlot(mapEl, [{
                 type: 'choropleth',
                 locationmode: 'country names',
-                locations: mapRows.map(x => x.country),
-                z: mapRows.map(x => x.value),
+                locations: displayRows.map(x => x.country),
+                z: displayRows.map(x => x.value),
                 colorscale: buildMapColorscale(mapGradientDark),
                 reversescale: false,
                 marker: { line: { color: '#ffffff', width: 0.4 } },
-                colorbar: { title: metricType === 'orders' ? 'Orders' : 'Revenue' }
+                colorbar: { title: metricType === 'orders' ? 'Orders' : `Revenue (${viewerCurrency})` }
             }], {
                 margin: { t: 0, l: 0, r: 0, b: 0 },
                 height: mapHeight,
@@ -578,6 +784,121 @@
             }
         }
 
+        async function renderReportPayload(payload) {
+            const note = document.getElementById('report-currency-note');
+            if(note) note.classList.toggle('hidden', viewerCurrency === REPORT_BASE_CURRENCY);
+
+            document.getElementById('g-rev').textContent = formatMoney(parseCurrencyLike(payload.global.revenue));
+            document.getElementById('g-items').textContent = payload.global.items;
+            document.getElementById('g-orders').textContent = payload.global.orders;
+            document.getElementById('g-aov').textContent = formatMoney(parseCurrencyLike(payload.global.aov));
+
+            const hasUsMarket = payload.storeHasUsMarket !== false;
+            const pieLabels = hasUsMarket ? ['UK', 'EU', 'US', 'INT'] : ['UK', 'EU', 'INT'];
+            const pieData = hasUsMarket ? payload.globalChartData : [payload.globalChartData?.[0] || 0, payload.globalChartData?.[1] || 0, payload.globalChartData?.[3] || 0];
+            const pieColors = hasUsMarket ? [payload.colors?.primary, payload.colors?.tertiary, payload.colors?.secondary, payload.colors?.quaternary] : [payload.colors?.primary, payload.colors?.tertiary, payload.colors?.quaternary];
+            const prim = payload.colors?.primary || '#8b7355'; const sec = payload.colors?.secondary || '#d4c4b7';
+            const tert = payload.colors?.tertiary || '#4b5563'; const quat = payload.colors?.quaternary || '#10b981';
+            registerPiePercentOverlayPlugin();
+            new Chart(document.getElementById('globalPie').getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors, borderWidth: 0 }] },
+                options: getChartOptions()
+            });
+
+            renderGlobalMerchSection(payload.globalMerch, prim, sec);
+
+            const timelineChart = resolveTimelineChart(m => getLegacyMarket(payload, m));
+            const chartLabels = timelineChart.labels;
+            const pointCount = timelineChart.pointCount || chartLabels.length;
+
+            let liveTEl = document.getElementById('liveTimelineChart')?.getContext('2d');
+            if(liveTEl) {
+                new Chart(liveTEl, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [
+                            { label: 'UK Market', data: timelineChart.getSeries('uk'), borderColor: prim, backgroundColor: prim, tension: 0.4, borderWidth: 3, pointRadius: 4 },
+                            { label: 'EU Market', data: timelineChart.getSeries('eu'), borderColor: tert, backgroundColor: tert, tension: 0.4, borderWidth: 3, pointRadius: 4 },
+                            { label: 'US Market', data: timelineChart.getSeries('us'), borderColor: sec, backgroundColor: sec, tension: 0.4, borderWidth: 3, pointRadius: 4, hidden: !hasUsMarket },
+                            { label: 'INT Market', data: timelineChart.getSeries('int'), borderColor: quat, backgroundColor: quat, tension: 0.4, borderWidth: 3, pointRadius: 4 }
+                        ]
+                    },
+                    options: getChartOptions({ plugins: { legend: getChartOptions().plugins.legend, tooltip: { mode: 'index', intersect: false, callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatMoney(ctx.raw)}` } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoneyAxis(v), maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 5 : 8 } }, x: { grid: { display: false }, ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 6 : (timelineChart.granularity === 'daily' ? 14 : 12) } } } })
+                });
+                const pointRadius = pointCount > 24 ? 1.5 : (pointCount > 12 ? 2.5 : 4);
+                const chartInstance = Chart.getChart(document.getElementById('liveTimelineChart'));
+                if(chartInstance) {
+                    chartInstance.data.datasets.forEach(ds => { ds.pointRadius = pointRadius; ds.tension = pointCount > 24 ? 0.2 : 0.4; });
+                    chartInstance.update();
+                }
+                const rangeEl = document.getElementById('live-timeline-range');
+                if(rangeEl) {
+                    if(!timelineChart.rangeText) rangeEl.textContent = 'Awaiting Data...';
+                    else rangeEl.textContent = timelineChart.granularity === 'daily' ? `Daily · ${timelineChart.rangeText}` : timelineChart.rangeText;
+                }
+            }
+
+            const populateSegments = (prefix, d) => {
+                const pane = document.getElementById(`${prefix}-pane`); if(!pane) return; let musicUnitsCount = 0;
+                if(typeof d.campaignChartUnits === 'number') musicUnitsCount = d.campaignChartUnits;
+                else if(d.musicProducts) { Object.values(d.musicProducts).forEach(m => { musicUnitsCount += m.units; }); }
+                const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+                const getCategoryBarColors = (topCats) => {
+                    const defaults = [prim, sec, tert, quat, '#94a3b8'];
+                    const toteCol = payload.colors?.toteBag || '#6366f1';
+                    return topCats.map(([name], i) => (/tote\s*bag/i.test(name) ? toteCol : defaults[i]));
+                };
+
+                pane.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 segment-grid-2">
+                    <div class="space-y-4 flex flex-col justify-between">
+                        <div class="dashboard-card border-l-4" style="border-color: var(--accent-primary)"><div class="flex justify-between items-start segment-kpi-row"><div><p class="text-[10px] uppercase font-bold card-header-custom">Territory Revenue</p><p class="text-2xl font-bold">${formatMoney(parseCurrencyLike(d.revenue))}</p><p class="text-xs mt-1 text-gray-500">${d.items} units shipped across ${d.orders} orders (AOV: ${formatMoney(parseCurrencyLike(d.aov))})</p></div><div class="text-right"><p class="text-[10px] uppercase font-bold card-header-custom">Campaign D2C Chart Units</p><p class="text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p></div></div></div>
+                        <div class="dashboard-card flex-1"><h3 class="text-xs font-bold card-header-custom mb-2">Standout campaign music formats</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><tbody id="${prefix}-table"></tbody></table></div></div>
+                        <div class="dashboard-card bg-white border border-gray-200"><p class="text-[10px] font-bold card-header-custom mb-2">Web traffic & device split</p><div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 text-center traffic-kpi-grid"><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Sessions</span><span class="font-semibold text-xs">${typeof d.sessions === 'number' ? d.sessions.toLocaleString() : d.sessions}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">ATC rate</span><span class="font-semibold text-xs">${d.atcRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Conv.</span><span class="font-semibold text-xs text-green-700">${d.conversionRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">UPT</span><span class="font-semibold text-xs">${d.upt || '0.00'}</span></div></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-pie-canvas"></canvas></div></div>
+                    </div>
+                    <div class="space-y-4 flex flex-col justify-between"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><span class="text-[10px] font-bold card-header-custom">Music vs merch (net rev)</span><span class="text-[11px] font-medium text-gray-500">Merch: ${formatMoney(merch.merchRev||0)}</span></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-mm-pie"></canvas></div></div><div class="dashboard-card"><div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold card-header-custom">Garment sizing (units)</span></div><div class="chart-shell chart-h-bar"><canvas id="${prefix}-size-bar"></canvas></div></div><div class="dashboard-card flex-1"><span class="text-[10px] font-bold card-header-custom block mb-2">Top merch categories</span><div class="chart-shell chart-h-cat"><canvas id="${prefix}-cat-bar"></canvas></div></div></div>
+                    </div>
+                    ${prefix === 'eu' ? renderEuTopCountriesSection(d.euTopCountries || [], payload.salesforcePriorUnits) : ''}
+                    <div id="${prefix}-levers-slot" class="space-y-4 border-t border-gray-200 pt-6"></div>
+                `;
+
+                const tbody = document.getElementById(`${prefix}-table`);
+                if(d.topMusicFormats) { d.topMusicFormats.slice(0,5).forEach(([name, metrics]) => { tbody.innerHTML += `<tr class="border-b"><td class="py-1.5 font-medium max-w-[180px] truncate">${name}</td><td class="py-1.5 text-xs text-gray-500">${metrics.units} units</td><td class="py-1.5 text-right font-semibold">${formatMoney(metrics.revenue)}</td></tr>`; }); }
+
+                setTimeout(() => {
+                    if(typeof Chart === 'undefined') return;
+                    registerPiePercentOverlayPlugin();
+                    if(document.getElementById(`${prefix}-pie-canvas`)) new Chart(document.getElementById(`${prefix}-pie-canvas`).getContext('2d'), { type: 'pie', data: { labels: ['Mobile', 'Desktop'], datasets: [{ data: [d.mobilePerc || 85, d.desktopPct || 15], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+                    if(document.getElementById(`${prefix}-mm-pie`)) new Chart(document.getElementById(`${prefix}-mm-pie`).getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev','Merch Rev'], datasets: [{ data: [merch.musicRev || 1, merch.merchRev || 1], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
+                    if(document.getElementById(`${prefix}-size-bar`)) { const s = merch.sizes || {}; new Chart(document.getElementById(`${prefix}-size-bar`).getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } }); }
+                    if(document.getElementById(`${prefix}-cat-bar`)) { const topCats = Object.entries(merch.categories || {}).sort((a,b)=>b[1]-a[1]).slice(0,5); new Chart(document.getElementById(`${prefix}-cat-bar`).getContext('2d'), { type: 'bar', data: { labels: topCats.map(x=>x[0]), datasets: [{ data: topCats.map(x=>x[1]), backgroundColor: getCategoryBarColors(topCats), borderRadius:3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}, callback: v => formatMoneyAxis(v)}}, y:{ticks:{font:{size:9}}}} } }); }
+                }, 50);
+            };
+
+            ['uk','eu','us','int'].forEach(m => { const mData = getLegacyMarket(payload, m); if(mData) populateSegments(m, mData); });
+            if(payload.sectionNames) { ['global','uk','eu','us','int','countries'].forEach(mk => { if(payload.sectionNames[mk] && document.getElementById(`title-${mk}`)) document.getElementById(`title-${mk}`).textContent = payload.sectionNames[mk]; }); }
+            applySectionVisibility(payload.sectionVisibility || {}, payload.storeHasUsMarket);
+            if(payload.levers?.computed) {
+                ['uk', 'eu', 'us', 'int'].forEach(m => renderLeversLive(m, payload.levers.computed, `${m}-levers-slot`, payload.colors));
+            }
+
+            const globalLeaderboardProducts = [];
+            ['uk','eu','us','int'].forEach(m => { if(payload[m]?.topProducts) { payload[m].topProducts.forEach(([name, metrics]) => { let match = globalLeaderboardProducts.find(x => x[0] === name); if(match) { match[1].units += metrics.units; match[1].revenue += metrics.revenue; } else { globalLeaderboardProducts.push([name, { units: metrics.units, revenue: metrics.revenue }]); } }); } });
+            const t = document.getElementById('g-table'); t.innerHTML = '';
+            globalLeaderboardProducts.sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5).forEach(([name, metrics]) => { t.innerHTML += `<tr class="border-b"><td class="py-2 font-medium">${name}</td><td class="py-2 text-gray-500">${metrics.units} units</td><td class="py-2 text-right font-semibold">${formatMoney(metrics.revenue)}</td></tr>`; });
+            renderTopCountriesLive(payload.topCountries, payload.colors?.mapGradientDark, payload.storeHasUsMarket);
+            if(!countriesToggleBound) {
+                countriesToggleBound = true;
+                document.getElementById('report-section-countries')?.querySelector('details')?.addEventListener('toggle', (e) => {
+                    if(!e.target.open || !lastLiveTopCountries) return;
+                    const mapEl = document.getElementById('live-top-countries-map');
+                    drawTopCountriesMapLive(mapEl, getTopCountriesMapRows(lastLiveTopCountries), lastLiveTopCountries.metricType, lastLiveMapGradient);
+                });
+            }
+        }
+
         async function fetchReportData() {
             const ref = getReportLookupRef();
             const loaderEl = document.getElementById('loader');
@@ -619,7 +940,7 @@
                     if(setupBy) { setupByEl.textContent = `Set up by ${setupBy}`; setupByEl.classList.remove('hidden'); }
                     else { setupByEl.textContent = ''; setupByEl.classList.add('hidden'); }
                 }
-                applyReportBranding(payload.title, payload.logoBase64 || null);
+                applyReportBranding(payload.title, payload.faviconBase64 || null);
                 if(payload.colors) {
                     ['global','uk','eu','us','int','countries'].forEach(m => {
                         const el = document.getElementById(`summary-header-${m}`);
@@ -640,109 +961,16 @@
                     if(showGrid) document.getElementById('products-grid').style.display = 'grid';
                 }
 
-                document.getElementById('g-rev').textContent = formatGBP(parseCurrencyLike(payload.global.revenue)); document.getElementById('g-items').textContent = payload.global.items;
-                document.getElementById('g-orders').textContent = payload.global.orders; document.getElementById('g-aov').textContent = formatGBP(parseCurrencyLike(payload.global.aov));
-
-                const hasUsMarket = payload.storeHasUsMarket !== false;
-                const pieLabels = hasUsMarket ? ['UK', 'EU', 'US', 'INT'] : ['UK', 'EU', 'INT'];
-                const pieData = hasUsMarket ? payload.globalChartData : [payload.globalChartData?.[0] || 0, payload.globalChartData?.[1] || 0, payload.globalChartData?.[3] || 0];
-                const pieColors = hasUsMarket ? [payload.colors?.primary, payload.colors?.tertiary, payload.colors?.secondary, payload.colors?.quaternary] : [payload.colors?.primary, payload.colors?.tertiary, payload.colors?.quaternary];
-                new Chart(document.getElementById('globalPie').getContext('2d'), {
-                    type: 'doughnut',
-                    data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors, borderWidth: 0 }] },
-                    options: getChartOptions()
+                await loadExchangeRates();
+                window.__reportPayload = payload;
+                bindCurrencySelector(async () => {
+                    destroyReportCharts();
+                    await renderReportPayload(payload);
                 });
+                await renderReportPayload(payload);
 
-                const timelineChart = resolveTimelineChart(m => getLegacyMarket(payload, m));
-                const chartLabels = timelineChart.labels;
-                const pointCount = timelineChart.pointCount || chartLabels.length;
-
-                const prim = payload.colors?.primary || '#8b7355'; const sec = payload.colors?.secondary || '#d4c4b7';
-                const tert = payload.colors?.tertiary || '#4b5563'; const quat = payload.colors?.quaternary || '#10b981';
-
-                let liveTEl = document.getElementById('liveTimelineChart')?.getContext('2d');
-                if(liveTEl) {
-                    new Chart(liveTEl, {
-                        type: 'line',
-                        data: {
-                            labels: chartLabels,
-                            datasets: [
-                                { label: 'UK Market', data: timelineChart.getSeries('uk'), borderColor: prim, backgroundColor: prim, tension: 0.4, borderWidth: 3, pointRadius: 4 },
-                                { label: 'EU Market', data: timelineChart.getSeries('eu'), borderColor: tert, backgroundColor: tert, tension: 0.4, borderWidth: 3, pointRadius: 4 },
-                                { label: 'US Market', data: timelineChart.getSeries('us'), borderColor: sec, backgroundColor: sec, tension: 0.4, borderWidth: 3, pointRadius: 4, hidden: !hasUsMarket },
-                                { label: 'INT Market', data: timelineChart.getSeries('int'), borderColor: quat, backgroundColor: quat, tension: 0.4, borderWidth: 3, pointRadius: 4 }
-                            ]
-                        },
-                        options: getChartOptions({ plugins: { legend: getChartOptions().plugins.legend, tooltip: { mode: 'index', intersect: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '£' + (v > 1000 ? (v/1000).toFixed(0) + 'K' : v), maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 5 : 8 } }, x: { grid: { display: false }, ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: window.matchMedia('(max-width: 768px)').matches ? 6 : (timelineChart.granularity === 'daily' ? 14 : 12) } } } })
-                    });
-                    const pointRadius = pointCount > 24 ? 1.5 : (pointCount > 12 ? 2.5 : 4);
-                    const chartInstance = Chart.getChart(document.getElementById('liveTimelineChart'));
-                    if(chartInstance) {
-                        chartInstance.data.datasets.forEach(ds => { ds.pointRadius = pointRadius; ds.tension = pointCount > 24 ? 0.2 : 0.4; });
-                        chartInstance.update();
-                    }
-                    const rangeEl = document.getElementById('live-timeline-range');
-                    if(rangeEl) {
-                        if(!timelineChart.rangeText) rangeEl.textContent = 'Awaiting Data...';
-                        else rangeEl.textContent = timelineChart.granularity === 'daily' ? `Daily · ${timelineChart.rangeText}` : timelineChart.rangeText;
-                    }
-                }
-
-                const populateSegments = (prefix, d) => {
-                    const pane = document.getElementById(`${prefix}-pane`); if(!pane) return; let musicUnitsCount = 0;
-                    if(typeof d.campaignChartUnits === 'number') musicUnitsCount = d.campaignChartUnits;
-                    else if(d.musicProducts) { Object.values(d.musicProducts).forEach(m => { musicUnitsCount += m.units; }); }
-                    const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
-                    const getCategoryBarColors = (topCats) => {
-                        const defaults = [prim, sec, tert, quat, '#94a3b8'];
-                        const toteCol = payload.colors?.toteBag || '#6366f1';
-                        return topCats.map(([name], i) => (/tote\s*bag/i.test(name) ? toteCol : defaults[i]));
-                    };
-
-                    pane.innerHTML = `
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 segment-grid-2">
-                        <div class="space-y-4 flex flex-col justify-between">
-                            <div class="dashboard-card border-l-4" style="border-color: var(--accent-primary)"><div class="flex justify-between items-start segment-kpi-row"><div><p class="text-[10px] uppercase font-bold card-header-custom">Territory Revenue</p><p class="text-2xl font-bold">${d.revenue}</p><p class="text-xs mt-1 text-gray-500">${d.items} units shipped across ${d.orders} orders (AOV: ${formatGBP(parseCurrencyLike(d.aov))})</p></div><div class="text-right"><p class="text-[10px] uppercase font-bold card-header-custom">Campaign Chart Units</p><p class="text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p></div></div></div>
-                            <div class="dashboard-card flex-1"><h3 class="text-xs font-bold card-header-custom mb-2">Standout campaign music formats</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><tbody id="${prefix}-table"></tbody></table></div></div>
-                            <div class="dashboard-card bg-white border border-gray-200"><p class="text-[10px] font-bold card-header-custom mb-2">Web traffic & device split</p><div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 text-center traffic-kpi-grid"><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Sessions</span><span class="font-semibold text-xs">${typeof d.sessions === 'number' ? d.sessions.toLocaleString() : d.sessions}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">ATC rate</span><span class="font-semibold text-xs">${d.atcRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Conv.</span><span class="font-semibold text-xs text-green-700">${d.conversionRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">UPT</span><span class="font-semibold text-xs">${d.upt || '0.00'}</span></div></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-pie-canvas"></canvas></div></div>
-                        </div>
-                        <div class="space-y-4 flex flex-col justify-between"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><span class="text-[10px] font-bold card-header-custom">Music vs merch (net rev)</span><span class="text-[11px] font-medium text-gray-500">Merch: £${(merch.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</span></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-mm-pie"></canvas></div></div><div class="dashboard-card"><div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold card-header-custom">Garment sizing (units)</span></div><div class="chart-shell chart-h-bar"><canvas id="${prefix}-size-bar"></canvas></div></div><div class="dashboard-card flex-1"><span class="text-[10px] font-bold card-header-custom block mb-2">Top merch categories</span><div class="chart-shell chart-h-cat"><canvas id="${prefix}-cat-bar"></canvas></div></div></div>
-                        </div>
-                        ${prefix === 'eu' ? renderEuTopCountriesSection(d.euTopCountries || [], payload.salesforcePriorUnits) : ''}
-                        <div id="${prefix}-levers-slot" class="space-y-4 border-t border-gray-200 pt-6"></div>
-                    `;
-
-                    const tbody = document.getElementById(`${prefix}-table`);
-                    if(d.topMusicFormats) { d.topMusicFormats.slice(0,5).forEach(([name, metrics]) => { tbody.innerHTML += `<tr class="border-b"><td class="py-1.5 font-medium max-w-[180px] truncate">${name}</td><td class="py-1.5 text-xs text-gray-500">${metrics.units} units</td><td class="py-1.5 text-right font-semibold">£${metrics.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`; }); }
-
-                    setTimeout(() => { 
-                        if(typeof Chart === 'undefined') return;
-                        if(document.getElementById(`${prefix}-pie-canvas`)) new Chart(document.getElementById(`${prefix}-pie-canvas`).getContext('2d'), { type: 'pie', data: { labels: ['Mobile', 'Desktop'], datasets: [{ data: [d.mobilePerc || 85, d.desktopPct || 15], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } }); 
-                        if(document.getElementById(`${prefix}-mm-pie`)) new Chart(document.getElementById(`${prefix}-mm-pie`).getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev','Merch Rev'], datasets: [{ data: [merch.musicRev || 1, merch.merchRev || 1], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
-                        if(document.getElementById(`${prefix}-size-bar`)) { const s = merch.sizes || {}; new Chart(document.getElementById(`${prefix}-size-bar`).getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } }); }
-                        if(document.getElementById(`${prefix}-cat-bar`)) { const topCats = Object.entries(merch.categories || {}).sort((a,b)=>b[1]-a[1]).slice(0,5); new Chart(document.getElementById(`${prefix}-cat-bar`).getContext('2d'), { type: 'bar', data: { labels: topCats.map(x=>x[0]), datasets: [{ data: topCats.map(x=>x[1]), backgroundColor: getCategoryBarColors(topCats), borderRadius:3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{ticks:{font:{size:9}}}} } }); }
-                    }, 50);
-                };
-
-                ['uk','eu','us','int'].forEach(m => { const mData = getLegacyMarket(payload, m); if(mData) populateSegments(m, mData); });
-                if(payload.sectionNames) { ['global','uk','eu','us','int','countries'].forEach(mk => { if(payload.sectionNames[mk] && document.getElementById(`title-${mk}`)) document.getElementById(`title-${mk}`).textContent = payload.sectionNames[mk]; }); }
-                applySectionVisibility(payload.sectionVisibility || {}, payload.storeHasUsMarket);
-                if(payload.levers?.computed) {
-                    ['uk', 'eu', 'us', 'int'].forEach(m => renderLeversLive(m, payload.levers.computed, `${m}-levers-slot`, payload.colors));
-                }
-
-                const globalLeaderboardProducts = [];
-                ['uk','eu','us','int'].forEach(m => { if(payload[m]?.topProducts) { payload[m].topProducts.forEach(([name, metrics]) => { let match = globalLeaderboardProducts.find(x => x[0] === name); if(match) { match[1].units += metrics.units; match[1].revenue += metrics.revenue; } else { globalLeaderboardProducts.push([name, { units: metrics.units, revenue: metrics.revenue }]); } }); } });
-                const t = document.getElementById('g-table'); t.innerHTML = '';
-                globalLeaderboardProducts.sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5).forEach(([name, metrics]) => { t.innerHTML += `<tr class="border-b"><td class="py-2 font-medium">${name}</td><td class="py-2 text-gray-500">${metrics.units} units</td><td class="py-2 text-right font-semibold">£${metrics.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`; });
-                renderTopCountriesLive(payload.topCountries, payload.colors?.mapGradientDark, payload.storeHasUsMarket);
-                document.getElementById('report-section-countries')?.querySelector('details')?.addEventListener('toggle', (e) => {
-                    if(!e.target.open || !lastLiveTopCountries) return;
-                    const mapEl = document.getElementById('live-top-countries-map');
-                    drawTopCountriesMapLive(mapEl, getTopCountriesMapRows(lastLiveTopCountries), lastLiveTopCountries.metricType, lastLiveMapGradient);
-                });
-
-                document.getElementById('loader').remove(); document.getElementById('dashboard-area').classList.remove('hidden');
+                document.getElementById('loader').remove();
+                document.getElementById('dashboard-area').classList.remove('hidden');
             } catch(e) { console.error(e); const l=document.getElementById('loader'); if(l) l.innerHTML=`<div class="text-center p-6 bg-white shadow-xl rounded-lg border border-red-200"><p class="text-2xl font-bold text-red-600 mb-2">Error Displaying Campaign</p><p class="text-sm text-gray-600">${e.message}</p></div>`; }
         }
         window.onload = fetchReportData;

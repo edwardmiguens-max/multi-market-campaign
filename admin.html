@@ -54,6 +54,10 @@
         #preview-workspace-pane details.group { background: #fff !important; border: 1px solid var(--shopify-border) !important; border-radius: 0.75rem !important; box-shadow: none !important; overflow: hidden; }
         #preview-workspace-pane .accordion-summary-bar { background-color: var(--rep-v-acc-col) !important; color: var(--rep-v-acc-txt) !important; border-bottom: none; }
         #preview-workspace-pane .accordion-title-text { color: var(--rep-v-acc-txt) !important; font-weight: 600 !important; font-size: 0.9375rem !important; }
+        .accordion-chevron { color: var(--rep-v-acc-txt); flex-shrink: 0; margin-left: 0.75rem; display: inline-flex; align-items: center; justify-content: center; }
+        .accordion-chevron svg { transition: transform 0.2s ease; stroke: currentColor; }
+        details:not([open]) > summary .accordion-chevron svg { transform: rotate(-90deg); }
+        details[open] > summary .accordion-chevron svg { transform: rotate(0deg); }
         #preview-workspace-pane details > div { background: #f6f6f7 !important; }
         #preview-workspace-pane .dashboard-card { border: 1px solid var(--shopify-border) !important; box-shadow: none !important; border-radius: 0.75rem !important; }
         #preview-workspace-pane .global-kpi-grid .dashboard-card { border-left: none !important; }
@@ -152,7 +156,7 @@
                         </div>
                         <div class="pt-2 border-t border-gray-700 bg-gray-800/60 p-2 rounded border border-orange-700/80">
                             <label class="block text-xs font-bold text-orange-300 uppercase tracking-wider mb-2">Prior Salesforce country sales</label>
-                            <p class="text-[10px] text-gray-400 mb-2 leading-tight">Upload a Salesforce EU country export (.xlsx). Vinyl units are added to EU music chart units and the EU country table — revenue is ignored.</p>
+                            <p class="text-[10px] text-gray-400 mb-2 leading-tight">Upload a Salesforce EU country export (.xlsx). Vinyl units are added to D2C chart units — <strong>GB → UK</strong>, all other countries → EU. Revenue is ignored.</p>
                             <div class="flex items-center gap-2 flex-wrap">
                                 <input type="file" id="upload-salesforce-country" accept=".xlsx,.xls" class="block text-[10px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600">
                                 <button type="button" id="btn-clear-salesforce-country" class="text-[10px] px-2 py-1 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 hidden">Clear</button>
@@ -166,6 +170,7 @@
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Campaign Display</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-4 pb-2">
                         <div class="pt-1"><div class="flex justify-between items-center mb-1"><label class="block text-xs font-semibold text-gray-400">Campaign Logo (PNG)</label><button id="clear-logo" type="button" class="text-xs text-red-400 hover:text-red-300 hidden">Clear</button></div><input type="file" id="upload-logo" accept="image/png, image/svg+xml" class="block w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"></div>
+                        <div class="pt-1 border-t border-gray-700"><div class="flex justify-between items-center mb-1 mt-2"><label class="block text-xs font-semibold text-gray-400">Report Favicon</label><button id="clear-favicon" type="button" class="text-xs text-red-400 hover:text-red-300 hidden">Clear</button></div><input type="file" id="upload-favicon" accept="image/png,image/x-icon,image/svg+xml,image/jpeg" class="block w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"><span class="text-[10px] text-gray-500 block mt-1 leading-tight">Browser tab icon for the published report (separate from the campaign logo).</span></div>
                         <div class="pt-1">
                             <label class="block text-xs font-semibold text-gray-400">Logo Size</label>
                             <div class="flex items-center space-x-2 mt-1"><span class="text-xs text-gray-500">Small</span><input type="range" id="input-logo-scale" min="70" max="180" value="100" class="w-full cursor-pointer"><span class="text-sm font-bold text-gray-300" id="logo-scale-display">100%</span></div>
@@ -188,13 +193,13 @@
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Campaign Filter</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-4 pb-2">
                         <div class="bg-gray-800/60 p-2 rounded border border-gray-700">
-                            <label class="block text-xs font-bold text-yellow-400 uppercase tracking-wider mb-1">Campaign Filter (Campaign Chart Units)</label>
+                            <label class="block text-xs font-bold text-yellow-400 uppercase tracking-wider mb-1">Campaign Filter (Campaign D2C Chart Units)</label>
                             <button type="button" id="btn-campaign-chart-products" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-2 text-white hover:border-yellow-500 text-left flex justify-between items-center gap-2">
                                 <span id="campaign-chart-products-label" class="truncate">All music products</span>
                                 <span class="text-gray-500 shrink-0">▾</span>
                             </button>
                             <input type="hidden" id="input-campaign-chart-products" value="">
-                            <span class="text-[10px] text-gray-400 block mt-1 leading-tight">Select exact product titles to count as chart units. Territory totals are unaffected.</span>
+                            <span class="text-[10px] text-gray-400 block mt-1 leading-tight">Select exact product titles to count as D2C chart units. Territory totals are unaffected.</span>
                         </div>
                         <div class="bg-gray-800/60 p-2 rounded border border-gray-700">
                             <label class="flex items-start gap-2 text-[11px] text-gray-300 cursor-pointer">
@@ -324,9 +329,9 @@
                     <div class="mt-3 px-1 grid grid-cols-2 gap-3 pb-2">
                         <div class="col-span-2"><label class="block text-xs font-semibold mb-1 text-gray-400">Logo & Title Color</label><input type="color" id="color-logo" value="#202223" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div>
                         <div class="col-span-2"><label class="block text-xs font-bold mb-1 text-blue-400 uppercase tracking-wider">Accordion Header Color</label><input type="color" id="color-accordion" value="#202223" class="w-full h-8 cursor-pointer bg-transparent rounded border border-blue-500"></div>
-                        <div><label class="block text-xs font-semibold mb-1 text-gray-400">Dashboard Base</label><input type="color" id="color-bg" value="#f6f6f7" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">Card Base</label><input type="color" id="color-card" value="#ffffff" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">Chart Primary (UK)</label><input type="color" id="color-primary" value="#008060" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">Chart Secondary (US)</label><input type="color" id="color-secondary" value="#5c6ac4" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">Chart Tertiary (EU)</label><input type="color" id="color-tertiary" value="#9c6ade" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">Chart Quaternary (INT)</label><input type="color" id="color-quaternary" value="#47c1bf" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div>
+                        <div><label class="block text-xs font-semibold mb-1 text-gray-400">Dashboard Base</label><input type="color" id="color-bg" value="#f6f6f7" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">Card Base</label><input type="color" id="color-card" value="#ffffff" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">D2C Chart Primary (UK)</label><input type="color" id="color-primary" value="#008060" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">D2C Chart Secondary (US)</label><input type="color" id="color-secondary" value="#5c6ac4" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">D2C Chart Tertiary (EU)</label><input type="color" id="color-tertiary" value="#9c6ade" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div><div><label class="block text-xs font-semibold mb-1 text-gray-400">D2C Chart Quaternary (INT)</label><input type="color" id="color-quaternary" value="#47c1bf" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div>
                         <div class="col-span-2"><label class="block text-xs font-bold mb-1 text-sky-400 uppercase tracking-wider">Country Map Gradient (Dark)</label><input type="color" id="color-map-gradient-dark" value="#005bd3" class="w-full h-8 cursor-pointer bg-transparent rounded border border-sky-500"></div>
-                        <div class="col-span-2"><label class="block text-xs font-semibold mb-1 text-gray-400">Tote Bag Category (Merch Chart)</label><input type="color" id="color-tote-bag" value="#6371c7" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div>
+                        <div class="col-span-2"><label class="block text-xs font-semibold mb-1 text-gray-400">Tote Bag Category (Merch colour)</label><input type="color" id="color-tote-bag" value="#6371c7" class="w-full h-8 cursor-pointer bg-transparent rounded border border-gray-700"></div>
                     </div>
                 </details>
 
@@ -377,7 +382,7 @@
             <details class="group analytics-panel" open>
                 <summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-global-preview">
                     <span class="accordion-title-text" id="preview-title-global">1. Global Dashboard Summary</span>
-                    <span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span>
+                    <span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span>
                 </summary>
                 <div class="p-6 space-y-6 rounded-b-lg">
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 global-kpi-grid">
@@ -401,22 +406,27 @@
                         <div class="dashboard-card"><h3 class="preview-header-label mb-4">Market Revenue Split</h3><div class="chart-shell chart-h-pie h-60"><canvas id="regionPieChart"></canvas></div></div>
                         <div class="dashboard-card"><h3 class="preview-header-label mb-2">Global Top Leaders</h3><table class="w-full text-sm"><tbody id="table-body" class="preview-small-text"></tbody></table></div>
                     </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="global-merch-row">
+                        <div class="dashboard-card"><div class="flex justify-between items-center mb-2"><h3 class="preview-header-label mb-0">Music vs Merch (Net Rev)</h3><span class="text-[11px] font-semibold text-gray-500" id="global-merch-rev-label">Merch: £0.00</span></div><div class="chart-shell chart-h-pie h-60"><canvas id="globalMerchMmPie"></canvas></div></div>
+                        <div class="dashboard-card"><h3 class="preview-header-label mb-2">Top Merch Products</h3><table class="w-full text-sm"><tbody id="global-merch-products-table" class="preview-small-text"></tbody></table></div>
+                        <div class="dashboard-card"><h3 class="preview-header-label mb-2">Garment Sizing (Units)</h3><div class="chart-shell chart-h-bar"><canvas id="globalMerchSizeBar"></canvas></div></div>
+                    </div>
                 </div>
             </details>
             </div>
 
-            <div id="report-section-uk-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-uk-preview"><span class="accordion-title-text" id="preview-title-uk">2. United Kingdom Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="uk-pane"></div></details></div>
-            <div id="report-section-eu-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-eu-preview"><span class="accordion-title-text" id="preview-title-eu">3. European Union Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="eu-pane"></div></details></div>
-            <div id="report-section-us-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-us-preview"><span class="accordion-title-text" id="preview-title-us">4. United States Market Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="us-pane"></div></details></div>
-            <div id="report-section-int-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-int-preview"><span class="accordion-title-text" id="preview-title-int">5. Rest of World / International Insights</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="int-pane"></div></details></div>
-            <div id="report-section-countries-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-countries-preview"><span class="accordion-title-text" id="preview-title-countries">6. Top Countries</span><span class="transition group-open:rotate-180"><svg fill="none" height="20" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-4"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><h3 class="preview-header-label">Global country distribution</h3><span id="preview-top-countries-metric" class="text-xs text-gray-500">Metric: Orders</span></div><div id="preview-top-countries-map" class="w-full" style="height: 440px;"></div></div><div class="dashboard-card"><h3 class="preview-header-label mb-2">Top 10 countries</h3><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Orders</th><th class="text-right py-1">Net Revenue</th></tr></thead><tbody id="preview-top-countries-table"></tbody></table></div></div></details></div>
+            <div id="report-section-uk-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-uk-preview"><span class="accordion-title-text" id="preview-title-uk">2. United Kingdom Market Insights</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="uk-pane"></div></details></div>
+            <div id="report-section-eu-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-eu-preview"><span class="accordion-title-text" id="preview-title-eu">3. European Union Market Insights</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="eu-pane"></div></details></div>
+            <div id="report-section-us-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-us-preview"><span class="accordion-title-text" id="preview-title-us">4. United States Market Insights</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="us-pane"></div></details></div>
+            <div id="report-section-int-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-int-preview"><span class="accordion-title-text" id="preview-title-int">5. Rest of World / International Insights</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-6" id="int-pane"></div></details></div>
+            <div id="report-section-countries-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-countries-preview"><span class="accordion-title-text" id="preview-title-countries">6. Top Countries</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-4"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><h3 class="preview-header-label">Global country distribution</h3><span id="preview-top-countries-metric" class="text-xs text-gray-500">Metric: Orders</span></div><div id="preview-top-countries-map" class="w-full" style="height: 440px;"></div></div><div class="dashboard-card"><h3 class="preview-header-label mb-2">Top 10 countries</h3><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Orders</th><th class="text-right py-1">Net Revenue</th></tr></thead><tbody id="preview-top-countries-table"></tbody></table></div></div></details></div>
         </div>
     </main>
 
     <div id="campaign-chart-products-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
         <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
             <div class="flex justify-between items-center px-4 py-3 border-b border-gray-700">
-                <h3 class="text-sm font-bold text-yellow-400">Campaign Chart Units — Select Products</h3>
+                <h3 class="text-sm font-bold text-yellow-400">Campaign D2C Chart Units — Select Products</h3>
                 <button type="button" id="btn-campaign-chart-products-close" class="text-gray-400 hover:text-white text-lg leading-none">&times;</button>
             </div>
             <div class="px-4 py-2 border-b border-gray-800 flex gap-2">
@@ -825,11 +835,13 @@
 
         const root = document.documentElement;
         const RUNTIME_VERSION = '2026.06.24-shopify-v1';
-        let regionPieChart, globalTimelineChart;
+        let regionPieChart, globalTimelineChart, globalMerchMmChart, globalMerchSizeChart;
         let chartInstances = {}; 
         let loadedTopCountriesPayload = null;
         let loadedEuTopCountriesPayload = null;
+        let loadedGlobalMerchPayload = null;
         let globalLogoBase64 = null;
+        let globalFaviconBase64 = null;
         let activeLoadedReportId = window.__bootLoadedReportId || window.activeLoadedReportId || null; 
         const productImages = { p1: null, p2: null, p3: null, p4: null };
         let comparisonModel = { markets: {}, periodOrder: [] };
@@ -843,6 +855,119 @@
             RO: 'Romania', SE: 'Sweden', SG: 'Singapore', SI: 'Slovenia', SK: 'Slovakia', US: 'United States'
         };
         let ingestionWarnings = [];
+        function registerPiePercentOverlayPlugin() {
+            if(typeof Chart === 'undefined' || window.__piePercentPluginRegistered) return;
+            window.__piePercentPluginRegistered = true;
+            Chart.register({
+                id: 'piePercentOverlay',
+                afterDraw(chart) {
+                    const type = chart.config.type;
+                    if(type !== 'pie' && type !== 'doughnut') return;
+                    const { ctx, data } = chart;
+                    const dataset = data.datasets[0];
+                    if(!dataset?.data?.length) return;
+                    const total = dataset.data.reduce((s, v) => s + (Number(v) || 0), 0);
+                    if(total <= 0) return;
+                    const meta = chart.getDatasetMeta(0);
+                    meta.data.forEach((arc, i) => {
+                        const value = Number(dataset.data[i]) || 0;
+                        if(value <= 0) return;
+                        const pct = (value / total) * 100;
+                        if(pct < 3) return;
+                        const pos = arc.tooltipPosition();
+                        ctx.save();
+                        ctx.font = 'bold 11px sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+                        ctx.lineWidth = 3;
+                        const label = pct >= 10 ? Math.round(pct) + '%' : pct.toFixed(1) + '%';
+                        ctx.strokeText(label, pos.x, pos.y);
+                        ctx.fillText(label, pos.x, pos.y);
+                        ctx.restore();
+                    });
+                }
+            });
+        }
+        function aggregateGlobalMerch() {
+            const sizes = { XS:0, S:0, M:0, L:0, XL:0, XXL:0, '3XL+':0 };
+            let musicRev = 0, merchRev = 0;
+            const merchProducts = {};
+            Object.values(storeData).forEach(d => {
+                if(!d.loaded) return;
+                musicRev += Number(d.merch?.musicRev) || 0;
+                merchRev += Number(d.merch?.merchRev) || 0;
+                Object.entries(d.merch?.sizes || {}).forEach(([sz, v]) => { sizes[sz] = (sizes[sz] || 0) + (Number(v) || 0); });
+                Object.entries(d.products || {}).forEach(([name, obj]) => {
+                    const mu = d.musicProducts?.[name];
+                    const units = (Number(obj.units) || 0) - (Number(mu?.units) || 0);
+                    const revenue = (Number(obj.revenue) || 0) - (Number(mu?.revenue) || 0);
+                    if(units <= 0 && revenue <= 0) return;
+                    if(!merchProducts[name]) merchProducts[name] = { units: 0, revenue: 0 };
+                    merchProducts[name].units += units;
+                    merchProducts[name].revenue += revenue;
+                });
+            });
+            return { musicRev, merchRev, sizes, topMerchProducts: Object.entries(merchProducts).sort((a,b) => b[1].revenue - a[1].revenue).slice(0, 5) };
+        }
+        function getGlobalMerchForDisplay() {
+            if(Object.values(storeData).some(d => d.loaded)) return aggregateGlobalMerch();
+            return loadedGlobalMerchPayload || { musicRev: 0, merchRev: 0, sizes: { XS:0, S:0, M:0, L:0, XL:0, XXL:0, '3XL+':0 }, topMerchProducts: [] };
+        }
+        function buildGlobalMerchPayload() {
+            const m = getGlobalMerchForDisplay();
+            return { musicRev: m.musicRev, merchRev: m.merchRev, sizes: m.sizes, topMerchProducts: m.topMerchProducts || [] };
+        }
+        function updateGlobalMerchSection(styles) {
+            const merch = getGlobalMerchForDisplay();
+            const label = document.getElementById('global-merch-rev-label');
+            if(label) label.textContent = `Merch: £${Number(merch.merchRev || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            const tbody = document.getElementById('global-merch-products-table');
+            if(tbody) {
+                const rows = merch.topMerchProducts || [];
+                tbody.innerHTML = rows.length ? rows.map(([name, obj]) => `<tr class="border-b"><td class="py-2 font-medium max-w-[180px] truncate">${name}</td><td class="py-2 text-gray-500">${Number(obj.units || 0).toLocaleString()} units</td><td class="py-2 text-right font-semibold">£${Number(obj.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join('') : '<tr><td colspan="3" class="italic text-gray-400 py-2">No merch data loaded</td></tr>';
+            }
+            if(typeof Chart === 'undefined') return;
+            registerPiePercentOverlayPlugin();
+            const prim = styles?.primary || '#008060', sec = styles?.secondary || '#5c6ac4';
+            if(globalMerchMmChart) { globalMerchMmChart.destroy(); globalMerchMmChart = null; }
+            const mmEl = document.getElementById('globalMerchMmPie');
+            const mRev = Number(merch.musicRev) || 0, meRev = Number(merch.merchRev) || 0;
+            if(mmEl && (mRev > 0 || meRev > 0)) {
+                globalMerchMmChart = new Chart(mmEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev', 'Merch Rev'], datasets: [{ data: [mRev || 0.001, meRev || 0.001], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } } });
+            }
+            if(globalMerchSizeChart) { globalMerchSizeChart.destroy(); globalMerchSizeChart = null; }
+            const szEl = document.getElementById('globalMerchSizeBar');
+            const s = merch.sizes || {};
+            if(szEl) {
+                globalMerchSizeChart = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
+            }
+        }
+        function compressFaviconToBase64(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const size = 64;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = size; canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    const scale = Math.min(size / img.width, size / img.height);
+                    const w = img.width * scale, h = img.height * scale;
+                    ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+                    callback(canvas.toDataURL('image/png'));
+                };
+                img.onerror = () => callback(e.target.result);
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        function applyFaviconBase64(b64) {
+            globalFaviconBase64 = b64;
+            const btnClear = document.getElementById('clear-favicon');
+            if(btnClear) btnClear.style.display = b64 ? 'inline-block' : 'none';
+        }
 
         // Globals to store raw CSV data for instant hot-swapping Filters
         let windowCurrentCSVData = null;
@@ -1292,6 +1417,23 @@
             if(['europe','eu','international','rest of world','int','row'].includes(lower)) return '';
             return c.split(' ').map(x => x ? (x.charAt(0).toUpperCase() + x.slice(1).toLowerCase()) : x).join(' ');
         }
+        function isSalesforceUkCountry(country) {
+            const c = String(country || '').trim();
+            return c === 'United Kingdom' || c === 'UK' || c === 'Great Britain';
+        }
+        function getSalesforceUnitsForMarket(market, sfData) {
+            const src = sfData || salesforcePriorUnits;
+            if(!src?.byCountry) return 0;
+            let total = 0;
+            Object.entries(src.byCountry).forEach(([country, units]) => {
+                const u = Number(units) || 0;
+                if(!u) return;
+                const uk = isSalesforceUkCountry(country);
+                if(market === 'uk' && uk) total += u;
+                if(market === 'eu' && !uk) total += u;
+            });
+            return total;
+        }
         function buildEuTopCountriesPayload() {
             const merged = {};
             Object.entries(marketCountryMusicStats.eu || {}).forEach(([country, obj]) => {
@@ -1299,6 +1441,7 @@
             });
             if(salesforcePriorUnits?.byCountry) {
                 Object.entries(salesforcePriorUnits.byCountry).forEach(([country, units]) => {
+                    if(isSalesforceUkCountry(country)) return;
                     const u = Number(units) || 0;
                     if(!merged[country]) merged[country] = { musicUnits: 0, revenue: 0, salesforceUnits: 0 };
                     merged[country].musicUnits += u;
@@ -1321,7 +1464,15 @@
                 return `<div class="dashboard-card w-full"><h3 class="preview-header-label mb-2">Top 10 EU countries</h3><p class="text-xs text-gray-500 italic">Awaiting EU country data from CSV upload (and optional Salesforce import).</p></div>`;
             }
             const body = rows.map(r => `<tr class="border-b"><td class="py-1.5 font-medium">${r.country}</td><td class="py-1.5 text-right">${Number(r.musicUnits || 0).toLocaleString()}${r.salesforceUnits ? `<span class="text-[10px] text-gray-400 block">incl. ${Number(r.salesforceUnits).toLocaleString()} SF</span>` : ''}</td><td class="py-1.5 text-right">£${Number(r.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join('');
-            const sfNote = salesforcePriorUnits?.totalUnits ? `<p class="text-[10px] text-gray-400 mt-2">Music units include ${Number(salesforcePriorUnits.totalUnits).toLocaleString()} prior Salesforce vinyl units (no revenue).</p>` : '';
+            const sfEu = getSalesforceUnitsForMarket('eu');
+            const sfUk = getSalesforceUnitsForMarket('uk');
+            let sfNote = '';
+            if(sfEu || sfUk) {
+                const parts = [];
+                if(sfEu) parts.push(`${Number(sfEu).toLocaleString()} to EU countries`);
+                if(sfUk) parts.push(`${Number(sfUk).toLocaleString()} to UK (GB)`);
+                sfNote = `<p class="text-[10px] text-gray-400 mt-2">Prior Salesforce vinyl units (no revenue): ${parts.join(' · ')}.</p>`;
+            }
             return `<div class="dashboard-card w-full"><h3 class="preview-header-label mb-2">Top 10 EU countries</h3><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Music units</th><th class="text-right py-1">Net revenue</th></tr></thead><tbody>${body}</tbody></table>${sfNote}</div>`;
         }
         function updateSalesforceSummary() {
@@ -1334,7 +1485,9 @@
                 return;
             }
             const name = salesforcePriorUnits.productName ? ` · ${salesforcePriorUnits.productName}` : '';
-            el.textContent = `${Number(salesforcePriorUnits.totalUnits).toLocaleString()} vinyl units across ${Object.keys(salesforcePriorUnits.byCountry || {}).length} countries${name}`;
+            const uk = getSalesforceUnitsForMarket('uk');
+            const eu = getSalesforceUnitsForMarket('eu');
+            el.textContent = `${Number(salesforcePriorUnits.totalUnits).toLocaleString()} vinyl units${name} — UK (GB): ${Number(uk).toLocaleString()} · EU: ${Number(eu).toLocaleString()}`;
             if(clearBtn) clearBtn.classList.remove('hidden');
         }
         function parseSalesforceCountryWorkbook(wb) {
@@ -1374,12 +1527,15 @@
                 totalUnits += units;
             });
             if(totalUnits <= 0) throw new Error('No unit quantities found in Salesforce export.');
-            return {
+            const payload = {
                 byCountry,
                 totalUnits,
                 sku: String(dataRow[1] || '').trim(),
                 productName: String(dataRow[2] || '').trim()
             };
+            payload.ukUnits = getSalesforceUnitsForMarket('uk', payload);
+            payload.euUnits = getSalesforceUnitsForMarket('eu', payload);
+            return payload;
         }
         function setSalesforcePriorUnits(data, refreshDashboard = true) {
             salesforcePriorUnits = data && data.totalUnits > 0 ? data : null;
@@ -1657,7 +1813,7 @@
         }
         function getMarketChartUnits(market) {
             let units = Object.values(storeData[market]?.musicProducts || {}).reduce((sum, p) => sum + (Number(p.units) || 0), 0);
-            if(market === 'eu' && salesforcePriorUnits?.totalUnits) units += Number(salesforcePriorUnits.totalUnits) || 0;
+            units += getSalesforceUnitsForMarket(market);
             return units;
         }
         function lineLondonDateKey(ts) {
@@ -1875,7 +2031,7 @@
             chartInstances[canvasId] = new Chart(el.getContext('2d'), {
                 type: 'bar',
                 data: { labels: top5.map(x => x[0].length > 22 ? x[0].slice(0, 22) + '…' : x[0]), datasets: [
-                    { label: 'Chart units', data: top5.map(x => x[1].units), backgroundColor: styles.primary, borderRadius: 3, yAxisID: 'y' },
+                    { label: 'D2C Chart units', data: top5.map(x => x[1].units), backgroundColor: styles.primary, borderRadius: 3, yAxisID: 'y' },
                     { label: 'Revenue (£)', data: top5.map(x => x[1].revenue), backgroundColor: styles.secondary, borderRadius: 3, yAxisID: 'y1' }
                 ]},
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true, position: 'left', ticks: { font: { size: 9 } } }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 8 }, maxRotation: 45 } } } }
@@ -1917,7 +2073,7 @@
             const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
             const sendHtml = (data.globalCombinedSend !== undefined) ? `<p class="text-xs font-semibold text-indigo-700 mt-1">Global Combined Send: ${Number(data.globalCombinedSend||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">All market orders + NPN (driver dates)</p>` : '';
             const marketOrdersLabel = leverMarketLabel(market) ? `${leverMarketLabel(market)} Orders` : 'Orders';
-            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: var(--rep-v-prim)"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${data.windowLabel}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="preview-body-data">£${Number(data.musicRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="preview-body-data">£${Number(data.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketOrdersLabel}</p><p class="preview-body-data">${Number(data.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(data.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${showsHtml}${prizeHtml}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No products in window</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
+            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: var(--rep-v-prim)"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${data.windowLabel}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">D2C Chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="preview-body-data">£${Number(data.musicRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="preview-body-data">£${Number(data.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketOrdersLabel}</p><p class="preview-body-data">${Number(data.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(data.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${showsHtml}${prizeHtml}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No products in window</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
         }
         function renderGwpLeverCard(key, data, panePrefix) {
             if(!data) return '';
@@ -1934,7 +2090,7 @@
             const pieId = `${panePrefix}-pie-${key}`;
             const notesHtml = data.notes ? `<p class="text-sm text-gray-600 whitespace-pre-wrap">${String(data.notes).replace(/</g, '&lt;')}</p>` : '';
             const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
-            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: #ea580c"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Sale window:</strong> ${data.windowLabel || '—'}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total orders</p><p class="preview-body-data text-xl font-bold">${Number(data.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale units</p><p class="preview-body-data text-xl font-bold">${Number(data.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="preview-body-data text-xl font-bold">£${Number(data.aov||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="preview-body-data text-lg font-bold">£${Number(data.totalRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale revenue</p><p class="preview-body-data text-lg font-bold">£${Number(data.saleRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from sale items</p><p class="preview-body-data text-xl font-bold">${Number(data.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 sale products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No sale products in window</td></tr>'}</tbody></table></div><div><p class="preview-header-label mb-2">Music vs merch (sale items)</p><div class="chart-shell chart-h-pie h-48"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="preview-header-label mb-2">Top 5 chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
+            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: #ea580c"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Sale window:</strong> ${data.windowLabel || '—'}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total orders</p><p class="preview-body-data text-xl font-bold">${Number(data.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale units</p><p class="preview-body-data text-xl font-bold">${Number(data.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="preview-body-data text-xl font-bold">£${Number(data.aov||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="preview-body-data text-lg font-bold">£${Number(data.totalRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale revenue</p><p class="preview-body-data text-lg font-bold">£${Number(data.saleRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from sale items</p><p class="preview-body-data text-xl font-bold">${Number(data.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 sale products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No sale products in window</td></tr>'}</tbody></table></div><div><p class="preview-header-label mb-2">Music vs merch (sale items)</p><div class="chart-shell chart-h-pie h-48"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="preview-header-label mb-2">Top 5 D2C Chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
         }
         function renderSalePieChart(canvasId, musicRev, merchRev, styles) {
             if(typeof Chart === 'undefined') return;
@@ -1953,7 +2109,7 @@
             const chartId = `${panePrefix}-chart-${key}`;
             const modeLabel = data.mode === 'signed_art_card' ? 'Signed art card (order attribution)' : 'Signed formats';
             const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
-            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: var(--rep-v-tert)"><h3 class="preview-header-label text-base">${data.title || key}</h3><p class="text-xs text-gray-500">${modeLabel}</p><div class="grid grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market chart</p></div><div class="col-span-2"><p class="text-[10px] uppercase text-gray-400 font-bold">Signed revenue</p><p class="preview-body-data text-xl font-bold">£${Number(data.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No signed products</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
+            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: var(--rep-v-tert)"><h3 class="preview-header-label text-base">${data.title || key}</h3><p class="text-xs text-gray-500">${modeLabel}</p><div class="grid grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed D2C Chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div class="col-span-2"><p class="text-[10px] uppercase text-gray-400 font-bold">Signed revenue</p><p class="preview-body-data text-xl font-bold">£${Number(data.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No signed products</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
         }
         function renderLeversPane(market, computed, paneId) {
             const pane = document.getElementById(paneId); if(!pane) return;
@@ -1971,6 +2127,7 @@
             if(data.signed) html += renderSignedLeverCard('signed', data.signed, prefix);
             pane.innerHTML = html;
             setTimeout(() => {
+                registerPiePercentOverlayPlugin();
                 const styles = getSidebarFormStyles();
                 ['preOrder1', 'preOrder2', 'competition', 'signed'].forEach(k => { if(data[k]?.top5?.length) renderLeverChart(`${prefix}-chart-${k}`, data[k].top5); });
                 if(data.sale) {
@@ -2364,7 +2521,7 @@
                     <div class="dashboard-card border-l-4" style="border-color: var(--accent-primary)">
                         <div class="flex justify-between items-start">
                             <div><p class="preview-header-label font-bold uppercase">Territory Revenue</p><p class="preview-body-data text-2xl font-bold">${d.revenue}</p><p class="preview-small-text mt-1 text-gray-500">${d.items} units shipped across ${d.orders} orders (AOV: ${d.aov})</p></div>
-                            <div class="text-right"><p class="preview-header-label font-bold uppercase">Campaign Chart Units</p><p class="preview-body-data text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p></div>
+                            <div class="text-right"><p class="preview-header-label font-bold uppercase">Campaign D2C Chart Units</p><p class="preview-body-data text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p>${prefix === 'uk' && getSalesforceUnitsForMarket('uk') ? `<p class="text-[10px] text-gray-400 mt-1">Includes ${getSalesforceUnitsForMarket('uk').toLocaleString()} prior SF units (GB→UK)</p>` : ''}${prefix === 'eu' && getSalesforceUnitsForMarket('eu') ? `<p class="text-[10px] text-gray-400 mt-1">Includes ${getSalesforceUnitsForMarket('eu').toLocaleString()} prior SF units (excl. GB)</p>` : ''}</div>
                         </div>
                     </div>
                     <div class="dashboard-card flex-1"><h3 class="preview-header-label mb-2 font-bold uppercase">Standout Campaign Music Formats</h3><table class="w-full text-sm"><tbody id="${prefix}-table-preview" class="preview-small-text"></tbody></table></div>
@@ -2404,6 +2561,7 @@
 
             setTimeout(() => {
                 if(typeof Chart === 'undefined') return;
+                registerPiePercentOverlayPlugin();
                 const prim = getSidebarFormStyles().primary; const sec = getSidebarFormStyles().secondary;
                 const tert = getSidebarFormStyles().tertiary; const quat = getSidebarFormStyles().quaternary;
 
@@ -2510,6 +2668,7 @@
             }
 
             populateLeadersTable('table-body', Object.entries(gProds).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5));
+            updateGlobalMerchSection(styles);
             const countryPayload = (() => {
                 const built = buildTopCountriesPayload();
                 if((built.top10 || []).length > 0) return built;
@@ -2629,6 +2788,8 @@
             if (document.getElementById('input-logo-color-overlay')) document.getElementById('input-logo-color-overlay').checked = old.logoColorOverlay !== false;
 
             applyLogoBase64(old.logoBase64 ? old.logoBase64 : null);
+            applyFaviconBase64(old.faviconBase64 || null);
+            loadedGlobalMerchPayload = old.globalMerch || null;
             for (const slot of ['p1', 'p2', 'p3', 'p4']) applyProductImage(slot, old.productImages?.[slot] || null);
             loadedTopCountriesPayload = old.topCountries || null;
             loadedEuTopCountriesPayload = old.eu?.euTopCountries || null;
@@ -3103,6 +3264,8 @@
 
             document.getElementById('upload-logo')?.addEventListener('change', function(e) { if (e.target.files[0]) compressImageToBase64(e.target.files[0], applyLogoBase64, { flattenTransparent: false }); });
             document.getElementById('clear-logo')?.addEventListener('click', () => { applyLogoBase64(null); document.getElementById('upload-logo').value = ''; });
+            document.getElementById('upload-favicon')?.addEventListener('change', function(e) { if (e.target.files[0]) compressFaviconToBase64(e.target.files[0], applyFaviconBase64); });
+            document.getElementById('clear-favicon')?.addEventListener('click', () => { applyFaviconBase64(null); document.getElementById('upload-favicon').value = ''; });
             ['p1','p2','p3','p4'].forEach(slot => { document.getElementById(`upload-${slot}`)?.addEventListener('change', function(e) { if (e.target.files[0]) compressImageToBase64(e.target.files[0], (b64) => applyProductImage(slot, b64)); }); document.getElementById(`clear-${slot}`)?.addEventListener('click', () => { applyProductImage(slot, null); document.getElementById(`upload-${slot}`).value = ''; }); });
 
             document.getElementById('btn-clear-load')?.addEventListener('click', () => { resetLoadedCampaignToDefaults(); });
@@ -3145,6 +3308,25 @@
                 });
             }
 
+            function optimizeFaviconForPublish(dataUrl, maxChars = 12000) {
+                return new Promise((resolve) => {
+                    if(!dataUrl) { resolve(dataUrl); return; }
+                    const img = new Image();
+                    img.onload = () => {
+                        const size = 64;
+                        const canvas = document.createElement('canvas');
+                        canvas.width = size; canvas.height = size;
+                        const ctx = canvas.getContext('2d');
+                        const scale = Math.min(size / img.width, size / img.height);
+                        const w = img.width * scale, h = img.height * scale;
+                        ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+                        resolve(canvas.toDataURL('image/png'));
+                    };
+                    img.onerror = () => resolve(dataUrl);
+                    img.src = dataUrl;
+                });
+            }
+
             function optimizeDataUrlForPublish(dataUrl, maxChars = 320000, cardBg = '#ffffff') {
                 return new Promise((resolve) => {
                     if(!dataUrl) { resolve(dataUrl); return; }
@@ -3173,6 +3355,7 @@
                     }
                 });
                 if(payload.logoBase64) payload.logoBase64 = await optimizeLogoForPublish(payload.logoBase64, 240000, cardBg, payload.logoColorOverlay !== false);
+                if(payload.faviconBase64) payload.faviconBase64 = await optimizeFaviconForPublish(payload.faviconBase64);
                 if(payload.productImages) {
                     for(const slot of ['p1', 'p2', 'p3', 'p4']) {
                         if(payload.productImages[slot]) payload.productImages[slot] = await optimizeDataUrlForPublish(payload.productImages[slot], 360000, cardBg);
@@ -3206,7 +3389,7 @@
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
                     sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only' },
-                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
+                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, faviconBase64: globalFaviconBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
                     sectionNames: { global: document.getElementById('input-name-global')?.value || '1. Global Dashboard Summary', uk: document.getElementById('input-name-uk')?.value || '2. United Kingdom Market Insights', eu: document.getElementById('input-name-eu')?.value || '3. European Union Market Insights', us: document.getElementById('input-name-us')?.value || '4. United States Market Insights', int: document.getElementById('input-name-int')?.value || '5. Rest of World / International Insights', countries: document.getElementById('input-name-countries')?.value || '6. Top Countries' },
                     campaignDates: getCampaignDates(),
                     timelineGranularity: timelineForPublish.granularity,
@@ -3217,6 +3400,7 @@
                     global: { revenue: document.getElementById('kpi-revenue')?.textContent || '£0.00', items: document.getElementById('kpi-items')?.textContent || '0', orders: document.getElementById('kpi-orders')?.textContent || '0', aov: document.getElementById('kpi-aov')?.textContent || '£0.00' },
                     uk: packageMarketSegment('uk'), eu: packageMarketSegment('eu'), us: packageMarketSegment('us'), int: packageMarketSegment('int'),
                     topCountries: buildTopCountriesPayload(),
+                    globalMerch: buildGlobalMerchPayload(),
                     salesforcePriorUnits: salesforcePriorUnits || null
                 };
 
@@ -3260,6 +3444,7 @@
             });
 
             if(typeof Chart !== 'undefined') {
+                registerPiePercentOverlayPlugin();
                 try {
                 let tCtx = document.getElementById('globalTimelineChart')?.getContext('2d');
                 if(tCtx) {
