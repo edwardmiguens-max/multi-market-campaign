@@ -374,6 +374,7 @@
 
         <header class="border-b pb-4">
             <h1 id="display-title" class="live-report-main-title">GLOBAL ROLLUP REPORT</h1>
+            <div id="display-last-updated" class="text-xs text-gray-500 mt-2 hidden" aria-live="polite"></div>
         </header>
 
         <div id="products-grid" style="display: none;" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -1006,6 +1007,39 @@
         }
         const LEVER_SHOW_KEYS = ['preOrder1', 'preOrder2'];
 
+        function formatLastUpdatedInZone(iso, timeZone) {
+            const d = new Date(iso);
+            if(Number.isNaN(d.getTime())) return '—';
+            const locale = timeZone === 'Europe/London' ? 'en-GB' : 'en-US';
+            const parts = new Intl.DateTimeFormat(locale, {
+                timeZone,
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: timeZone !== 'Europe/London',
+                timeZoneName: 'short'
+            }).formatToParts(d);
+            const pick = (type) => parts.find(p => p.type === type)?.value || '';
+            const tz = pick('timeZoneName');
+            const date = `${pick('day')} ${pick('month')} ${pick('year')}`.trim();
+            const time = `${pick('hour')}:${pick('minute')}`.replace(/^:/, '').trim();
+            return `${date}, ${time}${tz ? ' ' + tz : ''}`.replace(/\s+/g, ' ').trim();
+        }
+        function applyLastUpdatedDisplay(iso) {
+            const el = document.getElementById('display-last-updated');
+            if(!el) return;
+            if(!iso) { el.innerHTML = ''; el.classList.add('hidden'); return; }
+            const zones = [
+                { label: 'UK', timeZone: 'Europe/London' },
+                { label: 'US ET', timeZone: 'America/New_York' },
+                { label: 'US PT', timeZone: 'America/Los_Angeles' }
+            ];
+            const lines = zones.map(z => `<span class="block">${z.label}: ${formatLastUpdatedInZone(iso, z.timeZone)}</span>`).join('');
+            el.innerHTML = `<span class="font-semibold text-gray-400 block mb-0.5">Last updated</span>${lines}`;
+            el.classList.remove('hidden');
+        }
         function getEmptyStoreData() {
             return {
                 uk: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
@@ -2325,6 +2359,7 @@
             }
             document.getElementById('btn-clear-load')?.classList.add('hidden');
             document.getElementById('publish-result')?.classList.add('hidden');
+            applyLastUpdatedDisplay(null);
 
             const pubBtn = document.getElementById('btn-publish');
             if(pubBtn) {
@@ -2620,7 +2655,7 @@
                 const tert = getSidebarFormStyles().tertiary; const quat = getSidebarFormStyles().quaternary;
 
                 const devEl = document.getElementById(`${prefix}-pie-canvas-preview`);
-                if(devEl) chartInstances[`${prefix}_device`] = new Chart(devEl.getContext('2d'), { type: 'pie', data: { labels: ['Mobile','Desktop'], datasets: [{ data: [d.mobilePerc, d.desktopPct], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}} } });
+                if(devEl) chartInstances[`${prefix}_device`] = new Chart(devEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Mobile','Desktop'], datasets: [{ data: [d.mobilePerc, d.desktopPct], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
 
                 const mmEl = document.getElementById(`${prefix}-mm-pie-preview`);
                 if(mmEl) chartInstances[`${prefix}_mm`] = new Chart(mmEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev','Merch Rev'], datasets: [{ data: [merch.musicRev || 1, merch.merchRev || 1], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
@@ -2776,6 +2811,7 @@
             }
             if (document.getElementById('input-title')) document.getElementById('input-title').value = old.title || 'GLOBAL ROLLUP REPORT';
             if (document.getElementById('display-title')) document.getElementById('display-title').textContent = old.title || 'GLOBAL ROLLUP REPORT';
+            applyLastUpdatedDisplay(old.lastUpdatedAt || null);
 
             if (Array.isArray(old.campaignChartProducts)) setCampaignChartProducts(old.campaignChartProducts);
             else setCampaignChartProducts([]);
@@ -3419,6 +3455,7 @@
                         if(payload.productImages[slot]) payload.productImages[slot] = await optimizeDataUrlForPublish(payload.productImages[slot], 360000, cardBg);
                     }
                 }
+                payload.lastUpdatedAt = new Date().toISOString();
                 return payload;
             }
 
@@ -3483,6 +3520,7 @@
                     const data = await response.json();
                     if (!data || data.length === 0) throw new Error("Insert returned no ID.");
                     targetId = data[0].id; activeLoadedReportId = targetId;
+                    applyLastUpdatedDisplay(publishPayload.lastUpdatedAt || null);
                     try {
                         const setupBySaved = document.getElementById('input-setup-by')?.value.trim();
                         if(setupBySaved) localStorage.setItem('rep-admin-setup-by', setupBySaved);
