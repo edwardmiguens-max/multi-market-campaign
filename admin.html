@@ -48,17 +48,18 @@
         #shopify-theme-sidebar .text-blue-400, #shopify-theme-sidebar .text-cyan-400, #shopify-theme-sidebar .text-indigo-400, #shopify-theme-sidebar .text-yellow-400, #shopify-theme-sidebar .text-green-400, #shopify-theme-sidebar .text-purple-400, #shopify-theme-sidebar .text-sky-400 { color: var(--se-text-label) !important; font-weight: 600; font-size: 0.6875rem; letter-spacing: 0.04em; text-transform: uppercase; }
         #shopify-theme-sidebar .bg-gray-800, #shopify-theme-sidebar .bg-gray-800\/60, #shopify-theme-sidebar .bg-gray-900 { background: var(--se-surface-raised) !important; }
         #shopify-theme-sidebar .border-gray-700, #shopify-theme-sidebar .border-gray-600, #shopify-theme-sidebar .border-blue-500, #shopify-theme-sidebar .border-cyan-700, #shopify-theme-sidebar .border-indigo-700, #shopify-theme-sidebar .border-green-600\/50, #shopify-theme-sidebar .border-purple-600\/50 { border-color: var(--se-border) !important; }
-        #preview-workspace-pane { background: var(--se-canvas) !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }
+        #preview-workspace-pane { background: var(--rep-v-bg) !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important; }
         #preview-workspace-pane #display-title { font-family: var(--rep-v-font) !important; font-size: calc(1.5rem * var(--rep-v-h-scale)) !important; line-height: calc(2rem * var(--rep-v-h-scale)) !important; font-weight: 600 !important; color: var(--rep-v-logo-col) !important; letter-spacing: -0.02em; }
         #preview-workspace-pane header { border-bottom-color: var(--shopify-border) !important; }
         #preview-workspace-pane details.group { background: #fff !important; border: 1px solid var(--shopify-border) !important; border-radius: 0.75rem !important; box-shadow: none !important; overflow: hidden; }
         #preview-workspace-pane .accordion-summary-bar { background-color: var(--rep-v-acc-col) !important; color: var(--rep-v-acc-txt) !important; border-bottom: none; }
-        #preview-workspace-pane .accordion-title-text { color: var(--rep-v-acc-txt) !important; font-weight: 600 !important; font-size: 0.9375rem !important; }
+        #preview-workspace-pane .accordion-title-text, #preview-workspace-pane summary .accordion-chevron { color: var(--rep-v-acc-txt) !important; }
+        #preview-workspace-pane .accordion-title-text { font-weight: 600 !important; font-size: 0.9375rem !important; }
         .accordion-chevron { color: var(--rep-v-acc-txt); flex-shrink: 0; margin-left: 0.75rem; display: inline-flex; align-items: center; justify-content: center; }
         .accordion-chevron svg { transition: transform 0.2s ease; stroke: currentColor; }
         details:not([open]) > summary .accordion-chevron svg { transform: rotate(-90deg); }
         details[open] > summary .accordion-chevron svg { transform: rotate(0deg); }
-        #preview-workspace-pane details > div { background: #f6f6f7 !important; }
+        #preview-workspace-pane details > div { background: var(--rep-v-bg) !important; }
         #preview-workspace-pane .dashboard-card { border: 1px solid var(--shopify-border) !important; box-shadow: none !important; border-radius: 0.75rem !important; }
         #preview-workspace-pane .global-kpi-grid .dashboard-card { border-left: none !important; }
         #preview-workspace-pane .global-kpi-grid .preview-body-data { font-size: 1.5rem !important; font-weight: 600 !important; letter-spacing: -0.02em; color: #202223 !important; }
@@ -296,10 +297,15 @@
                                 <div class="flex items-center gap-2 mt-1"><button type="button" id="btn-lever-sale-products" class="text-[10px] px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600">Select products</button><span id="lever-sale-products-label" class="text-[10px] text-gray-400">None selected</span></div>
                             </div>
                         </div>
-                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="signed">
-                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-rose-300">Signed</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-signed-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-signed-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-signed-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-signed-int" class="mr-0.5">ROW</label></div></div>
-                            <input type="text" id="lever-signed-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Signed">
-                            <div class="flex gap-3 text-[11px]"><label><input type="radio" name="lever-signed-mode" value="signed_formats" checked> Signed formats</label><label><input type="radio" name="lever-signed-mode" value="signed_art_card"> Signed art card</label></div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="signedUkEu">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-rose-300">Signed (UK / EU / ROW)</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-signedUkEu-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-signedUkEu-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-signedUkEu-int" class="mr-0.5">ROW</label></div></div>
+                            <input type="text" id="lever-signedUkEu-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Signed">
+                            <div class="flex gap-3 text-[11px]"><label><input type="radio" name="lever-signedUkEu-mode" value="signed_formats" checked> Signed formats</label><label><input type="radio" name="lever-signedUkEu-mode" value="signed_art_card"> Signed art card</label></div>
+                        </div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="signedUs">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-rose-300">Signed (US)</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-signedUs-us" class="mr-0.5">US</label></div></div>
+                            <input type="text" id="lever-signedUs-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Signed">
+                            <div class="flex gap-3 text-[11px]"><label><input type="radio" name="lever-signedUs-mode" value="signed_formats" checked> Signed formats</label><label><input type="radio" name="lever-signedUs-mode" value="signed_art_card"> Signed art card</label></div>
                         </div>
                     </div>
                 </details>
@@ -839,6 +845,7 @@
         let chartInstances = {}; 
         let loadedTopCountriesPayload = null;
         let loadedEuTopCountriesPayload = null;
+        let loadedIntTopCountriesPayload = null;
         let loadedGlobalMerchPayload = null;
         let globalLogoBase64 = null;
         let globalFaviconBase64 = null;
@@ -899,10 +906,9 @@
                 musicRev += Number(d.merch?.musicRev) || 0;
                 merchRev += Number(d.merch?.merchRev) || 0;
                 Object.entries(d.merch?.sizes || {}).forEach(([sz, v]) => { sizes[sz] = (sizes[sz] || 0) + (Number(v) || 0); });
-                Object.entries(d.products || {}).forEach(([name, obj]) => {
-                    const mu = d.musicProducts?.[name];
-                    const units = (Number(obj.units) || 0) - (Number(mu?.units) || 0);
-                    const revenue = (Number(obj.revenue) || 0) - (Number(mu?.revenue) || 0);
+                Object.entries(d.merchProducts || {}).forEach(([name, obj]) => {
+                    const units = Number(obj.units) || 0;
+                    const revenue = Number(obj.revenue) || 0;
                     if(units <= 0 && revenue <= 0) return;
                     if(!merchProducts[name]) merchProducts[name] = { units: 0, revenue: 0 };
                     merchProducts[name].units += units;
@@ -979,7 +985,7 @@
         let orderIndex = {};
         let loadedLeversPayload = null;
 
-        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signed'];
+        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signedUkEu', 'signedUs'];
         const LEVER_MARKET_CODES = ['uk', 'eu', 'us', 'int'];
         const LEVER_MARKET_LABELS = { uk: 'UK', eu: 'EU', us: 'US', int: 'ROW' };
         const LEVER_MARKETS_OFF = { ukEnabled: false, euEnabled: false, usEnabled: false, intEnabled: false };
@@ -1002,10 +1008,10 @@
 
         function getEmptyStoreData() {
             return {
-                uk: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                eu: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 90, desktop: 10 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                us: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 80, desktop: 20 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                int: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 75, desktop: 25 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} }
+                uk: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
+                eu: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 90, desktop: 10 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
+                us: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 80, desktop: 20 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
+                int: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 75, desktop: 25 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} }
             };
         }
         let storeData = getEmptyStoreData();
@@ -1434,12 +1440,12 @@
             });
             return total;
         }
-        function buildEuTopCountriesPayload() {
+        function buildMarketTopCountriesPayload(market, limit, mergeSalesforce) {
             const merged = {};
-            Object.entries(marketCountryMusicStats.eu || {}).forEach(([country, obj]) => {
+            Object.entries(marketCountryMusicStats[market] || {}).forEach(([country, obj]) => {
                 merged[country] = { musicUnits: Number(obj.musicUnits || 0), revenue: Number(obj.revenue || 0), salesforceUnits: 0 };
             });
-            if(salesforcePriorUnits?.byCountry) {
+            if(mergeSalesforce && salesforcePriorUnits?.byCountry) {
                 Object.entries(salesforcePriorUnits.byCountry).forEach(([country, units]) => {
                     if(isSalesforceUkCountry(country)) return;
                     const u = Number(units) || 0;
@@ -1452,12 +1458,19 @@
                 .map(([country, o]) => ({ country, musicUnits: o.musicUnits, revenue: o.revenue, salesforceUnits: o.salesforceUnits || 0 }))
                 .filter(r => r.musicUnits > 0 || r.revenue > 0)
                 .sort((a, b) => b.musicUnits - a.musicUnits || b.revenue - a.revenue)
-                .slice(0, 10);
+                .slice(0, limit);
         }
+        function buildEuTopCountriesPayload() { return buildMarketTopCountriesPayload('eu', 10, true); }
+        function buildIntTopCountriesPayload() { return buildMarketTopCountriesPayload('int', 5, false); }
         function getEuTopCountriesForDisplay() {
             const live = buildEuTopCountriesPayload();
             if(live.length > 0) return live;
             return Array.isArray(loadedEuTopCountriesPayload) ? loadedEuTopCountriesPayload : [];
+        }
+        function getIntTopCountriesForDisplay() {
+            const live = buildIntTopCountriesPayload();
+            if(live.length > 0) return live;
+            return Array.isArray(loadedIntTopCountriesPayload) ? loadedIntTopCountriesPayload : [];
         }
         function renderEuTopCountriesTableHtml(rows) {
             if(!rows?.length) {
@@ -1474,6 +1487,13 @@
                 sfNote = `<p class="text-[10px] text-gray-400 mt-2">Prior Salesforce vinyl units (no revenue): ${parts.join(' · ')}.</p>`;
             }
             return `<div class="dashboard-card w-full"><h3 class="preview-header-label mb-2">Top 10 EU countries</h3><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Music units</th><th class="text-right py-1">Net revenue</th></tr></thead><tbody>${body}</tbody></table>${sfNote}</div>`;
+        }
+        function renderIntTopCountriesTableHtml(rows) {
+            if(!rows?.length) {
+                return `<div class="dashboard-card w-full"><h3 class="preview-header-label mb-2">Top 5 ROW countries</h3><p class="text-xs text-gray-500 italic">Awaiting ROW country data from CSV upload.</p></div>`;
+            }
+            const body = rows.map(r => `<tr class="border-b"><td class="py-1.5 font-medium">${r.country}</td><td class="py-1.5 text-right">${Number(r.musicUnits || 0).toLocaleString()}</td><td class="py-1.5 text-right">£${Number(r.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join('');
+            return `<div class="dashboard-card w-full"><h3 class="preview-header-label mb-2">Top 5 ROW countries</h3><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Music units</th><th class="text-right py-1">Net revenue</th></tr></thead><tbody>${body}</tbody></table></div>`;
         }
         function updateSalesforceSummary() {
             const el = document.getElementById('salesforce-country-summary');
@@ -1704,8 +1724,33 @@
             row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => calculateGlobalDashboard()));
             container.appendChild(row);
         }
+        function normalizeLeversConfig(cfg) {
+            if(!cfg) return cfg;
+            if(!cfg.signed || cfg.signedUkEu || cfg.signedUs) return cfg;
+            const s = cfg.signed;
+            return {
+                ...cfg,
+                signedUkEu: {
+                    title: s.title || 'Signed',
+                    mode: s.mode || 'signed_formats',
+                    ukEnabled: !!s.ukEnabled,
+                    euEnabled: !!s.euEnabled,
+                    intEnabled: !!s.intEnabled,
+                    usEnabled: false
+                },
+                signedUs: {
+                    title: s.title || 'Signed',
+                    mode: s.mode || 'signed_formats',
+                    ukEnabled: false,
+                    euEnabled: false,
+                    intEnabled: false,
+                    usEnabled: !!s.usEnabled
+                }
+            };
+        }
         function getLeversConfigFromForm() {
-            const signedModeEl = document.querySelector('input[name="lever-signed-mode"]:checked');
+            const signedUkEuModeEl = document.querySelector('input[name="lever-signedUkEu-mode"]:checked');
+            const signedUsModeEl = document.querySelector('input[name="lever-signedUs-mode"]:checked');
             return {
                 preOrder1: { ...readLeverMarketFlags('preOrder1'), title: document.getElementById('lever-preOrder1-title')?.value || 'Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder1-start-date')?.value || '', startTime: document.getElementById('lever-preOrder1-start-time')?.value || '', endDate: document.getElementById('lever-preOrder1-end-date')?.value || '', endTime: document.getElementById('lever-preOrder1-end-time')?.value || '', shows: getShowRowsFromDom('preOrder1'), npnSignups: Number(document.getElementById('lever-preOrder1-npn')?.value || 0) },
                 preOrder2: { ...readLeverMarketFlags('preOrder2'), title: document.getElementById('lever-preOrder2-title')?.value || 'Second Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder2-start-date')?.value || '', startTime: document.getElementById('lever-preOrder2-start-time')?.value || '', endDate: document.getElementById('lever-preOrder2-end-date')?.value || '', endTime: document.getElementById('lever-preOrder2-end-time')?.value || '', shows: getShowRowsFromDom('preOrder2'), npnSignups: Number(document.getElementById('lever-preOrder2-npn')?.value || 0) },
@@ -1713,10 +1758,12 @@
                 upsell: { ...readLeverMarketFlags('upsell'), title: document.getElementById('lever-upsell-title')?.value || 'Upsell', productName: document.getElementById('lever-upsell-product')?.value || '', discountPercent: Number(document.getElementById('lever-upsell-discount')?.value || 0) },
                 competition: { ...readLeverMarketFlags('competition'), title: document.getElementById('lever-competition-title')?.value || 'Competition', startDate: document.getElementById('lever-competition-start-date')?.value || '', startTime: document.getElementById('lever-competition-start-time')?.value || '', endDate: document.getElementById('lever-competition-end-date')?.value || '', endTime: document.getElementById('lever-competition-end-time')?.value || '', prize: document.getElementById('lever-competition-prize')?.value || '', npnSignups: Number(document.getElementById('lever-competition-npn')?.value || 0) },
                 sale: { ...readLeverMarketFlags('sale'), title: document.getElementById('lever-sale-title')?.value || 'Sale', notes: document.getElementById('lever-sale-notes')?.value || '', startDate: document.getElementById('lever-sale-start-date')?.value || '', startTime: document.getElementById('lever-sale-start-time')?.value || '', endDate: document.getElementById('lever-sale-end-date')?.value || '', endTime: document.getElementById('lever-sale-end-time')?.value || '', saleProducts: getLeverSaleProducts() },
-                signed: { ...readLeverMarketFlags('signed'), title: document.getElementById('lever-signed-title')?.value || 'Signed', mode: signedModeEl?.value || 'signed_formats' }
+                signedUkEu: { ...readLeverMarketFlags('signedUkEu'), title: document.getElementById('lever-signedUkEu-title')?.value || 'Signed', mode: signedUkEuModeEl?.value || 'signed_formats' },
+                signedUs: { ...readLeverMarketFlags('signedUs'), title: document.getElementById('lever-signedUs-title')?.value || 'Signed', mode: signedUsModeEl?.value || 'signed_formats' }
             };
         }
         function applyLeversConfigToForm(cfg) {
+            cfg = normalizeLeversConfig(cfg);
             if(!cfg) return;
             const set = (id, val, isCheck) => { const el = document.getElementById(id); if(!el) return; if(isCheck) el.checked = !!val; else el.value = val ?? ''; };
             LEVER_KEYS.forEach(key => {
@@ -1727,7 +1774,8 @@
                 if(key === 'upsell') { set('lever-upsell-product', c.productName, false); set('lever-upsell-discount', c.discountPercent ?? 0, false); }
                 if(key === 'competition') { set('lever-competition-prize', c.prize, false); set('lever-competition-npn', c.npnSignups, false); }
                 if(key === 'sale') { set('lever-sale-notes', c.notes, false); setLeverSaleProducts(c.saleProducts || []); }
-                if(key === 'signed' && c.mode) { const r = document.querySelector(`input[name="lever-signed-mode"][value="${c.mode}"]`); if(r) r.checked = true; }
+                if(key === 'signedUkEu' && c.mode) { const r = document.querySelector(`input[name="lever-signedUkEu-mode"][value="${c.mode}"]`); if(r) r.checked = true; }
+                if(key === 'signedUs' && c.mode) { const r = document.querySelector(`input[name="lever-signedUs-mode"][value="${c.mode}"]`); if(r) r.checked = true; }
                 if(key === 'preOrder1' || key === 'preOrder2' || key === 'competition' || key === 'sale') {
                     set(`lever-${key}-start-date`, c.startDate, false); set(`lever-${key}-start-time`, c.startTime, false);
                     set(`lever-${key}-end-date`, c.endDate, false); set(`lever-${key}-end-time`, c.endTime, false);
@@ -2019,7 +2067,8 @@
                 if(leverEnabledForMarket(config.upsell, market)) out[market].upsell = { ...aggregateUpsellLever(market, config.upsell), title: config.upsell.title };
                 if(leverEnabledForMarket(config.competition, market)) out[market].competition = { ...aggregateTimedLever(market, config.competition, gwpNames), title: config.competition.title };
                 if(leverEnabledForMarket(config.sale, market)) out[market].sale = { ...aggregateSaleLever(market, config.sale), title: config.sale.title };
-                if(leverEnabledForMarket(config.signed, market)) out[market].signed = { ...aggregateSignedLever(market, config.signed), title: config.signed.title };
+                if(leverEnabledForMarket(config.signedUkEu, market)) out[market].signedUkEu = { ...aggregateSignedLever(market, config.signedUkEu), title: config.signedUkEu.title };
+                if(leverEnabledForMarket(config.signedUs, market)) out[market].signedUs = { ...aggregateSignedLever(market, config.signedUs), title: config.signedUs.title };
             });
             return enrichLeversGlobalCombined(out, config);
         }
@@ -2124,12 +2173,14 @@
             if(data.upsell) html += renderUpsellLeverCard('upsell', data.upsell, prefix);
             if(data.competition) html += renderTimedLeverCard(market, 'competition', data.competition, prefix);
             if(data.sale) html += renderSaleLeverCard(market, 'sale', data.sale, prefix);
-            if(data.signed) html += renderSignedLeverCard('signed', data.signed, prefix);
+            if(data.signedUkEu) html += renderSignedLeverCard('signedUkEu', data.signedUkEu, prefix);
+            if(data.signedUs) html += renderSignedLeverCard('signedUs', data.signedUs, prefix);
+            if(data.signed && !data.signedUkEu && !data.signedUs) html += renderSignedLeverCard('signed', data.signed, prefix);
             pane.innerHTML = html;
             setTimeout(() => {
                 registerPiePercentOverlayPlugin();
                 const styles = getSidebarFormStyles();
-                ['preOrder1', 'preOrder2', 'competition', 'signed'].forEach(k => { if(data[k]?.top5?.length) renderLeverChart(`${prefix}-chart-${k}`, data[k].top5); });
+                ['preOrder1', 'preOrder2', 'competition', 'signedUkEu', 'signedUs', 'signed'].forEach(k => { if(data[k]?.top5?.length) renderLeverChart(`${prefix}-chart-${k}`, data[k].top5); });
                 if(data.sale) {
                     renderSalePieChart(`${prefix}-pie-sale`, data.sale.saleMusicRev, data.sale.saleMerchRev, styles);
                     if(data.sale.top5?.length) renderSaleTop5Chart(`${prefix}-chart-sale`, data.sale.top5);
@@ -2240,7 +2291,8 @@
                 upsell: { ...LEVER_MARKETS_OFF, title: 'Upsell', productName: '', discountPercent: 0 },
                 competition: { ...LEVER_MARKETS_OFF, title: 'Competition', startDate: '', startTime: '', endDate: '', endTime: '', prize: '', npnSignups: 0 },
                 sale: { ...LEVER_MARKETS_OFF, title: 'Sale', notes: '', startDate: '', startTime: '', endDate: '', endTime: '', saleProducts: [] },
-                signed: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' }
+                signedUkEu: { ukEnabled: true, euEnabled: true, intEnabled: true, usEnabled: false, title: 'Signed', mode: 'signed_formats' },
+                signedUs: { ukEnabled: false, euEnabled: false, intEnabled: false, usEnabled: true, title: 'Signed', mode: 'signed_formats' }
             });
             LEVER_SHOW_KEYS.forEach(k => renderShowRowsToDom(k, []));
             const gwpSel = document.getElementById('lever-giftWithPurchase-product');
@@ -2261,6 +2313,7 @@
             loadedLeversPayload = null;
             loadedTopCountriesPayload = null;
             loadedEuTopCountriesPayload = null;
+            loadedIntTopCountriesPayload = null;
 
             const dropdown = document.getElementById('select-campaign-directory');
             if(dropdown) dropdown.value = '';
@@ -2553,6 +2606,7 @@
                 </div>
                 </div>
                 ${prefix === 'eu' ? renderEuTopCountriesTableHtml(d.euTopCountries || []) : ''}
+                ${prefix === 'int' ? renderIntTopCountriesTableHtml(d.intTopCountries || []) : ''}
                 <div id="${prefix}-levers-slot" class="space-y-4 border-t border-gray-200 pt-6"></div>
             `;
             
@@ -2610,7 +2664,7 @@
                         revenue: `£${d.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}`,
                         items: d.items.toLocaleString(), orders: ordersCount.toLocaleString(),
                         aov: `£${(ordersCount > 0 ? d.revenue/ordersCount : 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`,
-                        sessions: sessions, atcRate: sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%', conversionRate: sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%', upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00', mobilePerc: d.traffic.mobile, desktopPct: d.traffic.desktop, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined
+                        sessions: sessions, atcRate: sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%', conversionRate: sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%', upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00', mobilePerc: d.traffic.mobile, desktopPct: d.traffic.desktop, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined, intTopCountries: k === 'int' ? getIntTopCountriesForDisplay() : undefined
                     };
                     renderSegmentPreview(k, segmentPayload);
                     gRev += d.revenue; gItems += d.items; gOrders += ordersCount;
@@ -2793,6 +2847,7 @@
             for (const slot of ['p1', 'p2', 'p3', 'p4']) applyProductImage(slot, old.productImages?.[slot] || null);
             loadedTopCountriesPayload = old.topCountries || null;
             loadedEuTopCountriesPayload = old.eu?.euTopCountries || null;
+            loadedIntTopCountriesPayload = old.int?.intTopCountries || null;
             setSalesforcePriorUnits(old.salesforcePriorUnits || null, false);
 
             ['uk', 'eu', 'us', 'int'].forEach(m => {
@@ -3051,6 +3106,9 @@
                         else if(upperName.includes('POSTER') || upperName.includes('PRINT') || upperName.includes('LITH')) cat = 'Posters';
                     }
                     if(!isSignedArtCard(name)) {
+                        if(!storeData[tMk].merchProducts[name]) storeData[tMk].merchProducts[name] = { units: 0, revenue: 0 };
+                        storeData[tMk].merchProducts[name].units += derivedQty;
+                        storeData[tMk].merchProducts[name].revenue += rev;
                         if(!storeData[tMk].merch.categories[cat]) storeData[tMk].merch.categories[cat] = 0;
                         storeData[tMk].merch.categories[cat] += rev;
                     }
@@ -3382,7 +3440,8 @@
                     const revNum = Number(d.revenue) || 0; const itemsNum = Number(d.items) || 0; const aovNum = ordersCount > 0 ? (revNum / ordersCount) : 0; const atcRate = sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%'; const convRate = sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%'; const upt = ordersCount > 0 ? (itemsNum / ordersCount).toFixed(2) : '0.00';
                     const campaignChartUnits = getMarketChartUnits(prefix);
                     const euTopCountries = prefix === 'eu' ? getEuTopCountriesForDisplay() : undefined;
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), weekly: d.weekly || {}, daily: d.daily || {}, campaignChartUnits, euTopCountries, merch: safeMerch };
+                    const intTopCountries = prefix === 'int' ? getIntTopCountriesForDisplay() : undefined;
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), weekly: d.weekly || {}, daily: d.daily || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);

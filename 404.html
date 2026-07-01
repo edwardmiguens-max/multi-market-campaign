@@ -46,14 +46,14 @@
         #dashboard-area .global-kpi-grid .dashboard-card { border-left: none !important; }
         #dashboard-area .card-header-custom { color: var(--rep-v-hdr-txt) !important; }
         #dashboard-area #logo-container { margin-bottom: 1.5rem; display: none; align-items: center; justify-content: center; overflow: visible; max-width: 100%; }
-        #dashboard-area td, #dashboard-area th, #dashboard-area p, #dashboard-area span:not(summary span.text-lg) { color: var(--rep-v-body-txt); }
+        #dashboard-area td, #dashboard-area th, #dashboard-area p, #dashboard-area span:not(summary span.text-lg):not(.accordion-chevron):not(.accordion-title-text) { color: var(--rep-v-body-txt); }
         #display-logo { max-width: min(100%, 20rem); max-height: 8rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
         #display-logo-img { max-width: min(100%, 20rem); max-height: 8rem; object-fit: contain; background-color: transparent; border-radius: 0.25rem; transform: scale(var(--rep-v-logo-scale)); transform-origin: center center; }
         #products-grid .product-image-slot { background-color: var(--rep-v-card-bg) !important; }
         .logo-mask { background-color: var(--rep-v-logo-col) !important; -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; mask-size: contain; mask-repeat: no-repeat; mask-position: center; }
         .analytics-panel { background: #fff !important; border: 1px solid var(--shopify-border) !important; border-radius: 0.75rem !important; box-shadow: none !important; overflow: hidden; max-width: 100%; }
         .accordion-summary-bar { background-color: var(--rep-v-acc-col) !important; color: var(--rep-v-acc-txt) !important; border-bottom: none; }
-        #dashboard-area summary span.text-lg, #dashboard-area .accordion-title-text { color: var(--rep-v-acc-txt) !important; }
+        #dashboard-area summary span.text-lg, #dashboard-area .accordion-title-text, #dashboard-area summary .accordion-chevron { color: var(--rep-v-acc-txt) !important; }
         .accordion-chevron { color: var(--rep-v-acc-txt); flex-shrink: 0; margin-left: 0.75rem; display: inline-flex; align-items: center; justify-content: center; }
         .accordion-chevron svg { transition: transform 0.2s ease; stroke: currentColor; }
         details:not([open]) > summary .accordion-chevron svg { transform: rotate(-90deg); }
@@ -215,12 +215,9 @@
         const parseCurrencyLike = (v) => parseFloat(String(v ?? '').replace(/[^0-9.-]+/g, '')) || 0;
         const REPORT_BASE_CURRENCY = 'GBP';
         const VIEWER_CURRENCIES = [
-            { code: 'GBP', label: 'GBP (£)' }, { code: 'USD', label: 'USD ($)' }, { code: 'EUR', label: 'EUR (€)' },
-            { code: 'AUD', label: 'AUD (A$)' }, { code: 'CAD', label: 'CAD (C$)' }, { code: 'JPY', label: 'JPY (¥)' },
-            { code: 'CHF', label: 'CHF' }, { code: 'SEK', label: 'SEK (kr)' }, { code: 'NOK', label: 'NOK (kr)' },
-            { code: 'DKK', label: 'DKK (kr)' }, { code: 'PLN', label: 'PLN (zł)' }
+            { code: 'GBP', label: 'GBP (£)' }, { code: 'EUR', label: 'EUR (€)' }, { code: 'USD', label: 'USD ($)' }
         ];
-        const FALLBACK_GBP_RATES = { GBP: 1, USD: 1.27, EUR: 1.17, AUD: 1.95, CAD: 1.73, JPY: 191, CHF: 1.12, SEK: 13.2, NOK: 13.5, DKK: 8.72, PLN: 5.05 };
+        const FALLBACK_GBP_RATES = { GBP: 1, USD: 1.27, EUR: 1.17 };
         let viewerCurrency = 'GBP';
         let gbpExchangeRates = { GBP: 1 };
         let currencySelectorBound = false;
@@ -277,6 +274,7 @@
             if(!currencySelectorBound) {
                 currencySelectorBound = true;
                 try { viewerCurrency = localStorage.getItem('rep-viewer-currency') || 'GBP'; } catch (_e) {}
+                if(!VIEWER_CURRENCIES.some(c => c.code === viewerCurrency)) viewerCurrency = 'GBP';
                 VIEWER_CURRENCIES.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.code;
@@ -514,6 +512,13 @@
             }
             return `<div class="dashboard-card w-full"><h3 class="text-xs font-bold card-header-custom mb-2">Top 10 EU countries</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[280px]"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Music units</th><th class="text-right py-1">Net revenue</th></tr></thead><tbody>${body}</tbody></table></div>${sfNote}</div>`;
         }
+        function renderIntTopCountriesSection(rows) {
+            if(!rows?.length) {
+                return `<div class="dashboard-card w-full"><h3 class="text-xs font-bold card-header-custom mb-2">Top 5 ROW countries</h3><p class="text-xs text-gray-500 italic">No ROW country breakdown in this report.</p></div>`;
+            }
+            const body = rows.map(r => `<tr class="border-b"><td class="py-1.5 font-medium">${r.country}</td><td class="py-1.5 text-right">${Number(r.musicUnits || 0).toLocaleString()}</td><td class="py-1.5 text-right">${formatGBP(r.revenue)}</td></tr>`).join('');
+            return `<div class="dashboard-card w-full"><h3 class="text-xs font-bold card-header-custom mb-2">Top 5 ROW countries</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[280px]"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Music units</th><th class="text-right py-1">Net revenue</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+        }
         function renderLeversLive(market, computed, slotId, colors) {
             const pane = document.getElementById(slotId); if(!pane) return;
             const data = computed?.[market] || {};
@@ -542,8 +547,8 @@
                 const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
                 return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:#ea580c"><h3 class="text-base font-bold mb-0">${d.title||'Sale'}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Sale window:</strong> ${d.windowLabel||'—'}</p>${d.emptyReason ? `<p class="text-xs text-amber-600 italic">${d.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total orders</p><p class="text-2xl font-bold">${Number(d.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale units</p><p class="text-2xl font-bold">${Number(d.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="text-2xl font-bold">${formatGBP(d.aov)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="text-lg font-bold">${formatGBP(d.totalRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale revenue</p><p class="text-lg font-bold">${formatGBP(d.saleRevenue)}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from sale items</p><p class="text-2xl font-bold">${Number(d.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 sale products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${top||'<tr><td colspan="3" class="italic text-gray-400 py-2">No sale products</td></tr>'}</tbody></table></div></div><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Music vs merch (sale items)</p><div class="chart-shell chart-h-pie"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="text-xs font-bold card-header-custom uppercase mb-2">Top 5 D2C Chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
             };
-            const signed = (d) => {
-                const chartId = `live-${slotId}-chart-signed`;
+            const signedCard = (d, key) => {
+                const chartId = `live-${slotId}-chart-${key}`;
                 const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
                 return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${colors?.tertiary||'#4b5563'}"><h3 class="text-base font-bold">${d.title||'Signed'}</h3><p class="text-xs text-gray-500">${d.mode==='signed_art_card'?'Signed art card attribution':'Signed formats'}</p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed D2C Chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed revenue</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top products</p><table class="w-full text-sm"><tbody>${top||'<tr><td class="italic text-gray-400 py-2">No signed products</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
             };
@@ -554,12 +559,14 @@
             if(data.upsell) html += upsell(data.upsell);
             if(data.competition) html += timed('competition', data.competition);
             if(data.sale) html += sale(data.sale);
-            if(data.signed) html += signed(data.signed);
+            if(data.signedUkEu) html += signedCard(data.signedUkEu, 'signedUkEu');
+            if(data.signedUs) html += signedCard(data.signedUs, 'signedUs');
+            if(data.signed && !data.signedUkEu && !data.signedUs) html += signedCard(data.signed, 'signed');
             pane.innerHTML = html;
             if(typeof Chart === 'undefined') return;
             registerPiePercentOverlayPlugin();
-            ['preOrder1','preOrder2','competition','signed'].forEach(k => {
-                const top5 = data[k]?.top5; const cid = k === 'signed' ? `live-${slotId}-chart-signed` : `live-${slotId}-chart-${k}`;
+            ['preOrder1','preOrder2','competition','signedUkEu','signedUs','signed'].forEach(k => {
+                const top5 = data[k]?.top5; const cid = `live-${slotId}-chart-${k}`;
                 const el = document.getElementById(cid); if(!el || !top5?.length) return;
                 if(liveLeverCharts[cid]) liveLeverCharts[cid].destroy();
                 liveLeverCharts[cid] = new Chart(el.getContext('2d'), { type: 'bar', data: { labels: top5.map(x => x[0].length>22?x[0].slice(0,22)+'…':x[0]), datasets: [{ label: 'Units', data: top5.map(x=>x[1].units), backgroundColor: prim, yAxisID:'y' }, { label: `Revenue (${viewerCurrency})`, data: top5.map(x=>x[1].revenue), backgroundColor: sec, yAxisID:'y1' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { font: { size: 10 } } }, tooltip: { callbacks: { label: (ctx) => ctx.dataset.yAxisID === 'y1' ? `${ctx.dataset.label}: ${formatMoney(ctx.raw)}` : `${ctx.dataset.label}: ${ctx.raw}` } } }, scales: { y: { beginAtZero: true, position: 'left' }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => formatMoneyAxis(v) } } } } });
@@ -861,6 +868,7 @@
                     <div class="space-y-4 flex flex-col justify-between"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><span class="text-[10px] font-bold card-header-custom">Music vs merch (net rev)</span><span class="text-[11px] font-medium text-gray-500">Merch: ${formatMoney(merch.merchRev||0)}</span></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-mm-pie"></canvas></div></div><div class="dashboard-card"><div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold card-header-custom">Garment sizing (units)</span></div><div class="chart-shell chart-h-bar"><canvas id="${prefix}-size-bar"></canvas></div></div><div class="dashboard-card flex-1"><span class="text-[10px] font-bold card-header-custom block mb-2">Top merch categories</span><div class="chart-shell chart-h-cat"><canvas id="${prefix}-cat-bar"></canvas></div></div></div>
                     </div>
                     ${prefix === 'eu' ? renderEuTopCountriesSection(d.euTopCountries || [], payload.salesforcePriorUnits) : ''}
+                    ${prefix === 'int' ? renderIntTopCountriesSection(d.intTopCountries || []) : ''}
                     <div id="${prefix}-levers-slot" class="space-y-4 border-t border-gray-200 pt-6"></div>
                 `;
 
