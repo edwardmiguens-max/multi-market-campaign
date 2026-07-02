@@ -1143,6 +1143,17 @@
             });
             ingestionWarnings.push('No compare markets were selected — all markets re-enabled for this upload.');
         }
+        function resetCompareFiltersForNewUpload() {
+            ['uk', 'eu', 'us', 'int'].forEach(mk => {
+                const cb = document.getElementById(`filter-market-${mk}`);
+                if(cb) cb.checked = true;
+            });
+            if(document.getElementById('input-period-from')) document.getElementById('input-period-from').value = '';
+            if(document.getElementById('input-period-to')) document.getElementById('input-period-to').value = '';
+            if(document.getElementById('input-product-scope')) document.getElementById('input-product-scope').value = 'all';
+            if(document.getElementById('input-include-keywords')) document.getElementById('input-include-keywords').value = '';
+            if(document.getElementById('input-exclude-keywords')) document.getElementById('input-exclude-keywords').value = '';
+        }
         function parseCsvDateValue(v) {
             if(v === null || v === undefined || v === '') return null;
             if(v instanceof Date && !isNaN(v.getTime())) {
@@ -3372,6 +3383,9 @@
             }
             ingestionWarnings.push(`Post-filter ingest counts — UK: ${acceptedRowsByMarket.uk}, EU: ${acceptedRowsByMarket.eu}, US: ${acceptedRowsByMarket.us}, INT: ${acceptedRowsByMarket.int}`);
             ingestionWarnings.push(`Post-filter ingest revenue — UK: £${acceptedRevenueByMarket.uk.toFixed(2)}, EU: £${acceptedRevenueByMarket.eu.toFixed(2)}, US: £${acceptedRevenueByMarket.us.toFixed(2)}, INT: £${acceptedRevenueByMarket.int.toFixed(2)}`);
+            const publishedRev = Object.values(acceptedRevenueByMarket).reduce((a,b)=>a+b,0);
+            const publishedOrders = Object.values(storeData).reduce((sum, m) => sum + (m.orders?.size || 0), 0);
+            ingestionWarnings.push(`Dashboard totals after upload — ${publishedOrders.toLocaleString()} orders · £${publishedRev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} revenue. Click Update/Publish for this to appear on the live report URL.`);
             renderWarnings();
             populateLeverProductDropdowns();
             calculateGlobalDashboard();
@@ -3388,7 +3402,10 @@
                 complete: function(res) {
                     windowCurrentCSVData = res.data; windowCurrentCSVMk = mk; windowCurrentCSVHasMarket = false;
                     ingestionWarnings = [];
-                    if(mk === 'master') ensureCompareMarketsSelected();
+                    if(mk === 'master') {
+                        resetCompareFiltersForNewUpload();
+                        ensureCompareMarketsSelected();
+                    }
                     const fields = (res.meta && Array.isArray(res.meta.fields)) ? res.meta.fields : [];
                     const normalizedFields = fields.map(f => String(f || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
                     const hasDateColumn = normalizedFields.some(f => f.includes('date') || f.includes('timestamp') || f.includes('created') || f === 'day' || f === 'reportingday');
@@ -3633,6 +3650,14 @@
 
             document.getElementById('btn-publish')?.addEventListener('click', async (e) => {
                 e.preventDefault(); const nameInput = document.getElementById('input-campaign-name')?.value.trim(); if(!nameInput) return alert("Please specify campaign identity flag.");
+                const liveRev = Object.values(storeData).reduce((sum, m) => sum + (Number(m.revenue) || 0), 0);
+                const liveOrders = Object.values(storeData).reduce((sum, m) => sum + (m.orders?.size || 0), 0);
+                if(windowCurrentCSVData?.length && liveOrders === 0) {
+                    return alert('No sales data is loaded in the preview (0 orders). Upload your Master Sales File again and check Data quality notes before publishing.');
+                }
+                if(windowCurrentCSVData?.length && liveRev > 0 && liveRev < 100) {
+                    if(!confirm(`Preview totals look very low (£${liveRev.toFixed(2)} revenue, ${liveOrders} orders). Publish anyway?`)) return;
+                }
                 const resDiv = document.getElementById('publish-result'); if(resDiv) { resDiv.innerHTML = "⏳ Compacting Payload & Dispatching..."; resDiv.classList.remove('hidden', 'text-green-400', 'text-red-400'); resDiv.classList.add('text-yellow-400'); }
 
                 const packageMarketSegment = (prefix) => {
