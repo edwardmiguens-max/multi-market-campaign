@@ -504,6 +504,27 @@
                 el.classList.remove('hidden', 'text-red-400', 'text-yellow-400');
                 el.classList.add('text-green-400');
             };
+            function initReportSupabaseClient() {
+                if (window.__reportSupabaseClient) return window.__reportSupabaseClient;
+                if (!window.supabase || typeof window.supabase.createClient !== 'function') return null;
+                try {
+                    window.__reportSupabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
+                    return window.__reportSupabaseClient;
+                } catch (err) {
+                    console.error('Supabase client init failed:', err);
+                    return null;
+                }
+            }
+            function fetchReportsDirectoryRest() {
+                return fetch(SB_URL + '/rest/v1/reports?select=id,report_name&order=report_name.asc', {
+                    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                }).then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                });
+            }
+            window.initReportSupabaseClient = initReportSupabaseClient;
+            initReportSupabaseClient();
             function getDropdown() { return document.getElementById('select-campaign-directory'); }
             function getRetryBtn() { return document.getElementById('btn-retry-db'); }
             window.refreshCampaignDirectory = function refreshCampaignDirectory() {
@@ -512,18 +533,19 @@
                 if (!dropdown) return Promise.resolve();
                 dropdown.innerHTML = '<option value="">🔄 Booting Supabase API...</option>';
                 if (retryBtn) retryBtn.classList.add('hidden');
-                if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-                    dropdown.innerHTML = '<option value="">❌ Supabase library not loaded</option>';
-                    if (retryBtn) retryBtn.classList.remove('hidden');
-                    return Promise.resolve();
+                var client = initReportSupabaseClient();
+                var queryPromise;
+                if (client) {
+                    queryPromise = client.from('reports').select('id, report_name').order('report_name', { ascending: true })
+                        .then(function (res) {
+                            if (res.error) throw res.error;
+                            return res.data;
+                        });
+                } else {
+                    queryPromise = fetchReportsDirectoryRest();
                 }
-                if (!window.__reportSupabaseClient) {
-                    window.__reportSupabaseClient = window.supabase.createClient(SB_URL, SB_KEY);
-                }
-                return window.__reportSupabaseClient.from('reports').select('id, report_name').order('report_name', { ascending: true })
-                    .then(function (res) {
-                        if (res.error) throw res.error;
-                        var data = res.data;
+                return queryPromise
+                    .then(function (data) {
                         if (!data || data.length === 0) {
                             dropdown.innerHTML = '<option value="">-- No Campaigns in Database --</option>';
                             return;
@@ -759,7 +781,7 @@
                     window.loadSelectedCampaign(reportId);
                     return;
                 }
-                var client = window.__reportSupabaseClient;
+                var client = initReportSupabaseClient();
                 if (!client) {
                     showCampaignLoadStatus('❌ Database not ready. Hard refresh and try again.', 'err');
                     return;
@@ -839,12 +861,16 @@
     <script>
         const supabaseUrl = 'https://obrjpgucgcrclukkvook.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9icmpwZ3VjZ2NyY2x1a2t2b29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzM1OTksImV4cCI6MjA5NzQwOTU5OX0.tN2DmXRTjcvR1azRcvILTxNZEViXkIutVlqYBhbPOq8';
-        const supabaseClient = window.__reportSupabaseClient || (
-            (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function')
-                ? window.supabase.createClient(supabaseUrl, supabaseKey)
-                : null
-        );
-        if (supabaseClient && !window.__reportSupabaseClient) window.__reportSupabaseClient = supabaseClient;
+        function getSupabaseClient() {
+            if (typeof window.initReportSupabaseClient === 'function') return window.initReportSupabaseClient();
+            if (window.__reportSupabaseClient) return window.__reportSupabaseClient;
+            if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
+                window.__reportSupabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+                return window.__reportSupabaseClient;
+            }
+            return null;
+        }
+        const supabaseClient = getSupabaseClient();
 
         const root = document.documentElement;
         const RUNTIME_VERSION = '2026.06.24-shopify-v1';
@@ -2356,14 +2382,20 @@
             if(preserveId) window.__pendingCampaignLoadId = preserveId;
             dropdown.innerHTML = '<option value="">🔄 Booting Supabase API...</option>';
             if(retryBtn) retryBtn.classList.add('hidden');
-            if(!supabaseClient) {
-                dropdown.innerHTML = '<option value="">❌ Supabase library not loaded</option>';
-                if(retryBtn) retryBtn.classList.remove('hidden');
-                return;
-            }
+            const client = getSupabaseClient();
             try {
-                const { data, error } = await supabaseClient.from('reports').select('id, report_name').order('report_name', { ascending: true });
-                if (error) throw error; 
+                let data = null;
+                if(client) {
+                    const { data: rows, error } = await client.from('reports').select('id, report_name').order('report_name', { ascending: true });
+                    if (error) throw error;
+                    data = rows;
+                } else {
+                    const res = await fetch(`${supabaseUrl}/rest/v1/reports?select=id,report_name&order=report_name.asc`, {
+                        headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
+                    });
+                    if(!res.ok) throw new Error('HTTP ' + res.status);
+                    data = await res.json();
+                }
                 if (!data || data.length === 0) { dropdown.innerHTML = '<option value="">-- No Campaigns in Database --</option>'; return; }
                 let html = '<option value="">-- Choose Campaign --</option>';
                 data.forEach(item => { html += `<option value="${item.id}">${item.report_name || item.id}</option>`; });
@@ -3058,7 +3090,7 @@
             if (loadCampaignInFlight === reportId) return;
             loadCampaignInFlight = reportId;
             window.__pendingCampaignLoadId = reportId;
-            const client = supabaseClient || window.__reportSupabaseClient;
+            const client = getSupabaseClient();
             showCampaignLoadStatusMain('⏳ Fetching campaign from database…', 'wait');
             if (!client) {
                 showCampaignLoadStatusMain('❌ Database client not ready. Hard refresh and try again.', 'err');
@@ -3084,20 +3116,24 @@
             sel.onchange = function () { window.__onCampaignDirectoryChange && window.__onCampaignDirectoryChange(sel); };
         }
         window.wireCampaignSelectHandler = wireCampaignSelectHandler;
-        wireCampaignSelectHandler();
-        if (window.__pendingCampaignRecord) {
-            try {
-                applyLoadedCampaignRecord(window.__pendingCampaignRecord);
-                showCampaignLoadStatusMain(`✅ Loaded <strong>${window.__pendingCampaignRecord.report_name || 'campaign'}</strong>`, 'ok');
-            } catch (pendingErr) {
-                console.error('Pending campaign apply error:', pendingErr);
-                showCampaignLoadStatusMain(`❌ Error applying campaign: <br><span class="text-[10px]">${pendingErr.message || 'Unknown error'}</span>`, 'err');
+        try {
+            wireCampaignSelectHandler();
+            if (window.__pendingCampaignRecord) {
+                try {
+                    applyLoadedCampaignRecord(window.__pendingCampaignRecord);
+                    showCampaignLoadStatusMain(`✅ Loaded <strong>${window.__pendingCampaignRecord.report_name || 'campaign'}</strong>`, 'ok');
+                } catch (pendingErr) {
+                    console.error('Pending campaign apply error:', pendingErr);
+                    showCampaignLoadStatusMain(`❌ Error applying campaign: <br><span class="text-[10px]">${pendingErr.message || 'Unknown error'}</span>`, 'err');
+                }
+                window.__pendingCampaignRecord = null;
+            } else if (window.__bootLoadedReportId && window.__pendingCampaignLoadId) {
+                loadSelectedCampaign(window.__pendingCampaignLoadId);
+            } else if (window.__pendingCampaignLoadId && !activeLoadedReportId) {
+                loadSelectedCampaign(window.__pendingCampaignLoadId);
             }
-            window.__pendingCampaignRecord = null;
-        } else if (window.__bootLoadedReportId && window.__pendingCampaignLoadId) {
-            loadSelectedCampaign(window.__pendingCampaignLoadId);
-        } else if (window.__pendingCampaignLoadId && !activeLoadedReportId) {
-            loadSelectedCampaign(window.__pendingCampaignLoadId);
+        } catch (startupErr) {
+            console.error('Admin startup apply error:', startupErr);
         }
 
         // --- DYNAMIC DATA AGGREGATION PIPELINE ---

@@ -164,7 +164,11 @@
     <script>
         const supabaseUrl = 'https://obrjpgucgcrclukkvook.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9icmpwZ3VjZ2NyY2x1a2t2b29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzM1OTksImV4cCI6MjA5NzQwOTU5OX0.tN2DmXRTjcvR1azRcvILTxNZEViXkIutVlqYBhbPOq8';
-        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        function getSupabaseClient() {
+            if (typeof window.supabase === 'undefined' || !window.supabase || typeof window.supabase.createClient !== 'function') return null;
+            return window.supabase.createClient(supabaseUrl, supabaseKey);
+        }
+        const supabaseClient = getSupabaseClient();
 
         function slugifyReportName(name) {
             return String(name || 'campaign-report').trim().toLowerCase()
@@ -189,6 +193,7 @@
             return null;
         }
         async function fetchReportRecord(ref) {
+            if(!supabaseClient) return { data: null, error: { message: 'Supabase library not loaded. Check your network connection and refresh.' } };
             if(ref.mode === 'id') {
                 return supabaseClient.from('reports').select('campaign_data').eq('id', ref.value).single();
             }

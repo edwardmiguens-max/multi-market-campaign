@@ -209,9 +209,19 @@
             const content = document.getElementById('content');
             content.innerHTML = '<div class="index-state">Loading reports from database…</div>';
             try {
-                const client = window.supabase.createClient(SB_URL, SB_KEY);
-                const { data, error } = await client.from('reports').select('id, report_name, campaign_data').order('report_name', { ascending: true });
-                if (error) throw error;
+                let data = null;
+                if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
+                    const client = window.supabase.createClient(SB_URL, SB_KEY);
+                    const res = await client.from('reports').select('id, report_name, campaign_data').order('report_name', { ascending: true });
+                    if (res.error) throw res.error;
+                    data = res.data;
+                } else {
+                    const response = await fetch(SB_URL + '/rest/v1/reports?select=id,report_name,campaign_data&order=report_name.asc', {
+                        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                    });
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    data = await response.json();
+                }
                 allReports = data || [];
                 renderTable(filterReports(document.getElementById('search').value));
             } catch (err) {
