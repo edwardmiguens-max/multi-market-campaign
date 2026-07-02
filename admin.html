@@ -622,20 +622,24 @@
                 }
 
                 var dates = old.campaignDates || (old.comparison && old.comparison.selectedFilters && old.comparison.selectedFilters.campaignDates) || {};
-                bootSetVal('input-campaign-start', dates.start || '');
-                bootSetVal('input-campaign-end', dates.end || '');
+                if (!window.__hasCsvData) {
+                    bootSetVal('input-campaign-start', dates.start || '');
+                    bootSetVal('input-campaign-end', dates.end || '');
 
-                if (old.comparison && old.comparison.selectedFilters) {
-                    var sf = old.comparison.selectedFilters;
-                    ['uk', 'eu', 'us', 'int'].forEach(function (mk) {
-                        bootSetChk('filter-market-' + mk, (sf.markets || []).indexOf(mk) >= 0);
-                    });
-                    bootSetVal('input-product-scope', sf.productScope || 'all');
-                    bootSetVal('input-include-keywords', (sf.includeKeywords || []).join(', '));
-                    bootSetVal('input-exclude-keywords', (sf.excludeKeywords || []).join(', '));
-                    bootSetVal('input-period-from', sf.from || '');
-                    bootSetVal('input-period-to', sf.to || '');
-                    if (sf.storeHasUsMarket !== undefined) bootSetChk('input-store-has-us-market', sf.storeHasUsMarket !== false);
+                    if (old.comparison && old.comparison.selectedFilters) {
+                        var sf = old.comparison.selectedFilters;
+                        ['uk', 'eu', 'us', 'int'].forEach(function (mk) {
+                            bootSetChk('filter-market-' + mk, (sf.markets || []).indexOf(mk) >= 0);
+                        });
+                        bootSetVal('input-product-scope', sf.productScope || 'all');
+                        bootSetVal('input-include-keywords', (sf.includeKeywords || []).join(', '));
+                        bootSetVal('input-exclude-keywords', (sf.excludeKeywords || []).join(', '));
+                        bootSetVal('input-period-from', sf.from || '');
+                        bootSetVal('input-period-to', sf.to || '');
+                        if (sf.storeHasUsMarket !== undefined) bootSetChk('input-store-has-us-market', sf.storeHasUsMarket !== false);
+                    } else {
+                        bootSetChk('input-store-has-us-market', old.storeHasUsMarket !== false);
+                    }
                 } else {
                     bootSetChk('input-store-has-us-market', old.storeHasUsMarket !== false);
                 }
@@ -680,7 +684,7 @@
                     bootApplyLogoPreview(old.logoBase64, old.logoColorOverlay !== false);
                 }
 
-                if (old.global) {
+                if (!window.__hasCsvData && old.global) {
                     bootSetTxt('kpi-revenue', old.global.revenue || '£0.00');
                     bootSetTxt('kpi-items', old.global.items || '0');
                     bootSetTxt('kpi-orders', old.global.orders || '0');
@@ -1013,6 +1017,15 @@
         // Globals to store raw CSV data for instant hot-swapping Filters
         let windowCurrentCSVData = null;
         let windowCurrentCSVMk = null;
+        window.__hasCsvData = false;
+        window.__csvDataGeneration = 0;
+        function hasLiveCsvUpload() {
+            return !!(windowCurrentCSVData && windowCurrentCSVData.length > 0);
+        }
+        function markCsvUploadReady() {
+            window.__hasCsvData = true;
+            window.__csvDataGeneration = (window.__csvDataGeneration || 0) + 1;
+        }
         let windowCurrentCSVHasMarket = false;
         let windowCurrentCSVFileStart = null;
         let windowCurrentCSVFileEnd = null;
@@ -2455,6 +2468,7 @@
         }
         function clearAllIngestedData() {
             windowCurrentCSVData = null;
+            window.__hasCsvData = false;
             windowCurrentCSVMk = null;
             windowCurrentCSVHasMarket = false;
             windowCurrentCSVFileStart = null;
@@ -2975,22 +2989,24 @@
 
             const usMarketEl = document.getElementById('input-store-has-us-market');
             if (usMarketEl) usMarketEl.checked = old.storeHasUsMarket !== false && old.comparison?.selectedFilters?.storeHasUsMarket !== false;
-            if (old.comparison?.selectedFilters) {
-                const sf = old.comparison.selectedFilters;
-                ['uk', 'eu', 'us', 'int'].forEach(mk => {
-                    const cb = document.getElementById(`filter-market-${mk}`);
-                    if (cb) cb.checked = (sf.markets || []).includes(mk);
-                });
-                if (document.getElementById('input-product-scope')) document.getElementById('input-product-scope').value = sf.productScope || 'all';
-                if (document.getElementById('input-include-keywords')) document.getElementById('input-include-keywords').value = (sf.includeKeywords || []).join(', ');
-                if (document.getElementById('input-exclude-keywords')) document.getElementById('input-exclude-keywords').value = (sf.excludeKeywords || []).join(', ');
-                if (document.getElementById('input-period-from')) document.getElementById('input-period-from').value = sf.from || '';
-                if (document.getElementById('input-period-to')) document.getElementById('input-period-to').value = sf.to || '';
-                if (usMarketEl && sf.storeHasUsMarket !== undefined) usMarketEl.checked = sf.storeHasUsMarket !== false;
+            if (!hasLiveCsvUpload()) {
+                if (old.comparison?.selectedFilters) {
+                    const sf = old.comparison.selectedFilters;
+                    ['uk', 'eu', 'us', 'int'].forEach(mk => {
+                        const cb = document.getElementById(`filter-market-${mk}`);
+                        if (cb) cb.checked = (sf.markets || []).includes(mk);
+                    });
+                    if (document.getElementById('input-product-scope')) document.getElementById('input-product-scope').value = sf.productScope || 'all';
+                    if (document.getElementById('input-include-keywords')) document.getElementById('input-include-keywords').value = (sf.includeKeywords || []).join(', ');
+                    if (document.getElementById('input-exclude-keywords')) document.getElementById('input-exclude-keywords').value = (sf.excludeKeywords || []).join(', ');
+                    if (document.getElementById('input-period-from')) document.getElementById('input-period-from').value = sf.from || '';
+                    if (document.getElementById('input-period-to')) document.getElementById('input-period-to').value = sf.to || '';
+                    if (usMarketEl && sf.storeHasUsMarket !== undefined) usMarketEl.checked = sf.storeHasUsMarket !== false;
+                }
+                const loadedCampaignDates = old.campaignDates || old.comparison?.selectedFilters?.campaignDates || {};
+                if (document.getElementById('input-campaign-start')) document.getElementById('input-campaign-start').value = loadedCampaignDates.start || '';
+                if (document.getElementById('input-campaign-end')) document.getElementById('input-campaign-end').value = loadedCampaignDates.end || '';
             }
-            const loadedCampaignDates = old.campaignDates || old.comparison?.selectedFilters?.campaignDates || {};
-            if (document.getElementById('input-campaign-start')) document.getElementById('input-campaign-start').value = loadedCampaignDates.start || '';
-            if (document.getElementById('input-campaign-end')) document.getElementById('input-campaign-end').value = loadedCampaignDates.end || '';
             if (old.sectionVisibility) {
                 REPORT_SECTION_KEYS.forEach(k => {
                     const cb = document.getElementById(`section-toggle-${k}`);
@@ -3036,13 +3052,23 @@
 
             applyLogoBase64(old.logoBase64 ? old.logoBase64 : null);
             applyFaviconBase64(old.faviconBase64 || null);
-            loadedGlobalMerchPayload = old.globalMerch || null;
+            if (!hasLiveCsvUpload()) {
+                loadedGlobalMerchPayload = old.globalMerch || null;
+                loadedTopCountriesPayload = old.topCountries || null;
+                loadedEuTopCountriesPayload = old.eu?.euTopCountries || null;
+                loadedIntTopCountriesPayload = old.int?.intTopCountries || null;
+            } else {
+                loadedGlobalMerchPayload = null;
+                loadedTopCountriesPayload = null;
+                loadedEuTopCountriesPayload = null;
+                loadedIntTopCountriesPayload = null;
+            }
             for (const slot of ['p1', 'p2', 'p3', 'p4']) applyProductImage(slot, old.productImages?.[slot] || null);
-            loadedTopCountriesPayload = old.topCountries || null;
-            loadedEuTopCountriesPayload = old.eu?.euTopCountries || null;
-            loadedIntTopCountriesPayload = old.int?.intTopCountries || null;
             setSalesforcePriorUnits(old.salesforcePriorUnits || null, false);
 
+            if (hasLiveCsvUpload()) {
+                runDataAggregation();
+            } else {
             ['uk', 'eu', 'us', 'int'].forEach(m => {
                 const mData = getLegacyMarket(old, m);
                 if (mData) {
@@ -3085,6 +3111,7 @@
             });
 
             calculateGlobalDashboard();
+            }
             window.__pendingCampaignLoadId = null;
             window.showLiveReportLinkInSidebar(data.report_name, old, `✅ Loaded <strong>${data.report_name || 'campaign'}</strong>`);
         }
@@ -3138,9 +3165,9 @@
                     showCampaignLoadStatusMain(`❌ Error applying campaign: <br><span class="text-[10px]">${pendingErr.message || 'Unknown error'}</span>`, 'err');
                 }
                 window.__pendingCampaignRecord = null;
-            } else if (window.__bootLoadedReportId && window.__pendingCampaignLoadId) {
+            } else if (window.__bootLoadedReportId && window.__pendingCampaignLoadId && !hasLiveCsvUpload()) {
                 loadSelectedCampaign(window.__pendingCampaignLoadId);
-            } else if (window.__pendingCampaignLoadId && !activeLoadedReportId) {
+            } else if (window.__pendingCampaignLoadId && !activeLoadedReportId && !hasLiveCsvUpload()) {
                 loadSelectedCampaign(window.__pendingCampaignLoadId);
             }
         } catch (startupErr) {
@@ -3401,6 +3428,7 @@
                 header: true, dynamicTyping: true, skipEmptyLines: true,
                 complete: function(res) {
                     windowCurrentCSVData = res.data; windowCurrentCSVMk = mk; windowCurrentCSVHasMarket = false;
+                    markCsvUploadReady();
                     ingestionWarnings = [];
                     if(mk === 'master') {
                         resetCompareFiltersForNewUpload();
@@ -3762,7 +3790,7 @@
             calculateGlobalDashboard();
             const keepSelectedId = activeLoadedReportId || document.getElementById('select-campaign-directory')?.value || window.__pendingCampaignLoadId || '';
             window.refreshCampaignDirectory().then(function () {
-                if(keepSelectedId) {
+                if(keepSelectedId && !hasLiveCsvUpload()) {
                     const dropdown = document.getElementById('select-campaign-directory');
                     if(dropdown) dropdown.value = keepSelectedId;
                     if(typeof loadSelectedCampaign === 'function') loadSelectedCampaign(keepSelectedId);
