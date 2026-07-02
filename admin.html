@@ -1102,22 +1102,60 @@
             start: document.getElementById('input-campaign-start')?.value || '',
             end: document.getElementById('input-campaign-end')?.value || ''
         });
-        function applyCampaignDatesFromFilename(dateMatches) {
+        function applyCampaignDatesFromFilename(dateMatches, forceUpdate = false) {
             if(!dateMatches || dateMatches.length < 2) return;
             const startEl = document.getElementById('input-campaign-start');
             const endEl = document.getElementById('input-campaign-end');
-            if(startEl && !startEl.value) startEl.value = dateMatches[0];
-            if(endEl && !endEl.value) endEl.value = dateMatches[1];
+            if(startEl && (forceUpdate || !startEl.value)) startEl.value = dateMatches[0];
+            if(endEl && (forceUpdate || !endEl.value)) endEl.value = dateMatches[1];
+        }
+        function ensureCompareMarketsSelected() {
+            if(getSelectedMarkets().length > 0) return;
+            ['uk', 'eu', 'us', 'int'].forEach(mk => {
+                const cb = document.getElementById(`filter-market-${mk}`);
+                if(cb) cb.checked = true;
+            });
+            ingestionWarnings.push('No compare markets were selected — all markets re-enabled for this upload.');
         }
         function parseCsvDateValue(v) {
             if(v === null || v === undefined || v === '') return null;
-            if(v instanceof Date && !isNaN(v.getTime())) return new Date(v.getTime());
+            if(v instanceof Date && !isNaN(v.getTime())) {
+                // Papa Parse dynamicTyping uses UTC midnight for YYYY-MM-DD; use UTC parts so calendar day is stable.
+                return new Date(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate(), 12, 0, 0);
+            }
             const s = String(v).trim();
             if(!s) return null;
             const iso = s.match(/^(\d{4}-\d{2}-\d{2})/);
             if(iso) return new Date(iso[1] + 'T12:00:00');
             const d = new Date(s);
             return isNaN(d.getTime()) ? null : d;
+        }
+        function csvIsoDayKey(dateVal) {
+            const d = parseCsvDateValue(dateVal);
+            if(!d) return null;
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+        function getCsvDataDateRange() {
+            if(!windowCurrentCSVData || windowCurrentCSVData.length === 0) return null;
+            let min = null, max = null;
+            windowCurrentCSVData.forEach(row => {
+                let dayVal = null;
+                Object.keys(row).forEach(k => {
+                    if(!k) return;
+                    const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if(cleanK === 'day' || cleanK === 'reportingday' || cleanK.includes('date') || cleanK.includes('timestamp') || cleanK.includes('created')) {
+                        if(dayVal === null) dayVal = row[k];
+                    }
+                });
+                const key = csvIsoDayKey(dayVal);
+                if(!key) return;
+                if(!min || key < min) min = key;
+                if(!max || key > max) max = key;
+            });
+            return (min && max) ? { start: min, end: max } : null;
         }
         function rowTimestampWithHour(dateVal, hourVal, id, minOrder, maxOrder) {
             const d = parseCsvDateValue(dateVal);
@@ -3077,7 +3115,11 @@
             const activeFilters = getAdvancedFilters();
             if(activeFilters.markets.length === 0) {
                 ingestionWarnings.push('No markets selected in Advanced Compare Filters.');
+                Object.keys(storeData).forEach(m => {
+                    storeData[m] = getEmptyStoreData()[m];
+                });
                 renderWarnings();
+                calculateGlobalDashboard();
                 return;
             }
 
@@ -3267,8 +3309,16 @@
                 }
             }
             const totalAccepted = Object.values(acceptedRowsByMarket).reduce((a,b)=>a+b,0);
-            if(totalAccepted === 0) ingestionWarnings.push('No rows matched current filters. Check campaign dates (use YYYY-MM-DD), market checkboxes, and product scope.');
-            else {
+            const csvRange = getCsvDataDateRange();
+            if(csvRange) ingestionWarnings.push(`CSV sales dates in file: ${csvRange.start} to ${csvRange.end}.`);
+            if(totalAccepted === 0) {
+                const { start, end } = getCampaignDates();
+                if(csvRange && (start || end)) {
+                    ingestionWarnings.push(`No rows matched current filters. Campaign dates are ${start || '…'} to ${end || '…'} but uploaded sales are ${csvRange.start} to ${csvRange.end}. Update Campaign Dates or clear them.`);
+                } else {
+                    ingestionWarnings.push('No rows matched current filters. Check campaign dates (use YYYY-MM-DD), market checkboxes, and product scope.');
+                }
+            } else {
                 const { start, end } = getCampaignDates();
                 if(start || end) {
                     let inRange = 0;
@@ -3295,13 +3345,14 @@
             const file = event.target.files[0]; if (!file) return;
             const dateMatches = file.name.match(/\d{4}-\d{2}-\d{2}/g);
             windowCurrentCSVFileStart = null; windowCurrentCSVFileEnd = null;
-            if (dateMatches && dateMatches.length >= 2) { windowCurrentCSVFileStart = new Date(dateMatches[0]).getTime(); windowCurrentCSVFileEnd = new Date(dateMatches[1]).getTime(); applyCampaignDatesFromFilename(dateMatches); }
+            if (dateMatches && dateMatches.length >= 2) { windowCurrentCSVFileStart = new Date(dateMatches[0]).getTime(); windowCurrentCSVFileEnd = new Date(dateMatches[1]).getTime(); if(mk === 'master') applyCampaignDatesFromFilename(dateMatches, true); else applyCampaignDatesFromFilename(dateMatches); }
 
             Papa.parse(file, {
                 header: true, dynamicTyping: true, skipEmptyLines: true,
                 complete: function(res) {
                     windowCurrentCSVData = res.data; windowCurrentCSVMk = mk; windowCurrentCSVHasMarket = false;
                     ingestionWarnings = [];
+                    if(mk === 'master') ensureCompareMarketsSelected();
                     const fields = (res.meta && Array.isArray(res.meta.fields)) ? res.meta.fields : [];
                     const normalizedFields = fields.map(f => String(f || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
                     const hasDateColumn = normalizedFields.some(f => f.includes('date') || f.includes('timestamp') || f.includes('created') || f === 'day' || f === 'reportingday');
