@@ -1025,6 +1025,63 @@
         function markCsvUploadReady() {
             window.__hasCsvData = true;
             window.__csvDataGeneration = (window.__csvDataGeneration || 0) + 1;
+            loadCampaignInFlight = null;
+        }
+        function normalizeCsvRows(rows) {
+            if(!Array.isArray(rows)) return [];
+            return rows.map(row => {
+                if(!row || typeof row !== 'object') return row;
+                const out = {};
+                Object.keys(row).forEach(k => {
+                    const key = String(k || '').replace(/^\uFEFF/, '').trim();
+                    out[key] = row[k];
+                });
+                return out;
+            });
+        }
+        function syncCampaignDatesToCsvRange() {
+            const range = getCsvDataDateRange();
+            if(!range) return false;
+            const startEl = document.getElementById('input-campaign-start');
+            const endEl = document.getElementById('input-campaign-end');
+            const curStart = startEl?.value || '';
+            const curEnd = endEl?.value || '';
+            let changed = false;
+            if(!curStart || curStart > range.start) {
+                if(startEl) startEl.value = range.start;
+                changed = true;
+            }
+            if(!curEnd || curEnd < range.end) {
+                if(endEl) endEl.value = range.end;
+                changed = true;
+            }
+            if(changed) ingestionWarnings.push(`Campaign dates expanded to include CSV sales (${range.start} to ${range.end}).`);
+            return changed;
+        }
+        function countRawCsvSalesRows() {
+            if(!windowCurrentCSVData || windowCurrentCSVData.length === 0) return 0;
+            let count = 0;
+            windowCurrentCSVData.forEach(row => {
+                let name = '', rev = 0, netItemsSold = null, rawQty = 1;
+                Object.keys(row).forEach(k => {
+                    if(!k) return;
+                    const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if(cleanK.includes('producttitle') || cleanK.includes('lineitemname') || cleanK === 'title') name = row[k];
+                    else if(cleanK.includes('netsales') || cleanK === 'netsales' || cleanK === 'revenue' || (cleanK.includes('sales') && !cleanK.includes('country'))) {
+                        const parsedRev = parseFloat(row[k]);
+                        if(!isNaN(parsedRev)) rev = parsedRev;
+                    } else if(cleanK.includes('netitemssold') || (cleanK.includes('items') && cleanK.includes('sold'))) {
+                        const parsedUnits = parseFloat(row[k]);
+                        if(!isNaN(parsedUnits)) netItemsSold = parsedUnits;
+                    } else if(cleanK.includes('quantity') || cleanK === 'qty') rawQty = row[k];
+                });
+                const qty = parseInt(rawQty, 10) || 1;
+                const derivedQty = (netItemsSold !== null) ? netItemsSold : qty;
+                if(!name || !String(name).trim()) return;
+                if(rev === 0 && derivedQty === 0) return;
+                count += 1;
+            });
+            return count;
         }
         let windowCurrentCSVHasMarket = false;
         let windowCurrentCSVFileStart = null;
@@ -3067,8 +3124,14 @@
             setSalesforcePriorUnits(old.salesforcePriorUnits || null, false);
 
             if (hasLiveCsvUpload()) {
+                resetCompareFiltersForNewUpload();
+                ingestionWarnings.push('CSV upload detected — saved compare filters were cleared so Shopify export totals are not blocked.');
                 runDataAggregation();
             } else {
+            const snapRev = old.global?.revenue || '£0.00';
+            const snapOrders = old.global?.orders || '0';
+            ingestionWarnings.push(`Preview shows last published snapshot (${snapRev} · ${snapOrders} orders). Upload Master Sales CSV in Data Upload to refresh from Shopify.`);
+            renderWarnings();
             ['uk', 'eu', 'us', 'int'].forEach(m => {
                 const mData = getLegacyMarket(old, m);
                 if (mData) {
@@ -3175,10 +3238,13 @@
         }
 
         // --- DYNAMIC DATA AGGREGATION PIPELINE ---
-        function runDataAggregation() {
+        function runDataAggregation(options = {}) {
             if(!windowCurrentCSVData || windowCurrentCSVData.length === 0) return;
+            const uploadGeneration = window.__csvDataGeneration || 0;
             const preservedWarnings = [...ingestionWarnings];
             ingestionWarnings = preservedWarnings;
+            if(!options.skipDateSync) syncCampaignDatesToCsvRange();
+            const rawSalesLineCount = countRawCsvSalesRows();
             comparisonModel = { markets: {}, periodOrder: [] };
             globalCountryStats = {};
             marketCountryMusicStats = { uk: {}, eu: {}, us: {}, int: {} };
@@ -3385,13 +3451,34 @@
             const totalAccepted = Object.values(acceptedRowsByMarket).reduce((a,b)=>a+b,0);
             const csvRange = getCsvDataDateRange();
             if(csvRange) ingestionWarnings.push(`CSV sales dates in file: ${csvRange.start} to ${csvRange.end}.`);
-            if(totalAccepted === 0) {
+            if(totalAccepted === 0 && !options.autoRetried) {
                 const { start, end } = getCampaignDates();
+                const activeFiltersNow = getAdvancedFilters();
+                const hadBlockingFilters = !!(start || end || activeFiltersNow.excludeKeywords.length || activeFiltersNow.includeKeywords.length || activeFiltersNow.productScope !== 'all' || activeFiltersNow.from || activeFiltersNow.to);
+                if(hadBlockingFilters && uploadGeneration === (window.__csvDataGeneration || 0)) {
+                    if(csvRange) {
+                        if(document.getElementById('input-campaign-start')) document.getElementById('input-campaign-start').value = csvRange.start;
+                        if(document.getElementById('input-campaign-end')) document.getElementById('input-campaign-end').value = csvRange.end;
+                    }
+                    resetCompareFiltersForNewUpload();
+                    ingestionWarnings.push('No rows matched filters — auto-cleared campaign dates and Advanced Compare Filters, then re-processed the CSV.');
+                    runDataAggregation({ skipDateSync: true, autoRetried: true });
+                    return;
+                }
                 if(csvRange && (start || end)) {
                     ingestionWarnings.push(`No rows matched current filters. Campaign dates are ${start || '…'} to ${end || '…'} but uploaded sales are ${csvRange.start} to ${csvRange.end}. Update Campaign Dates or clear them.`);
                 } else {
                     ingestionWarnings.push('No rows matched current filters. Check campaign dates (use YYYY-MM-DD), market checkboxes, and product scope.');
                 }
+            } else if(totalAccepted > 0 && rawSalesLineCount > 0 && totalAccepted / rawSalesLineCount < 0.15) {
+                const activeFiltersNow = getAdvancedFilters();
+                const filterBits = [];
+                if(activeFiltersNow.excludeKeywords.length) filterBits.push(`exclude keywords (${activeFiltersNow.excludeKeywords.join(', ')})`);
+                if(activeFiltersNow.includeKeywords.length) filterBits.push(`include keywords (${activeFiltersNow.includeKeywords.join(', ')})`);
+                if(activeFiltersNow.productScope !== 'all') filterBits.push(`product scope (${activeFiltersNow.productScope})`);
+                const { start, end } = getCampaignDates();
+                if(start || end) filterBits.push(`campaign dates (${start || '…'} to ${end || '…'})`);
+                ingestionWarnings.push(`Only ${totalAccepted.toLocaleString()} of ${rawSalesLineCount.toLocaleString()} sales lines passed filters${filterBits.length ? ' — check ' + filterBits.join(', ') : ''}.`);
             } else {
                 const { start, end } = getCampaignDates();
                 if(start || end) {
@@ -3426,13 +3513,23 @@
 
             Papa.parse(file, {
                 header: true, dynamicTyping: true, skipEmptyLines: true,
+                error: function(err) {
+                    ingestionWarnings = [`CSV parse failed: ${err?.message || 'Unknown error'}. Try re-exporting from Shopify.`];
+                    renderWarnings();
+                },
                 complete: function(res) {
-                    windowCurrentCSVData = res.data; windowCurrentCSVMk = mk; windowCurrentCSVHasMarket = false;
+                    windowCurrentCSVData = normalizeCsvRows(res.data || []); windowCurrentCSVMk = mk; windowCurrentCSVHasMarket = false;
+                    if(!windowCurrentCSVData.length) {
+                        ingestionWarnings = ['CSV parsed but contained no data rows. Check the file is a Shopify export with headers.'];
+                        renderWarnings();
+                        return;
+                    }
                     markCsvUploadReady();
-                    ingestionWarnings = [];
+                    ingestionWarnings = [`Loaded ${windowCurrentCSVData.length.toLocaleString()} rows from ${file.name}.`];
                     if(mk === 'master') {
                         resetCompareFiltersForNewUpload();
                         ensureCompareMarketsSelected();
+                        syncCampaignDatesToCsvRange();
                     }
                     const fields = (res.meta && Array.isArray(res.meta.fields)) ? res.meta.fields : [];
                     const normalizedFields = fields.map(f => String(f || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
@@ -3562,7 +3659,7 @@
                 const normalizedMapData = (lastTopCountriesPayload.mapData || []).map(r => ({ country: r.country, value: r.value }));
                 drawTopCountriesMap(mapEl, normalizedMapData.length ? normalizedMapData : (lastTopCountriesPayload.top10 || []).map(r => ({ country: r.country, value: lastTopCountriesPayload.metricType === 'orders' ? r.orders : r.revenue })), lastTopCountriesPayload.metricType, lastMapGradientDark);
             });
-            ['filter-market-uk','filter-market-eu','filter-market-us','filter-market-int','input-period-from','input-period-to','input-product-scope','input-include-keywords','input-exclude-keywords','input-campaign-start','input-campaign-end']
+            ['filter-market-uk','filter-market-eu','filter-market-us','filter-market-int','input-period-from','input-period-to','input-product-scope','input-include-keywords','input-exclude-keywords','input-campaign-start','input-campaign-end','input-campaign-chart-mode']
                 .forEach(id => {
                     const el = document.getElementById(id);
                     if (!el) return;
