@@ -258,7 +258,16 @@
                 <details class="group">
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Levers</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-3 pb-2" id="levers-config-root">
-                        <p class="text-[10px] text-gray-400 leading-tight">Configure campaign drivers. Market toggles (UK, EU, US, ROW) control which accordion each lever appears in. Times use Europe/London (GMT/BST).</p>
+                        <p class="text-[10px] text-gray-400 leading-tight">Configure campaign drivers. Market toggles (UK, EU, US, ROW) control which accordion each lever appears in.</p>
+                        <div class="bg-gray-800/60 p-2 rounded border border-indigo-700/80">
+                            <label class="block text-[10px] text-indigo-300 uppercase font-bold mb-1">Lever time zone</label>
+                            <select id="input-lever-timezone" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white">
+                                <option value="Europe/London">UK (GMT/BST)</option>
+                                <option value="America/New_York">US Eastern (ET)</option>
+                                <option value="America/Los_Angeles">US Pacific (PT)</option>
+                            </select>
+                            <p class="text-[10px] text-gray-500 mt-1 leading-tight">Start/end date &amp; time fields for all timed levers are interpreted in this zone.</p>
+                        </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="preOrder1">
                             <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-amber-300">Pre-order for Pre-sale</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-preOrder1-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-preOrder1-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-preOrder1-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-preOrder1-int" class="mr-0.5">ROW</label></div></div>
                             <input type="text" id="lever-preOrder1-title" placeholder="Section title on report" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Pre-order for Pre-sale">
@@ -272,6 +281,12 @@
                             <div class="grid grid-cols-2 gap-2 text-[10px]"><div><span class="text-gray-400 block mb-0.5">Start date</span><input type="date" id="lever-preOrder2-start-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">Start time</span><input type="time" id="lever-preOrder2-start-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End date</span><input type="date" id="lever-preOrder2-end-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End time</span><input type="time" id="lever-preOrder2-end-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div></div>
                             <div><span class="text-gray-400 text-[10px] uppercase font-bold">Shows (display only)</span><div id="lever-preOrder2-shows" class="space-y-1 mt-1"></div><button type="button" class="text-[10px] text-blue-400 mt-1" data-add-show="preOrder2">+ Add show</button></div>
                             <div><span class="text-gray-400 text-[10px]">NPN sign-ups (manual)</span><input type="number" min="0" id="lever-preOrder2-npn" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="0"></div>
+                        </div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="earlyAccess">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-sky-300">Early Access Period</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-earlyAccess-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-earlyAccess-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-earlyAccess-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-earlyAccess-int" class="mr-0.5">ROW</label></div></div>
+                            <input type="text" id="lever-earlyAccess-title" placeholder="Section title on report" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Early Access Period">
+                            <div><span class="text-gray-400 text-[10px]">Early access info (audience &amp; method)</span><textarea id="lever-earlyAccess-info" rows="3" placeholder="e.g. Sent to VIP mailing list via Klaviyo; early access link shared on artist Instagram Stories" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white resize-y"></textarea></div>
+                            <div class="grid grid-cols-2 gap-2 text-[10px]"><div><span class="text-gray-400 block mb-0.5">Start date</span><input type="date" id="lever-earlyAccess-start-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">Start time</span><input type="time" id="lever-earlyAccess-start-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End date</span><input type="date" id="lever-earlyAccess-end-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End time</span><input type="time" id="lever-earlyAccess-end-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div></div>
                         </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="giftWithPurchase">
                             <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-emerald-300">Gift with Purchase</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-giftWithPurchase-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-giftWithPurchase-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-giftWithPurchase-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-giftWithPurchase-int" class="mr-0.5">ROW</label></div></div>
@@ -362,8 +377,19 @@
                 <details class="group" open>
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Data Uploads</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-4 pb-2">
+                        <div id="csv-upload-status" class="hidden text-[10px] rounded p-2 border"></div>
+                        <div class="bg-gray-800/60 p-2 rounded border border-indigo-700/80">
+                            <label class="block text-[10px] text-indigo-300 uppercase font-bold mb-1">Shopify CSV "Hour of day" timezone</label>
+                            <select id="input-csv-hour-timezone" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white">
+                                <option value="Europe/London">UK (GMT/BST)</option>
+                                <option value="America/New_York">US Eastern (ET)</option>
+                                <option value="America/Los_Angeles" selected>US Pacific (PT)</option>
+                            </select>
+                            <p class="text-[10px] text-gray-500 mt-1 leading-tight">The hour column in Shopify Master exports uses your Shopify admin timezone (Settings → Store details). This must match or timed levers will be wrong.</p>
+                        </div>
                         <div class="bg-gray-800 p-2.5 rounded border border-green-600/50"><label class="block text-[11px] font-bold text-green-400 mb-1">Option A: Master Sales File</label><input type="file" id="csv-master" accept=".csv" class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-green-700 file:text-white hover:file:bg-green-600 cursor-pointer"></div>
                         <div class="bg-gray-800 p-2.5 rounded border border-purple-600/50"><label class="block text-[11px] font-bold text-purple-400 mb-1">Append Analytics / Traffic File</label><input type="file" id="csv-traffic" accept=".csv" class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-purple-700 file:text-white hover:file:bg-purple-600 cursor-pointer"></div>
+                        <button type="button" id="btn-copy-debug-snapshot" class="w-full text-[10px] px-2 py-1.5 rounded bg-gray-800 text-cyan-300 hover:bg-gray-700 border border-cyan-800 font-semibold">Copy debug snapshot (paste in chat)</button>
                         <button type="button" id="btn-clear-data-uploads" class="w-full text-[10px] px-2 py-1.5 rounded bg-red-900/80 text-red-200 hover:bg-red-800 font-semibold">Clear all data</button>
                     </div>
                 </details>
@@ -952,6 +978,15 @@
                     merchProducts[name].revenue += revenue;
                 });
             });
+            if(merchRev <= 0 && aggregatedLineRows.length > 0) {
+                aggregatedLineRows.forEach(l => {
+                    if(l.isSignedArtCard || !l.isMerch) return;
+                    merchRev += Number(l.rev) || 0;
+                    if(!merchProducts[l.name]) merchProducts[l.name] = { units: 0, revenue: 0 };
+                    merchProducts[l.name].units += Number(l.units) || 0;
+                    merchProducts[l.name].revenue += Number(l.rev) || 0;
+                });
+            }
             return { musicRev, merchRev, sizes, topMerchProducts: Object.entries(merchProducts).sort((a,b) => b[1].revenue - a[1].revenue).slice(0, 5) };
         }
         function getGlobalMerchForDisplay() {
@@ -1019,6 +1054,7 @@
         let windowCurrentCSVMk = null;
         window.__hasCsvData = false;
         window.__csvDataGeneration = 0;
+        let loadCampaignInFlight = null;
         function hasLiveCsvUpload() {
             return !!(windowCurrentCSVData && windowCurrentCSVData.length > 0);
         }
@@ -1090,7 +1126,33 @@
         let orderIndex = {};
         let loadedLeversPayload = null;
 
-        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signedUkEu', 'signedUs'];
+        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signedUkEu', 'signedUs'];
+        const LEVER_TIMED_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'competition', 'sale'];
+        const LEVER_TIMEZONE_OPTIONS = [
+            { value: 'Europe/London', label: 'UK (GMT/BST)' },
+            { value: 'America/New_York', label: 'US Eastern (ET)' },
+            { value: 'America/Los_Angeles', label: 'US Pacific (PT)' }
+        ];
+        function getLeverTimeZone() {
+            return document.getElementById('input-lever-timezone')?.value || 'Europe/London';
+        }
+        function getLeverTimeZoneLabel(tz) {
+            const zone = tz || getLeverTimeZone();
+            return LEVER_TIMEZONE_OPTIONS.find(o => o.value === zone)?.label || zone;
+        }
+        function getCsvHourTimeZone() {
+            return document.getElementById('input-csv-hour-timezone')?.value || 'America/Los_Angeles';
+        }
+        function getLeverWindowBoundsMs(cfg) {
+            const tz = getLeverTimeZone();
+            const startMs = parseLeverDateTimeMs(cfg.startDate, cfg.startTime || '00:00', tz);
+            let endMs = parseLeverDateTimeMs(cfg.endDate, cfg.endTime || '23:59', tz);
+            if(endMs !== null && cfg.endTime && /^\d{2}:\d{2}$/.test(cfg.endTime)) {
+                if(cfg.endTime.endsWith(':00')) endMs -= 1;
+                else if(cfg.endTime === '23:59') endMs += 59 * 1000 + 59999;
+            }
+            return { startMs, endMs, tz };
+        }
         const LEVER_MARKET_CODES = ['uk', 'eu', 'us', 'int'];
         const LEVER_MARKET_LABELS = { uk: 'UK', eu: 'EU', us: 'US', int: 'ROW' };
         const LEVER_MARKETS_OFF = { ukEnabled: false, euEnabled: false, usEnabled: false, intEnabled: false };
@@ -1265,11 +1327,14 @@
             return (min && max) ? { start: min, end: max } : null;
         }
         function rowTimestampWithHour(dateVal, hourVal, id, minOrder, maxOrder) {
-            const d = parseCsvDateValue(dateVal);
-            if(d) {
-                const hour = (hourVal === null || hourVal === undefined || hourVal === '') ? 12 : Number(hourVal);
-                if(!isNaN(hour)) d.setHours(hour, 0, 0, 0);
-                return d.getTime();
+            const dayKey = csvIsoDayKey(dateVal);
+            if(dayKey) {
+                const hour = (hourVal === null || hourVal === undefined || hourVal === '') ? null : Number(hourVal);
+                if(hour !== null && !isNaN(hour)) {
+                    const hh = String(Math.floor(hour)).padStart(2, '0');
+                    return parseLeverDateTimeMs(dayKey, `${hh}:00`, getCsvHourTimeZone());
+                }
+                return parseLeverDateTimeMs(dayKey, '12:00', getCsvHourTimeZone());
             }
             return rowTimestamp(dateVal, id, minOrder, maxOrder);
         }
@@ -1382,8 +1447,8 @@
         function getStandoutSectionTitle(mode) {
             return (mode || getCampaignChartMode()) === 'no_focus' ? 'Standout Products' : 'Standout Campaign Music Formats';
         }
-        function lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard, chartMode, selectedProducts) {
-            if(isSignedArtCard(name)) return false;
+        function lineMatchesCampaignChart(name, isMusic, isMerch, signedArtCardLine, chartMode, selectedProducts) {
+            if(signedArtCardLine) return false;
             const mode = chartMode || 'all_music';
             const selected = selectedProducts || [];
             if(mode === 'no_focus') return isMusic || isMerch;
@@ -1427,9 +1492,7 @@
                     else if (cleanK.includes('producttype') || cleanK === 'type') pType = String(row[k] || '').trim();
                 });
                 if(!name) return;
-                const upperName = name.toUpperCase();
-                const isMusic = pType.toLowerCase().includes('music') || upperName.includes('VINYL') || upperName.includes('CD') || upperName.includes('CASSETTE') || upperName.includes('EP ') || upperName.includes('ALBUM');
-                const isMerch = !isMusic;
+                const { isMusic, isMerch } = classifySalesLineProduct(name, pType);
                 if(isSignedArtCard(name)) return;
                 if(isMusic || isMerch) productNames.add(name);
             });
@@ -1451,12 +1514,68 @@
         function closeCampaignChartProductModal() {
             document.getElementById('campaign-chart-products-modal')?.classList.add('hidden');
         }
+        function renderCsvUploadStatus(message, tone = 'wait') {
+            const el = document.getElementById('csv-upload-status');
+            if(!el) return;
+            if(!message) { el.classList.add('hidden'); el.textContent = ''; return; }
+            el.classList.remove('hidden', 'text-amber-300', 'border-amber-700', 'bg-amber-950/40', 'text-green-300', 'border-green-700', 'bg-green-950/40', 'text-red-300', 'border-red-700', 'bg-red-950/40');
+            if(tone === 'ok') el.classList.add('text-green-300', 'border-green-700', 'bg-green-950/40');
+            else if(tone === 'err') el.classList.add('text-red-300', 'border-red-700', 'bg-red-950/40');
+            else el.classList.add('text-amber-300', 'border-amber-700', 'bg-amber-950/40');
+            el.textContent = message;
+        }
+        function buildAdminDebugSnapshot() {
+            const filters = getAdvancedFilters();
+            return {
+                capturedAt: new Date().toISOString(),
+                pageUrl: window.location.href,
+                runtimeVersion: RUNTIME_VERSION,
+                hasCsvUpload: hasLiveCsvUpload(),
+                csvRowCount: windowCurrentCSVData?.length || 0,
+                csvFileKind: windowCurrentCSVMk || null,
+                loadedCampaignId: activeLoadedReportId || null,
+                campaignName: document.getElementById('input-campaign-name')?.value || '',
+                campaignDates: getCampaignDates(),
+                compareFilters: {
+                    markets: filters.markets,
+                    productScope: filters.productScope,
+                    includeKeywords: filters.includeKeywords,
+                    excludeKeywords: filters.excludeKeywords,
+                    periodFrom: filters.from,
+                    periodTo: filters.to
+                },
+                kpis: {
+                    revenue: document.getElementById('kpi-revenue')?.textContent || '',
+                    items: document.getElementById('kpi-items')?.textContent || '',
+                    orders: document.getElementById('kpi-orders')?.textContent || '',
+                    aov: document.getElementById('kpi-aov')?.textContent || ''
+                },
+                marketTotals: Object.fromEntries(Object.entries(storeData).map(([k, d]) => [k, {
+                    loaded: !!d.loaded,
+                    revenue: Number(d.revenue || 0),
+                    items: Number(d.items || 0),
+                    orders: d.orders?.size || 0
+                }])),
+                ingestionWarnings: Array.from(new Set(ingestionWarnings || [])),
+                papaParseLoaded: typeof Papa !== 'undefined'
+            };
+        }
+        async function copyAdminDebugSnapshot() {
+            const payload = JSON.stringify(buildAdminDebugSnapshot(), null, 2);
+            try {
+                await navigator.clipboard.writeText(payload);
+                renderCsvUploadStatus('Debug snapshot copied — paste it into chat.', 'ok');
+            } catch (_err) {
+                window.prompt('Copy this debug snapshot:', payload);
+            }
+        }
         function renderWarnings() {
             const el = document.getElementById('ingestion-warnings');
             if(!el) return;
             if(ingestionWarnings.length === 0) { el.classList.add('hidden'); el.innerHTML = ''; return; }
             el.classList.remove('hidden');
             el.innerHTML = `<strong>Data quality notes:</strong><br>${Array.from(new Set(ingestionWarnings)).join('<br>')}`;
+            el.closest('details')?.setAttribute('open', 'open');
         }
         function updatePeriodSelectors(periodKeys) {
             const fromEl = document.getElementById('input-period-from');
@@ -1888,16 +2007,38 @@
             const u = String(nameRaw || '').toUpperCase();
             return u.includes('SIGNED ART CARD') || u.includes('SIGNEDARTCARD');
         }
+        function classifySalesLineProduct(name, pType) {
+            const upperName = String(name || '').toUpperCase();
+            const pt = String(pType || '').trim().toLowerCase();
+            if (/t-?shirt|tee\b|hoodie|sweat|poster|print|hat\b|cap\b|bag\b|merch|apparel|joggers|beanie|pin\b|patch\b|sock|jacket|balaclava/.test(pt)) {
+                return { isMusic: false, isMerch: true };
+            }
+            if (/vinyl|cd|cassette|album|single|\bep\b|music|\blp\b|record|picture disc/.test(pt)) {
+                return { isMusic: true, isMerch: false };
+            }
+            if (/BADGE|TOTE|TEE|SHIRT|HOODIE|JOGGER|POSTER|PATCH|BALACLAVA|BEANIE|CAP\b|HAT\b/.test(upperName)) {
+                return { isMusic: false, isMerch: true };
+            }
+            if (upperName.includes('VINYL') || upperName.includes('CASSETTE') || upperName.includes('PICTURE DISC') || /\bCD\b/.test(upperName) || /\bEP\b/.test(upperName) || upperName.includes('ALBUM')) {
+                return { isMusic: true, isMerch: false };
+            }
+            return { isMusic: false, isMerch: true };
+        }
         function parseLondonDateTimeMs(dateStr, timeStr) {
+            return parseLeverDateTimeMs(dateStr, timeStr, getLeverTimeZone());
+        }
+        function parseLeverDateTimeMs(dateStr, timeStr, timeZone) {
             if(!dateStr) return null;
+            const tz = timeZone || getLeverTimeZone();
             const [year, month, day] = dateStr.split('-').map(Number);
             const parts = (timeStr || '00:00').split(':');
             const hour = Number(parts[0] || 0);
             const minute = Number(parts[1] || 0);
             let utcGuess = Date.UTC(year, month - 1, day, hour, minute, 0);
+            const locale = tz === 'Europe/London' ? 'en-GB' : 'en-US';
             for(let i = 0; i < 3; i++) {
                 const d = new Date(utcGuess);
-                const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const fmt = new Intl.DateTimeFormat(locale, { timeZone: tz, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const p = Object.fromEntries(fmt.formatToParts(d).filter(x => x.type !== 'literal').map(x => [x.type, x.value]));
                 const asShown = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day), Number(p.hour), Number(p.minute), Number(p.second || 0));
                 const wanted = Date.UTC(year, month - 1, day, hour, minute, 0);
@@ -1906,13 +2047,22 @@
             return utcGuess;
         }
         function formatLondonDateTimeLabel(dateStr, timeStr) {
-            const ms = parseLondonDateTimeMs(dateStr, timeStr);
+            return formatLeverDateTimeLabel(dateStr, timeStr, getLeverTimeZone());
+        }
+        function formatLeverDateTimeLabel(dateStr, timeStr, timeZone) {
+            const tz = timeZone || getLeverTimeZone();
+            const ms = parseLeverDateTimeMs(dateStr, timeStr, tz);
             if(ms === null) return '—';
-            return new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZoneName: 'short' }).format(new Date(ms));
+            const locale = tz === 'Europe/London' ? 'en-GB' : 'en-US';
+            return new Intl.DateTimeFormat(locale, { timeZone: tz, day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: tz !== 'Europe/London', timeZoneName: 'short' }).format(new Date(ms));
         }
         function formatLondonWindow(startDate, startTime, endDate, endTime) {
+            return formatLeverWindow(startDate, startTime, endDate, endTime, getLeverTimeZone());
+        }
+        function formatLeverWindow(startDate, startTime, endDate, endTime, timeZone) {
             if(!startDate && !endDate) return 'No window configured';
-            return `${formatLondonDateTimeLabel(startDate, startTime)} → ${formatLondonDateTimeLabel(endDate, endTime)}`;
+            const tzLabel = getLeverTimeZoneLabel(timeZone);
+            return `${formatLeverDateTimeLabel(startDate, startTime, timeZone)} → ${formatLeverDateTimeLabel(endDate, endTime, timeZone)} (${tzLabel})`;
         }
         function getShowRowsFromDom(leverKey) {
             const container = document.getElementById(`lever-${leverKey}-shows`);
@@ -1968,8 +2118,11 @@
             const signedUkEuModeEl = document.querySelector('input[name="lever-signedUkEu-mode"]:checked');
             const signedUsModeEl = document.querySelector('input[name="lever-signedUs-mode"]:checked');
             return {
+                leverTimeZone: getLeverTimeZone(),
+                csvHourTimeZone: getCsvHourTimeZone(),
                 preOrder1: { ...readLeverMarketFlags('preOrder1'), title: document.getElementById('lever-preOrder1-title')?.value || 'Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder1-start-date')?.value || '', startTime: document.getElementById('lever-preOrder1-start-time')?.value || '', endDate: document.getElementById('lever-preOrder1-end-date')?.value || '', endTime: document.getElementById('lever-preOrder1-end-time')?.value || '', shows: getShowRowsFromDom('preOrder1'), npnSignups: Number(document.getElementById('lever-preOrder1-npn')?.value || 0) },
                 preOrder2: { ...readLeverMarketFlags('preOrder2'), title: document.getElementById('lever-preOrder2-title')?.value || 'Second Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder2-start-date')?.value || '', startTime: document.getElementById('lever-preOrder2-start-time')?.value || '', endDate: document.getElementById('lever-preOrder2-end-date')?.value || '', endTime: document.getElementById('lever-preOrder2-end-time')?.value || '', shows: getShowRowsFromDom('preOrder2'), npnSignups: Number(document.getElementById('lever-preOrder2-npn')?.value || 0) },
+                earlyAccess: { ...readLeverMarketFlags('earlyAccess'), title: document.getElementById('lever-earlyAccess-title')?.value || 'Early Access Period', infoNotes: document.getElementById('lever-earlyAccess-info')?.value || '', startDate: document.getElementById('lever-earlyAccess-start-date')?.value || '', startTime: document.getElementById('lever-earlyAccess-start-time')?.value || '', endDate: document.getElementById('lever-earlyAccess-end-date')?.value || '', endTime: document.getElementById('lever-earlyAccess-end-time')?.value || '' },
                 giftWithPurchase: { ...readLeverMarketFlags('giftWithPurchase'), title: document.getElementById('lever-giftWithPurchase-title')?.value || 'Gift with Purchase', productName: document.getElementById('lever-giftWithPurchase-product')?.value || '' },
                 upsell: { ...readLeverMarketFlags('upsell'), title: document.getElementById('lever-upsell-title')?.value || 'Upsell', productName: document.getElementById('lever-upsell-product')?.value || '', discountPercent: Number(document.getElementById('lever-upsell-discount')?.value || 0) },
                 competition: { ...readLeverMarketFlags('competition'), title: document.getElementById('lever-competition-title')?.value || 'Competition', startDate: document.getElementById('lever-competition-start-date')?.value || '', startTime: document.getElementById('lever-competition-start-time')?.value || '', endDate: document.getElementById('lever-competition-end-date')?.value || '', endTime: document.getElementById('lever-competition-end-time')?.value || '', prize: document.getElementById('lever-competition-prize')?.value || '', npnSignups: Number(document.getElementById('lever-competition-npn')?.value || 0) },
@@ -1982,17 +2135,20 @@
             cfg = normalizeLeversConfig(cfg);
             if(!cfg) return;
             const set = (id, val, isCheck) => { const el = document.getElementById(id); if(!el) return; if(isCheck) el.checked = !!val; else el.value = val ?? ''; };
+            if(cfg.leverTimeZone) set('input-lever-timezone', cfg.leverTimeZone, false);
+            if(cfg.csvHourTimeZone) set('input-csv-hour-timezone', cfg.csvHourTimeZone, false);
             LEVER_KEYS.forEach(key => {
                 const c = cfg[key]; if(!c) return;
                 LEVER_MARKET_CODES.forEach(code => set(`lever-${key}-${code}`, c[`${code}Enabled`], true));
                 set(`lever-${key}-title`, c.title, false);
+                if(key === 'earlyAccess') set('lever-earlyAccess-info', c.infoNotes, false);
                 if(key === 'giftWithPurchase') set('lever-giftWithPurchase-product', c.productName, false);
                 if(key === 'upsell') { set('lever-upsell-product', c.productName, false); set('lever-upsell-discount', c.discountPercent ?? 0, false); }
                 if(key === 'competition') { set('lever-competition-prize', c.prize, false); set('lever-competition-npn', c.npnSignups, false); }
                 if(key === 'sale') { set('lever-sale-notes', c.notes, false); setLeverSaleProducts(c.saleProducts || []); }
                 if(key === 'signedUkEu' && c.mode) { const r = document.querySelector(`input[name="lever-signedUkEu-mode"][value="${c.mode}"]`); if(r) r.checked = true; }
                 if(key === 'signedUs' && c.mode) { const r = document.querySelector(`input[name="lever-signedUs-mode"][value="${c.mode}"]`); if(r) r.checked = true; }
-                if(key === 'preOrder1' || key === 'preOrder2' || key === 'competition' || key === 'sale') {
+                if(LEVER_TIMED_KEYS.includes(key)) {
                     set(`lever-${key}-start-date`, c.startDate, false); set(`lever-${key}-start-time`, c.startTime, false);
                     set(`lever-${key}-end-date`, c.endDate, false); set(`lever-${key}-end-time`, c.endTime, false);
                     if(key === 'preOrder1' || key === 'preOrder2') { set(`lever-${key}-npn`, c.npnSignups, false); renderShowRowsToDom(key, c.shows || []); }
@@ -2081,8 +2237,11 @@
             return units;
         }
         function lineLondonDateKey(ts) {
+            return lineLeverDateKey(ts, getLeverTimeZone());
+        }
+        function lineLeverDateKey(ts, timeZone) {
             if(ts === null || ts === undefined) return '';
-            return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts));
+            return new Intl.DateTimeFormat('en-CA', { timeZone: timeZone || getLeverTimeZone(), year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts));
         }
         function linesInDateWindow(market, startDate, endDate) {
             if(!startDate || !endDate) return [];
@@ -2116,35 +2275,38 @@
         function sortTopProductsByRevenue(entries) {
             return entries.sort((a, b) => b[1].revenue - a[1].revenue || b[1].units - a[1].units);
         }
-        function aggregateTimedLever(market, cfg, gwpNames) {
+        function aggregateTimedLever(market, cfg, gwpNames, options = {}) {
             const chartProducts = getCampaignChartProducts();
             const chartMode = getCampaignChartMode();
-            const linesForUnits = (cfg.startDate && cfg.endDate) ? linesInDateWindow(market, cfg.startDate, cfg.endDate) : [];
-            const startMs = parseLondonDateTimeMs(cfg.startDate, cfg.startTime || '00:00');
-            const endMs = parseLondonDateTimeMs(cfg.endDate, cfg.endTime || '23:59');
-            const linesForRevenue = (startMs !== null && endMs !== null) ? linesInWindow(market, startMs, endMs) : linesForUnits;
-            if((!cfg.startDate || !cfg.endDate) && linesForUnits.length === 0) {
+            const top5AllProducts = options.top5AllProducts === true || cfg.top5AllProducts === true;
+            const { startMs, endMs } = getLeverWindowBoundsMs(cfg);
+            let lines = [];
+            if(cfg.startDate && cfg.endDate && startMs !== null && endMs !== null) {
+                lines = linesInWindow(market, startMs, endMs);
+            } else if(cfg.startDate && cfg.endDate) {
+                lines = linesInDateWindow(market, cfg.startDate, cfg.endDate);
+            }
+            if((!cfg.startDate || !cfg.endDate) && lines.length === 0) {
                 return { windowLabel: formatLondonWindow(cfg.startDate, cfg.startTime, cfg.endDate, cfg.endTime), chartUnits: 0, chartUnitsPct: 0, marketChartUnits: getMarketChartUnits(market), musicRev: 0, merchRev: 0, top5: [], customers: 0, npnSignups: Number(cfg.npnSignups || 0), shows: cfg.shows || [], prize: cfg.prize || '', emptyReason: 'Set start and end date/time for this lever.' };
             }
             const products = {};
             let musicRev = 0, merchRev = 0, chartUnits = 0;
             const customers = new Set();
-            linesForUnits.forEach(l => {
+            lines.forEach(l => {
                 if(l.orderId) customers.add(l.orderId);
                 if(isChartUnitLine(l, chartProducts, gwpNames, chartMode)) chartUnits += l.units;
-            });
-            linesForRevenue.forEach(l => {
                 if(l.isMusic) musicRev += l.rev;
                 if(l.isMerch) merchRev += l.rev;
                 if(isExcludedGwpProduct(l.name, gwpNames)) return;
-                if(!isChartUnitLine(l, chartProducts, gwpNames, chartMode)) return;
+                const includeInTop5 = top5AllProducts || isChartUnitLine(l, chartProducts, gwpNames, chartMode);
+                if(!includeInTop5) return;
                 if(!products[l.name]) products[l.name] = { units: 0, revenue: 0 };
                 products[l.name].units += l.units; products[l.name].revenue += l.rev;
             });
             const marketChartUnits = getMarketChartUnits(market);
             const top5 = sortTopProductsByRevenue(Object.entries(products)).slice(0, 5);
             const npn = Number(cfg.npnSignups || 0);
-            return { windowLabel: formatLondonWindow(cfg.startDate, cfg.startTime, cfg.endDate, cfg.endTime), chartUnits, chartUnitsPct: marketChartUnits > 0 ? (chartUnits / marketChartUnits) * 100 : 0, marketChartUnits, musicRev, merchRev, top5, customers: customers.size, npnSignups: npn, shows: cfg.shows || [], prize: cfg.prize || '', emptyReason: linesForUnits.length === 0 ? 'No sales rows fall inside this driver window for the selected market.' : '' };
+            return { windowLabel: formatLondonWindow(cfg.startDate, cfg.startTime, cfg.endDate, cfg.endTime), chartUnits, chartUnitsPct: marketChartUnits > 0 ? (chartUnits / marketChartUnits) * 100 : 0, marketChartUnits, musicRev, merchRev, top5, customers: customers.size, npnSignups: npn, shows: cfg.shows || [], prize: cfg.prize || '', emptyReason: lines.length === 0 ? 'No sales rows fall inside this driver window for the selected market.' : '' };
         }
         function enrichLeversGlobalCombined(computed, config) {
             ['preOrder1', 'preOrder2', 'competition'].forEach(key => {
@@ -2196,9 +2358,8 @@
         }
         function aggregateSaleLever(market, cfg) {
             const saleProducts = new Set(cfg.saleProducts || []);
-            const startMs = parseLondonDateTimeMs(cfg.startDate, cfg.startTime || '00:00');
-            const endMs = parseLondonDateTimeMs(cfg.endDate, cfg.endTime || '23:59');
-            const windowLabel = formatLondonWindow(cfg.startDate, cfg.startTime, cfg.endDate, cfg.endTime);
+            const { startMs, endMs } = getLeverWindowBoundsMs(cfg);
+            const windowLabel = formatLeverWindow(cfg.startDate, cfg.startTime, cfg.endDate, cfg.endTime, getLeverTimeZone());
             if(!cfg.startDate || !cfg.endDate) {
                 return { windowLabel, notes: cfg.notes || '', totalOrders: 0, saleUnits: 0, aov: 0, totalRevenue: 0, saleRevenue: 0, saleRevenuePct: 0, saleMusicRev: 0, saleMerchRev: 0, top5: [], emptyReason: 'Set start and end date/time for the sale.' };
             }
@@ -2279,6 +2440,7 @@
             LEVER_MARKET_CODES.forEach(market => {
                 if(leverEnabledForMarket(config.preOrder1, market)) out[market].preOrder1 = { ...aggregateTimedLever(market, config.preOrder1, gwpNames), title: config.preOrder1.title };
                 if(leverEnabledForMarket(config.preOrder2, market)) out[market].preOrder2 = { ...aggregateTimedLever(market, config.preOrder2, gwpNames), title: config.preOrder2.title };
+                if(leverEnabledForMarket(config.earlyAccess, market)) out[market].earlyAccess = { ...aggregateTimedLever(market, config.earlyAccess, gwpNames, { top5AllProducts: true }), title: config.earlyAccess.title, infoNotes: config.earlyAccess.infoNotes || '' };
                 if(leverEnabledForMarket(config.giftWithPurchase, market)) out[market].giftWithPurchase = { ...aggregateGwpLever(market, config.giftWithPurchase), title: config.giftWithPurchase.title };
                 if(leverEnabledForMarket(config.upsell, market)) out[market].upsell = { ...aggregateUpsellLever(market, config.upsell), title: config.upsell.title };
                 if(leverEnabledForMarket(config.competition, market)) out[market].competition = { ...aggregateTimedLever(market, config.competition, gwpNames), title: config.competition.title };
@@ -2340,6 +2502,14 @@
             const marketOrdersLabel = leverMarketLabel(market) ? `${leverMarketLabel(market)} Orders` : 'Orders';
             return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: var(--rep-v-prim)"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3><p class="text-xs text-gray-500"><strong>Driver window:</strong> ${data.windowLabel}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">D2C Chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="preview-body-data">£${Number(data.musicRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="preview-body-data">£${Number(data.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketOrdersLabel}</p><p class="preview-body-data">${Number(data.customers||0).toLocaleString()}</p><p class="text-xs text-gray-500">NPN sign-ups: ${Number(data.npnSignups||0).toLocaleString()}</p>${sendHtml}</div></div>${showsHtml}${prizeHtml}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No products in window</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
         }
+        function renderEarlyAccessLeverCard(market, key, data, panePrefix) {
+            if(!data) return '';
+            const chartId = `${panePrefix}-chart-${key}`;
+            const infoHtml = data.infoNotes ? `<div class="dashboard-card"><p class="preview-header-label mb-1">Early access info</p><p class="text-sm text-gray-600 whitespace-pre-wrap">${String(data.infoNotes).replace(/</g, '&lt;')}</p></div>` : '';
+            const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
+            const marketOrdersLabel = leverMarketLabel(market) ? `${leverMarketLabel(market)} Orders` : 'Orders';
+            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: #38bdf8"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3>${infoHtml}<p class="text-xs text-gray-500"><strong>Early access window:</strong> ${data.windowLabel}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-4 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">D2C Chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Music net rev</p><p class="preview-body-data">£${Number(data.musicRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Merch net rev</p><p class="preview-body-data">£${Number(data.merchRev||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">${marketOrdersLabel}</p><p class="preview-body-data">${Number(data.customers||0).toLocaleString()}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 products (music &amp; merch)</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No products in window</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
+        }
         function renderGwpLeverCard(key, data, panePrefix) {
             if(!data) return '';
             return `<div class="dashboard-card border-l-4 space-y-2" style="border-color: var(--rep-v-sec)"><h3 class="preview-header-label text-base">${data.title || key}</h3><p class="text-xs text-gray-500">Gift product: <strong>${data.productName || '—'}</strong></p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Orders with gift</p><p class="preview-body-data text-xl font-bold">${Number(data.orders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Full order revenue</p><p class="preview-body-data text-xl font-bold">£${Number(data.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div></div></div>`;
@@ -2385,6 +2555,7 @@
             const prefix = `${paneId.replace('-pane', '')}`;
             if(data.preOrder1) html += renderTimedLeverCard(market, 'preOrder1', data.preOrder1, prefix);
             if(data.preOrder2) html += renderTimedLeverCard(market, 'preOrder2', data.preOrder2, prefix);
+            if(data.earlyAccess) html += renderEarlyAccessLeverCard(market, 'earlyAccess', data.earlyAccess, prefix);
             if(data.giftWithPurchase) html += renderGwpLeverCard('giftWithPurchase', data.giftWithPurchase, prefix);
             if(data.upsell) html += renderUpsellLeverCard('upsell', data.upsell, prefix);
             if(data.competition) html += renderTimedLeverCard(market, 'competition', data.competition, prefix);
@@ -2396,7 +2567,7 @@
             setTimeout(() => {
                 registerPiePercentOverlayPlugin();
                 const styles = getSidebarFormStyles();
-                ['preOrder1', 'preOrder2', 'competition', 'signedUkEu', 'signedUs', 'signed'].forEach(k => { if(data[k]?.top5?.length) renderLeverChart(`${prefix}-chart-${k}`, data[k].top5); });
+                ['preOrder1', 'preOrder2', 'earlyAccess', 'competition', 'signedUkEu', 'signedUs', 'signed'].forEach(k => { if(data[k]?.top5?.length) renderLeverChart(`${prefix}-chart-${k}`, data[k].top5); });
                 if(data.sale) {
                     renderSalePieChart(`${prefix}-pie-sale`, data.sale.saleMusicRev, data.sale.saleMerchRev, styles);
                     if(data.sale.top5?.length) renderSaleTop5Chart(`${prefix}-chart-sale`, data.sale.top5);
@@ -2406,7 +2577,7 @@
         function buildLeversPayload() {
             const config = getLeversConfigFromForm();
             const computed = aggregatedLineRows.length ? buildLeversComputed(config) : (loadedLeversPayload?.computed || { uk: {}, eu: {}, us: {}, int: {} });
-            return { config, computed };
+            return { config, computed, leverTimeZone: config.leverTimeZone || getLeverTimeZone(), csvHourTimeZone: config.csvHourTimeZone || getCsvHourTimeZone() };
         }
         function buildComparisonPayload() {
             const filters = getAdvancedFilters();
@@ -2507,8 +2678,10 @@
         };
         function resetLeversToDefaults() {
             applyLeversConfigToForm({
+                leverTimeZone: 'Europe/London',
                 preOrder1: { ...LEVER_MARKETS_OFF, title: 'Pre-order for Pre-sale', startDate: '', startTime: '', endDate: '', endTime: '', npnSignups: 0, shows: [] },
                 preOrder2: { ...LEVER_MARKETS_OFF, title: 'Second Pre-order for Pre-sale', startDate: '', startTime: '', endDate: '', endTime: '', npnSignups: 0, shows: [] },
+                earlyAccess: { ...LEVER_MARKETS_OFF, title: 'Early Access Period', infoNotes: '', startDate: '', startTime: '', endDate: '', endTime: '' },
                 giftWithPurchase: { ...LEVER_MARKETS_OFF, title: 'Gift with Purchase', productName: '' },
                 upsell: { ...LEVER_MARKETS_OFF, title: 'Upsell', productName: '', discountPercent: 0 },
                 competition: { ...LEVER_MARKETS_OFF, title: 'Competition', startDate: '', startTime: '', endDate: '', endTime: '', prize: '', npnSignups: 0 },
@@ -2542,6 +2715,7 @@
             loadedLeversPayload = null;
             ingestionWarnings = [];
             renderWarnings();
+            renderCsvUploadStatus('');
 
             const csvMaster = document.getElementById('csv-master');
             const csvTraffic = document.getElementById('csv-traffic');
@@ -3007,7 +3181,6 @@
             return null;
         }
 
-        let loadCampaignInFlight = null;
         function showCampaignLoadStatusMain(html, tone) {
             const el = document.getElementById('publish-result');
             if (!el) return;
@@ -3087,7 +3260,17 @@
                 if (document.getElementById(`input-name-${mk}`)) document.getElementById(`input-name-${mk}`).value = txt;
                 if (document.getElementById(`preview-title-${mk}`)) document.getElementById(`preview-title-${mk}`).textContent = txt;
             });
-            if (old.levers) { loadedLeversPayload = old.levers; applyLeversConfigToForm(old.levers.config || old.levers); } else loadedLeversPayload = null;
+            if (old.levers) {
+                loadedLeversPayload = old.levers;
+                const leverCfg = { ...(old.levers.config || old.levers) };
+                if(old.levers.leverTimeZone && !leverCfg.leverTimeZone) leverCfg.leverTimeZone = old.levers.leverTimeZone;
+                if(old.levers.csvHourTimeZone && !leverCfg.csvHourTimeZone) leverCfg.csvHourTimeZone = old.levers.csvHourTimeZone;
+                applyLeversConfigToForm(leverCfg);
+                if(old.csvHourTimeZone) {
+                    const csvTzEl = document.getElementById('input-csv-hour-timezone');
+                    if(csvTzEl) csvTzEl.value = old.csvHourTimeZone;
+                }
+            } else loadedLeversPayload = null;
 
             if (old.colors) {
                 const c = old.colors, d = { bg: '#f6f6f7', cardBg: '#ffffff', logo: '#202223', accordion: '#202223', primary: '#008060', secondary: '#5c6ac4', tertiary: '#9c6ade', quaternary: '#47c1bf', mapGradientDark: '#005bd3', toteBag: '#6371c7', cardHeaderText: '#6d7175', accordionHeaderText: '#ffffff', textColor: '#202223' };
@@ -3167,7 +3350,7 @@
                     storeData[m].weekly = mData.weekly || mData.monthly || { 'Period 1': storeData[m].revenue * 0.25, 'Period 2': storeData[m].revenue * 0.25, 'Period 3': storeData[m].revenue * 0.25, 'Period 4': storeData[m].revenue * 0.25 };
                     storeData[m].daily = mData.daily || {};
                     storeData[m].traffic = { sessions: loadedSess, atc: calcAtc, mobile: parseInt(mData.mobilePerc, 10) || 85, desktop: parseInt(mData.desktopPct, 10) || 15 };
-                    storeData[m].merch = mData.merch || { musicRev: storeData[m].revenue, merchRev: 0, sizes: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL+': 0 }, categories: {} };
+                    storeData[m].merch = mData.merch || { musicRev: 0, merchRev: 0, sizes: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL+': 0 }, categories: {} };
                 } else {
                     storeData[m] = getEmptyStoreData()[m];
                 }
@@ -3240,6 +3423,13 @@
         // --- DYNAMIC DATA AGGREGATION PIPELINE ---
         function runDataAggregation(options = {}) {
             if(!windowCurrentCSVData || windowCurrentCSVData.length === 0) return;
+            if(typeof Papa === 'undefined') {
+                ingestionWarnings = ['CSV parser (Papa Parse) did not load. Disable ad blockers or hard-refresh, then upload again.'];
+                renderWarnings();
+                renderCsvUploadStatus('CSV parser blocked — check network/ad blocker.', 'err');
+                return;
+            }
+            try {
             const uploadGeneration = window.__csvDataGeneration || 0;
             const preservedWarnings = [...ingestionWarnings];
             ingestionWarnings = preservedWarnings;
@@ -3332,13 +3522,12 @@
                 if(!activeFilters.markets.includes(tMk)) return;
                 if(!rowIsWithinCampaignDates(dayVal, id, minOrder, maxOrder)) return;
 
-                const isMusic = pType.toLowerCase().includes('music') || upperName.includes('VINYL') || upperName.includes('CD') || upperName.includes('CASSETTE') || upperName.includes('EP ') || upperName.includes('ALBUM');
+                const { isMusic, isMerch } = classifySalesLineProduct(name, pType);
                 if(activeFilters.productScope === 'music' && !isMusic) return;
                 if(activeFilters.productScope === 'merch' && isMusic) return;
                 if(activeFilters.includeKeywords.length > 0 && !activeFilters.includeKeywords.some(kw => upperName.includes(kw))) return;
                 if(activeFilters.excludeKeywords.some(kw => upperName.includes(kw))) return;
 
-                const isMerch = !isMusic;
                 const rowTs = rowTimestampWithHour(dayVal, hourVal, id, minOrder, maxOrder);
                 const orderKey = id || `row_${rowIdx}`;
                 const unitPrice = derivedQty ? Math.abs(rev / derivedQty) : 0;
@@ -3390,11 +3579,12 @@
                         if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
                         storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
                     }
-                } else if(activeFilters.campaignChartMode === 'no_focus' && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
-                    if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
-                    storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
                 } else {
                     storeData[tMk].merch.merchRev += rev;
+                    if(activeFilters.campaignChartMode === 'no_focus' && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
+                        if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
+                        storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
+                    }
                     let cat = pType ? pType : 'General Apparel';
                     if(!pType) {
                         if(upperName.includes('TEE') || upperName.includes('T-SHIRT') || upperName.includes('SHIRT')) cat = 'T-Shirts';
@@ -3503,10 +3693,26 @@
             renderWarnings();
             populateLeverProductDropdowns();
             calculateGlobalDashboard();
+            const gRev = Object.values(storeData).reduce((sum, d) => sum + (d.revenue || 0), 0);
+            const gOrders = Object.values(storeData).reduce((sum, d) => sum + (d.orders?.size || 0), 0);
+            renderCsvUploadStatus(`CSV processed — ${gOrders.toLocaleString()} orders · £${gRev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} in preview.`, gRev > 0 ? 'ok' : 'err');
+            } catch (aggErr) {
+                console.error('runDataAggregation failed:', aggErr);
+                ingestionWarnings.push(`Aggregation error: ${aggErr?.message || aggErr}. Click "Copy debug snapshot" and send to support.`);
+                renderWarnings();
+                renderCsvUploadStatus(`Aggregation error: ${aggErr?.message || aggErr}`, 'err');
+            }
         }
 
         function handleFileUpload(event, mk) {
             const file = event.target.files[0]; if (!file) return;
+            if(typeof Papa === 'undefined') {
+                ingestionWarnings = ['CSV parser (Papa Parse) did not load. Disable ad blockers or hard-refresh, then upload again.'];
+                renderWarnings();
+                renderCsvUploadStatus('CSV parser blocked — check network/ad blocker.', 'err');
+                return;
+            }
+            renderCsvUploadStatus(`Reading ${file.name}…`, 'wait');
             const dateMatches = file.name.match(/\d{4}-\d{2}-\d{2}/g);
             windowCurrentCSVFileStart = null; windowCurrentCSVFileEnd = null;
             if (dateMatches && dateMatches.length >= 2) { windowCurrentCSVFileStart = new Date(dateMatches[0]).getTime(); windowCurrentCSVFileEnd = new Date(dateMatches[1]).getTime(); if(mk === 'master') applyCampaignDatesFromFilename(dateMatches, true); else applyCampaignDatesFromFilename(dateMatches); }
@@ -3516,12 +3722,15 @@
                 error: function(err) {
                     ingestionWarnings = [`CSV parse failed: ${err?.message || 'Unknown error'}. Try re-exporting from Shopify.`];
                     renderWarnings();
+                    renderCsvUploadStatus(`CSV parse failed: ${err?.message || 'Unknown error'}`, 'err');
                 },
                 complete: function(res) {
+                    try {
                     windowCurrentCSVData = normalizeCsvRows(res.data || []); windowCurrentCSVMk = mk; windowCurrentCSVHasMarket = false;
                     if(!windowCurrentCSVData.length) {
                         ingestionWarnings = ['CSV parsed but contained no data rows. Check the file is a Shopify export with headers.'];
                         renderWarnings();
+                        renderCsvUploadStatus('CSV parsed but had 0 data rows.', 'err');
                         return;
                     }
                     markCsvUploadReady();
@@ -3538,8 +3747,10 @@
                     const hasNameColumn = normalizedFields.some(f => f.includes('producttitle') || f.includes('lineitemname') || f === 'title' || f === 'name');
                     if(!hasRevenueColumn) ingestionWarnings.push('Missing revenue column. Expected Net Sales / Sales / Revenue.');
                     if(!hasNameColumn) ingestionWarnings.push('Missing product title column. Expected Product Title / Line Item Name / Name.');
+                    const hasHourColumn = normalizedFields.some(f => f.includes('hourofday') || f === 'hour');
+                    if(hasHourColumn) ingestionWarnings.push(`Hour-of-day column detected — rows timed using CSV hour timezone (${getLeverTimeZoneLabel(getCsvHourTimeZone())}). Lever windows use lever timezone (${getLeverTimeZoneLabel()}).`);
                     if(!hasDateColumn) ingestionWarnings.push('No date-like column detected. Time series may rely on inferred periods.');
-                    res.meta.fields.forEach(f => {
+                    fields.forEach(f => {
                         if (!f) return; const cleanF = String(f).toLowerCase().replace(/[^a-z0-9]/g, '');
                         if(cleanF.includes('market') || cleanF.includes('country')) windowCurrentCSVHasMarket = true;
                     });
@@ -3548,6 +3759,12 @@
                     }
                     renderWarnings();
                     runDataAggregation();
+                    } catch (uploadErr) {
+                        console.error('CSV upload handling failed:', uploadErr);
+                        ingestionWarnings = [`Upload handling error: ${uploadErr?.message || uploadErr}`];
+                        renderWarnings();
+                        renderCsvUploadStatus(`Upload handling error: ${uploadErr?.message || uploadErr}`, 'err');
+                    }
                 }
             });
         }
@@ -3619,7 +3836,9 @@
             ['global', 'uk', 'eu', 'us', 'int', 'countries'].forEach(mk => { document.getElementById(`input-name-${mk}`)?.addEventListener('input', (e) => { const titleTarget = document.getElementById(`preview-title-${mk}`); if(titleTarget) titleTarget.textContent = e.target.value; }); });
             REPORT_SECTION_KEYS.forEach(k => { document.getElementById(`section-toggle-${k}`)?.addEventListener('change', () => applySectionVisibility(getSectionVisibility(), true)); });
             document.querySelectorAll('[data-add-show]').forEach(btn => { btn.addEventListener('click', () => { addShowRow(btn.getAttribute('data-add-show'), {}); calculateGlobalDashboard(); }); });
-            document.querySelectorAll('#levers-config-root input, #levers-config-root select').forEach(el => { el.addEventListener('input', () => calculateGlobalDashboard()); el.addEventListener('change', () => calculateGlobalDashboard()); });
+            document.getElementById('input-csv-hour-timezone')?.addEventListener('change', () => { if(windowCurrentCSVData) runDataAggregation(); else calculateGlobalDashboard(); });
+            document.getElementById('input-lever-timezone')?.addEventListener('change', () => { if(windowCurrentCSVData) runDataAggregation(); else calculateGlobalDashboard(); });
+            document.querySelectorAll('#levers-config-root input, #levers-config-root select, #levers-config-root textarea').forEach(el => { el.addEventListener('input', () => calculateGlobalDashboard()); el.addEventListener('change', () => calculateGlobalDashboard()); });
 
             document.getElementById('btn-campaign-chart-products')?.addEventListener('click', openCampaignChartProductModal);
             document.getElementById('input-campaign-chart-mode')?.addEventListener('change', () => {
@@ -3669,6 +3888,7 @@
 
             document.getElementById('csv-master')?.addEventListener('change', (e) => handleFileUpload(e, 'master'));
             document.getElementById('csv-traffic')?.addEventListener('change', handleTrafficUpload);
+            document.getElementById('btn-copy-debug-snapshot')?.addEventListener('click', () => { copyAdminDebugSnapshot(); });
 
             document.getElementById('upload-logo')?.addEventListener('change', function(e) { if (e.target.files[0]) compressImageToBase64(e.target.files[0], applyLogoBase64, { flattenTransparent: false }); });
             document.getElementById('clear-logo')?.addEventListener('click', () => { applyLogoBase64(null); document.getElementById('upload-logo').value = ''; });
@@ -3822,7 +4042,8 @@
                     uk: packageMarketSegment('uk'), eu: packageMarketSegment('eu'), us: packageMarketSegment('us'), int: packageMarketSegment('int'),
                     topCountries: buildTopCountriesPayload(),
                     globalMerch: buildGlobalMerchPayload(),
-                    salesforcePriorUnits: salesforcePriorUnits || null
+                    salesforcePriorUnits: salesforcePriorUnits || null,
+                    csvHourTimeZone: getCsvHourTimeZone()
                 };
 
                 try {
