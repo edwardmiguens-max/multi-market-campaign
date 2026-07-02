@@ -160,7 +160,7 @@
                             <p class="text-[10px] text-gray-400 mb-2 leading-tight">Upload a Salesforce EU country export (.xlsx). Vinyl units are added to D2C chart units — <strong>GB → UK</strong>, all other countries → EU. Revenue is ignored.</p>
                             <div class="flex items-center gap-2 flex-wrap">
                                 <input type="file" id="upload-salesforce-country" accept=".xlsx,.xls" class="block text-[10px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600">
-                                <button type="button" id="btn-clear-salesforce-country" class="text-[10px] px-2 py-1 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 hidden">Clear</button>
+                                <button type="button" id="btn-clear-salesforce-country" class="text-[10px] px-2 py-1 rounded bg-red-900/80 text-red-200 hover:bg-red-800">Clear all data</button>
                             </div>
                             <p id="salesforce-country-summary" class="text-[10px] text-gray-400 mt-2 leading-tight">No prior Salesforce units loaded.</p>
                         </div>
@@ -359,6 +359,7 @@
                     <div class="mt-3 px-1 space-y-4 pb-2">
                         <div class="bg-gray-800 p-2.5 rounded border border-green-600/50"><label class="block text-[11px] font-bold text-green-400 mb-1">Option A: Master Sales File</label><input type="file" id="csv-master" accept=".csv" class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-green-700 file:text-white hover:file:bg-green-600 cursor-pointer"></div>
                         <div class="bg-gray-800 p-2.5 rounded border border-purple-600/50"><label class="block text-[11px] font-bold text-purple-400 mb-1">Append Analytics / Traffic File</label><input type="file" id="csv-traffic" accept=".csv" class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-purple-700 file:text-white hover:file:bg-purple-600 cursor-pointer"></div>
+                        <button type="button" id="btn-clear-data-uploads" class="w-full text-[10px] px-2 py-1.5 rounded bg-red-900/80 text-red-200 hover:bg-red-800 font-semibold">Clear all data</button>
                     </div>
                 </details>
             </div>
@@ -919,8 +920,10 @@
             return { musicRev, merchRev, sizes, topMerchProducts: Object.entries(merchProducts).sort((a,b) => b[1].revenue - a[1].revenue).slice(0, 5) };
         }
         function getGlobalMerchForDisplay() {
-            if(Object.values(storeData).some(d => d.loaded)) return aggregateGlobalMerch();
-            return loadedGlobalMerchPayload || { musicRev: 0, merchRev: 0, sizes: { XS:0, S:0, M:0, L:0, XL:0, XXL:0, '3XL+':0 }, topMerchProducts: [] };
+            if(windowCurrentCSVData && windowCurrentCSVData.length > 0) return aggregateGlobalMerch();
+            if(aggregatedLineRows.length > 0) return aggregateGlobalMerch();
+            if(loadedGlobalMerchPayload) return loadedGlobalMerchPayload;
+            return { musicRev: 0, merchRev: 0, sizes: { XS:0, S:0, M:0, L:0, XL:0, XXL:0, '3XL+':0 }, topMerchProducts: [] };
         }
         function buildGlobalMerchPayload() {
             const m = getGlobalMerchForDisplay();
@@ -1531,18 +1534,15 @@
         }
         function updateSalesforceSummary() {
             const el = document.getElementById('salesforce-country-summary');
-            const clearBtn = document.getElementById('btn-clear-salesforce-country');
             if(!el) return;
             if(!salesforcePriorUnits?.totalUnits) {
                 el.textContent = 'No prior Salesforce units loaded.';
-                if(clearBtn) clearBtn.classList.add('hidden');
                 return;
             }
             const name = salesforcePriorUnits.productName ? ` · ${salesforcePriorUnits.productName}` : '';
             const uk = getSalesforceUnitsForMarket('uk');
             const eu = getSalesforceUnitsForMarket('eu');
             el.textContent = `${Number(salesforcePriorUnits.totalUnits).toLocaleString()} vinyl units${name} — UK (GB): ${Number(uk).toLocaleString()} · EU: ${Number(eu).toLocaleString()}`;
-            if(clearBtn) clearBtn.classList.remove('hidden');
         }
         function parseSalesforceCountryWorkbook(wb) {
             if(typeof XLSX === 'undefined') throw new Error('Spreadsheet parser not loaded.');
@@ -2335,6 +2335,42 @@
             if(upsellSel) upsellSel.innerHTML = '<option value="">— Select after CSV upload —</option>';
             setLeverSaleProducts([]);
         }
+        function clearAllIngestedData() {
+            windowCurrentCSVData = null;
+            windowCurrentCSVMk = null;
+            windowCurrentCSVHasMarket = false;
+            windowCurrentCSVFileStart = null;
+            windowCurrentCSVFileEnd = null;
+            aggregatedLineRows = [];
+            orderIndex = {};
+            comparisonModel = { markets: {}, periodOrder: [] };
+            globalCountryStats = {};
+            marketCountryMusicStats = { uk: {}, eu: {}, us: {}, int: {} };
+            loadedGlobalMerchPayload = null;
+            loadedTopCountriesPayload = null;
+            loadedEuTopCountriesPayload = null;
+            loadedIntTopCountriesPayload = null;
+            loadedLeversPayload = null;
+            ingestionWarnings = [];
+            renderWarnings();
+
+            const csvMaster = document.getElementById('csv-master');
+            const csvTraffic = document.getElementById('csv-traffic');
+            const sfUpload = document.getElementById('upload-salesforce-country');
+            if(csvMaster) csvMaster.value = '';
+            if(csvTraffic) csvTraffic.value = '';
+            if(sfUpload) sfUpload.value = '';
+            setSalesforcePriorUnits(null);
+
+            storeData = getEmptyStoreData();
+            populateLeverProductDropdowns();
+            ['uk', 'eu', 'us', 'int'].forEach(clearSegmentPreview);
+            LEVER_MARKET_CODES.forEach(m => {
+                const slot = document.getElementById(`${m}-levers-slot`);
+                if(slot) slot.innerHTML = '';
+            });
+            calculateGlobalDashboard();
+        }
         function clearSegmentPreview(prefix) {
             ['device', 'mm', 'size', 'cat'].forEach(t => {
                 if(chartInstances[`${prefix}_${t}`]) { chartInstances[`${prefix}_${t}`].destroy(); delete chartInstances[`${prefix}_${t}`]; }
@@ -2439,12 +2475,8 @@
             const sfUpload = document.getElementById('upload-salesforce-country');
             if(sfUpload) sfUpload.value = '';
 
-            if(windowCurrentCSVData) {
-                runDataAggregation();
-            } else {
-                ['uk', 'eu', 'us', 'int'].forEach(clearSegmentPreview);
-                calculateGlobalDashboard();
-            }
+            ['uk', 'eu', 'us', 'int'].forEach(clearSegmentPreview);
+            calculateGlobalDashboard();
             syncUsMarketDerivedUi();
         }
 
@@ -2897,6 +2929,7 @@
                     const ordCount = parseInt(rawOrdString, 10) || 0;
                     storeData[m].orders = new Set(Array.from({ length: ordCount }, (_, i) => `imported_${m}_${i}`));
                     storeData[m].products = {};
+                    storeData[m].merchProducts = {};
                     if (Array.isArray(mData.topProducts)) {
                         mData.topProducts.forEach(prod => {
                             if (Array.isArray(prod) && prod.length === 2) {
@@ -2994,6 +3027,7 @@
             globalCountryStats = {};
             marketCountryMusicStats = { uk: {}, eu: {}, us: {}, int: {} };
             loadedTopCountriesPayload = null;
+            loadedGlobalMerchPayload = null;
             aggregatedLineRows = [];
             orderIndex = {};
             const activeFilters = getAdvancedFilters();
@@ -3005,7 +3039,7 @@
 
             Object.keys(storeData).forEach(m => {
                 storeData[m].loaded = true; storeData[m].revenue = 0; storeData[m].items = 0; storeData[m].orders.clear();
-                storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {};
+                storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].merchProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {};
                 storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
             });
 
@@ -3306,11 +3340,8 @@
                 };
                 reader.readAsArrayBuffer(file);
             });
-            document.getElementById('btn-clear-salesforce-country')?.addEventListener('click', () => {
-                const uploadEl = document.getElementById('upload-salesforce-country');
-                if(uploadEl) uploadEl.value = '';
-                setSalesforcePriorUnits(null);
-            });
+            document.getElementById('btn-clear-salesforce-country')?.addEventListener('click', () => { clearAllIngestedData(); });
+            document.getElementById('btn-clear-data-uploads')?.addEventListener('click', () => { clearAllIngestedData(); });
             ['global', 'uk', 'eu', 'us', 'int', 'countries'].forEach(mk => { document.getElementById(`input-name-${mk}`)?.addEventListener('input', (e) => { const titleTarget = document.getElementById(`preview-title-${mk}`); if(titleTarget) titleTarget.textContent = e.target.value; }); });
             REPORT_SECTION_KEYS.forEach(k => { document.getElementById(`section-toggle-${k}`)?.addEventListener('change', () => applySectionVisibility(getSectionVisibility(), true)); });
             document.querySelectorAll('[data-add-show]').forEach(btn => { btn.addEventListener('click', () => { addShowRow(btn.getAttribute('data-add-show'), {}); calculateGlobalDashboard(); }); });
@@ -3362,7 +3393,7 @@
             document.getElementById('clear-favicon')?.addEventListener('click', () => { applyFaviconBase64(null); document.getElementById('upload-favicon').value = ''; });
             ['p1','p2','p3','p4'].forEach(slot => { document.getElementById(`upload-${slot}`)?.addEventListener('change', function(e) { if (e.target.files[0]) compressImageToBase64(e.target.files[0], (b64) => applyProductImage(slot, b64)); }); document.getElementById(`clear-${slot}`)?.addEventListener('click', () => { applyProductImage(slot, null); document.getElementById(`upload-${slot}`).value = ''; }); });
 
-            document.getElementById('btn-clear-load')?.addEventListener('click', () => { resetLoadedCampaignToDefaults(); });
+            document.getElementById('btn-clear-load')?.addEventListener('click', () => { clearAllIngestedData(); resetLoadedCampaignToDefaults(); });
             wireCampaignSelectHandler();
 
             async function resolveUniqueReportSlug(name, currentId) {
