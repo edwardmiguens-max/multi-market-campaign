@@ -126,10 +126,38 @@
                     <input type="text" id="input-setup-by" placeholder="e.g. Ed M." maxlength="80" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500">
                     <p class="text-[10px] text-gray-500 mt-1 leading-tight">Shown on the report index and live report header.</p>
                 </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Artist name</label>
+                    <input type="text" id="input-artist-name" placeholder="e.g. Erin LeCount" maxlength="120" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500">
+                    <p class="text-[10px] text-gray-500 mt-1 leading-tight">Groups this report under the artist on the label report index.</p>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Record label</label>
+                    <select id="input-record-label" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500 cursor-pointer">
+                        <option value="">— Select label —</option>
+                        <option value="Atlantic">Atlantic</option>
+                        <option value="Warner Records">Warner Records</option>
+                        <option value="Parlophone">Parlophone</option>
+                        <option value="Roadrunner">Roadrunner</option>
+                        <option value="Rhino">Rhino</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Rep</label>
+                    <select id="input-rep" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500 cursor-pointer">
+                        <option value="">— Select rep —</option>
+                        <option value="US">US</option>
+                        <option value="UK">UK</option>
+                        <option value="JV - US Lead">JV - US Lead</option>
+                        <option value="JV - UK Lead">JV - UK Lead</option>
+                    </select>
+                    <p class="text-[10px] text-gray-500 mt-1 leading-tight">UK &amp; JV UK Lead → Domestic · US &amp; JV US Lead → International on the label index.</p>
+                </div>
                 <button id="btn-publish" type="button" class="w-full text-white font-bold py-2 px-4 rounded text-sm transition-colors">
                     Save
                 </button>
                 <a id="link-report-index" href="index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 transition-colors">Open Report Index</a>
+                <a id="link-atlantic-index" href="atlantic-index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-yellow-500/40 text-yellow-200 hover:bg-yellow-950/40 transition-colors">Open Atlantic Report Index</a>
                 <div id="publish-result" class="mt-2 text-xs hidden break-words text-center p-2 rounded bg-gray-900/80 border border-gray-700"></div>
             </div>
 
@@ -149,7 +177,7 @@
                         </div>
                         <div class="pt-2 border-t border-gray-700 bg-gray-800/60 p-2 rounded border border-indigo-700">
                             <label class="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Campaign Dates</label>
-                            <p class="text-[10px] text-gray-400 mb-2 leading-tight">Rows outside this range are excluded from all totals. Use calendar format (e.g. 21 May 2026 = 2026-05-21). Auto-filled from CSV filename when empty.</p>
+                            <p class="text-[10px] text-gray-400 mb-2 leading-tight">Rows outside this range are excluded from all totals. Narrow the window to filter the preview — dates are only auto-set on CSV upload. Use calendar format (e.g. 21 May 2026 = 2026-05-21).</p>
                             <div class="grid grid-cols-2 gap-2">
                                 <div><span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Start Date</span><input type="date" id="input-campaign-start" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"></div>
                                 <div><span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">End Date</span><input type="date" id="input-campaign-end" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"></div>
@@ -638,6 +666,9 @@
 
                 bootSetVal('input-campaign-name', data.report_name || '');
                 bootSetVal('input-setup-by', old.setupBy || '');
+                bootSetVal('input-artist-name', old.artistName || '');
+                bootSetVal('input-record-label', old.recordLabel || '');
+                bootSetVal('input-rep', old.rep || '');
                 bootSetVal('input-title', old.title || 'GLOBAL ROLLUP REPORT');
                 bootSetTxt('display-title', old.title || 'GLOBAL ROLLUP REPORT');
 
@@ -1075,7 +1106,7 @@
                 return out;
             });
         }
-        function syncCampaignDatesToCsvRange() {
+        function syncCampaignDatesToCsvRange(options = {}) {
             const range = getCsvDataDateRange();
             if(!range) return false;
             const startEl = document.getElementById('input-campaign-start');
@@ -1083,15 +1114,15 @@
             const curStart = startEl?.value || '';
             const curEnd = endEl?.value || '';
             let changed = false;
-            if(!curStart || curStart > range.start) {
-                if(startEl) startEl.value = range.start;
-                changed = true;
+            if(options.alignOnUpload) {
+                if(startEl && startEl.value !== range.start) { startEl.value = range.start; changed = true; }
+                if(endEl && endEl.value !== range.end) { endEl.value = range.end; changed = true; }
+                if(changed) ingestionWarnings.push(`Campaign dates aligned to CSV sales range (${range.start} to ${range.end}).`);
+                return changed;
             }
-            if(!curEnd || curEnd < range.end) {
-                if(endEl) endEl.value = range.end;
-                changed = true;
-            }
-            if(changed) ingestionWarnings.push(`Campaign dates expanded to include CSV sales (${range.start} to ${range.end}).`);
+            if(!curStart && startEl) { startEl.value = range.start; changed = true; }
+            if(!curEnd && endEl) { endEl.value = range.end; changed = true; }
+            if(changed) ingestionWarnings.push(`Campaign dates set from CSV sales range (${range.start} to ${range.end}).`);
             return changed;
         }
         function countRawCsvSalesRows() {
@@ -2757,6 +2788,9 @@
             if(setupByInput) {
                 try { setupByInput.value = localStorage.getItem('rep-admin-setup-by') || ''; } catch (_e) { setupByInput.value = ''; }
             }
+            if(document.getElementById('input-artist-name')) document.getElementById('input-artist-name').value = '';
+            if(document.getElementById('input-record-label')) document.getElementById('input-record-label').value = '';
+            if(document.getElementById('input-rep')) document.getElementById('input-rep').value = '';
             document.getElementById('btn-clear-load')?.classList.add('hidden');
             document.getElementById('publish-result')?.classList.add('hidden');
             applyLastUpdatedDisplay(null);
@@ -3204,6 +3238,9 @@
 
             if (document.getElementById('input-campaign-name')) document.getElementById('input-campaign-name').value = data.report_name || '';
             if (document.getElementById('input-setup-by')) document.getElementById('input-setup-by').value = old.setupBy || '';
+            if (document.getElementById('input-artist-name')) document.getElementById('input-artist-name').value = old.artistName || '';
+            if (document.getElementById('input-record-label')) document.getElementById('input-record-label').value = old.recordLabel || '';
+            if (document.getElementById('input-rep')) document.getElementById('input-rep').value = old.rep || '';
             const versionBadgeEl = document.getElementById('runtime-version-badge');
             if (versionBadgeEl) {
                 const loadedVersion = old.runtimeVersion || old.comparison?.runtimeVersion || 'legacy';
@@ -3433,7 +3470,6 @@
             const uploadGeneration = window.__csvDataGeneration || 0;
             const preservedWarnings = [...ingestionWarnings];
             ingestionWarnings = preservedWarnings;
-            if(!options.skipDateSync) syncCampaignDatesToCsvRange();
             const rawSalesLineCount = countRawCsvSalesRows();
             comparisonModel = { markets: {}, periodOrder: [] };
             globalCountryStats = {};
@@ -3738,7 +3774,7 @@
                     if(mk === 'master') {
                         resetCompareFiltersForNewUpload();
                         ensureCompareMarketsSelected();
-                        syncCampaignDatesToCsvRange();
+                        syncCampaignDatesToCsvRange({ alignOnUpload: true });
                     }
                     const fields = (res.meta && Array.isArray(res.meta.fields)) ? res.meta.fields : [];
                     const normalizedFields = fields.map(f => String(f || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
@@ -4030,7 +4066,7 @@
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
                     sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only' },
-                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartMode: getCampaignChartMode(), campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, faviconBase64: globalFaviconBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
+                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', artistName: document.getElementById('input-artist-name')?.value.trim() || '', recordLabel: document.getElementById('input-record-label')?.value || '', rep: document.getElementById('input-rep')?.value || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartMode: getCampaignChartMode(), campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, faviconBase64: globalFaviconBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
                     sectionNames: { global: document.getElementById('input-name-global')?.value || '1. Global Dashboard Summary', uk: document.getElementById('input-name-uk')?.value || '2. United Kingdom Market Insights', eu: document.getElementById('input-name-eu')?.value || '3. European Union Market Insights', us: document.getElementById('input-name-us')?.value || '4. United States Market Insights', int: document.getElementById('input-name-int')?.value || '5. Rest of World / International Insights', countries: document.getElementById('input-name-countries')?.value || '6. Top Countries' },
                     campaignDates: getCampaignDates(),
                     timelineGranularity: timelineForPublish.granularity,

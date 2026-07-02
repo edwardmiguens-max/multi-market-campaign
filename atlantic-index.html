@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlantic Records — Campaign Reports</title>
+    <link rel="icon" href="assets/atlantic-logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/atlantic-logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --atl-black: #000000;
+            --atl-orange: #f28e2b;
+            --atl-green: #31a354;
+            --atl-magenta: #e11d74;
+            --atl-yellow: #ffef00;
+            --atl-white: #ffffff;
+            --atl-muted: #a3a3a3;
+            --atl-border: rgba(255, 255, 255, 0.12);
+            --atl-font-display: 'Archivo Black', 'Arial Black', sans-serif;
+            --atl-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--atl-black);
+            color: var(--atl-white);
+            font-family: var(--atl-font-body);
+        }
+        .atl-page { max-width: 72rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+        .atl-header {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 1rem;
+            align-items: stretch;
+            margin-bottom: 1.5rem;
+        }
+        .atl-logo-wrap {
+            background: var(--atl-black);
+            border: 2px solid var(--atl-border);
+            border-radius: 0.35rem;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 7rem;
+        }
+        .atl-logo-wrap img { max-height: 4.5rem; width: auto; display: block; }
+        .atl-title-bar {
+            background: var(--atl-yellow);
+            color: var(--atl-black);
+            border-radius: 0.35rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0.85rem 1.25rem;
+            min-height: 4.5rem;
+        }
+        .atl-title-bar h1 {
+            font-family: var(--atl-font-display);
+            font-size: clamp(1.35rem, 3vw, 2rem);
+            letter-spacing: 0.04em;
+            line-height: 1;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .atl-title-bar p {
+            margin: 0.35rem 0 0;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            opacity: 0.75;
+        }
+        .atl-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+        .atl-search {
+            flex: 1;
+            min-width: 14rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            color: var(--atl-white);
+            padding: 0.7rem 0.9rem;
+            font: inherit;
+            font-size: 0.875rem;
+        }
+        .atl-search:focus {
+            outline: none;
+            border-color: var(--atl-yellow);
+            box-shadow: 0 0 0 1px var(--atl-yellow);
+        }
+        .atl-search::placeholder { color: var(--atl-muted); }
+        .atl-count { font-size: 0.75rem; color: var(--atl-muted); font-weight: 600; white-space: nowrap; }
+        .atl-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .atl-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            padding: 0.625rem 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.15s, transform 0.15s;
+            border: none;
+        }
+        .atl-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+        .atl-btn-primary { background: var(--atl-yellow); color: var(--atl-black); }
+        .atl-btn-secondary { background: transparent; color: var(--atl-white); border: 1px solid var(--atl-border); }
+        .atl-btn-sm {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--atl-border);
+            background: rgba(255,255,255,0.04);
+            color: var(--atl-white);
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .atl-btn-sm:hover { background: rgba(255,255,255,0.1); }
+        .atl-btn-sm.copied { border-color: var(--atl-yellow); color: var(--atl-yellow); }
+        .region-accordion {
+            margin-bottom: 1rem;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.65rem;
+            overflow: hidden;
+            background: rgba(255,255,255,0.03);
+        }
+        .region-accordion.domestic { border-color: rgba(49,163,84,0.45); }
+        .region-accordion.international { border-color: rgba(225,29,116,0.45); }
+        .region-accordion.unassigned { border-color: rgba(255,255,255,0.2); }
+        .region-accordion > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.85rem 1rem;
+            font-family: var(--atl-font-display);
+            font-size: 0.9375rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-black);
+            user-select: none;
+        }
+        .region-accordion > summary::-webkit-details-marker { display: none; }
+        .region-accordion.domestic > summary { background: linear-gradient(90deg, var(--atl-green), #278a42); }
+        .region-accordion.international > summary { background: linear-gradient(90deg, var(--atl-magenta), #b9155f); }
+        .region-accordion.unassigned > summary { background: linear-gradient(90deg, #444, #666); color: var(--atl-white); }
+        .region-summary-sub {
+            font-family: var(--atl-font-body);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: none;
+            opacity: 0.85;
+            margin-top: 0.15rem;
+        }
+        .region-accordion.unassigned .region-summary-sub { color: var(--atl-white); }
+        .region-count {
+            font-family: var(--atl-font-body);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            background: rgba(0,0,0,0.2);
+            color: inherit;
+            white-space: nowrap;
+        }
+        .region-accordion.unassigned > summary .region-count { background: rgba(255,255,255,0.15); color: var(--atl-white); }
+        .region-body { padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--atl-border); }
+        .accordion-chevron {
+            width: 1rem;
+            height: 1rem;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+        .region-accordion > summary .summary-end {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+        details[open] > summary .accordion-chevron { transform: rotate(180deg); }
+        .artist-accordion {
+            margin-bottom: 0.65rem;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: rgba(255,255,255,0.02);
+        }
+        .artist-accordion:last-child { margin-bottom: 0; }
+        .artist-accordion > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.65rem 0.85rem;
+            user-select: none;
+            border-bottom: 1px solid transparent;
+            background: var(--atl-yellow);
+            color: var(--atl-black);
+            transition: filter 0.15s ease;
+        }
+        .artist-accordion > summary::-webkit-details-marker { display: none; }
+        .artist-accordion > summary:hover { filter: brightness(0.97); }
+        .artist-accordion[open] > summary {
+            border-bottom-color: rgba(0, 0, 0, 0.12);
+        }
+        .artist-summary-main {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            min-width: 0;
+        }
+        .artist-accordion h2 {
+            margin: 0;
+            font-family: var(--atl-font-display);
+            font-size: 0.8125rem;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            line-height: 1.25;
+            color: var(--atl-black);
+        }
+        .artist-count {
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--atl-black);
+            background: rgba(0, 0, 0, 0.12);
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+        .artist-body { padding: 0.65rem; }
+        .report-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        .report-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) auto auto auto auto;
+            gap: 0.65rem;
+            align-items: center;
+            padding: 0.85rem;
+            border-top: 1px solid var(--atl-border);
+            font-size: 0.8125rem;
+        }
+        @media (max-width: 900px) {
+            .report-row {
+                grid-template-columns: 1fr;
+                gap: 0.35rem;
+            }
+        }
+        .report-name {
+            font-weight: 700;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .report-meta { font-size: 0.6875rem; color: var(--atl-muted); margin-top: 0.15rem; }
+        .rep-tag {
+            display: inline-block;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 0.22rem 0.55rem;
+            border-radius: 9999px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .rep-tag.domestic { background: rgba(49,163,84,0.2); color: #7ddea0; border: 1px solid rgba(49,163,84,0.45); }
+        .rep-tag.international { background: rgba(225,29,116,0.18); color: #ff7eb8; border: 1px solid rgba(225,29,116,0.45); }
+        .rep-tag.unassigned { background: rgba(255,255,255,0.08); color: var(--atl-muted); border: 1px solid var(--atl-border); }
+        .metric-label {
+            display: block;
+            font-size: 0.625rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--atl-muted);
+            font-weight: 700;
+            margin-bottom: 0.1rem;
+        }
+        .metric-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+        .metric-value.revenue { color: var(--atl-yellow); }
+        .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
+        .bucket-empty {
+            padding: 1.25rem 0.85rem;
+            color: var(--atl-muted);
+            font-size: 0.8125rem;
+            font-style: italic;
+        }
+        .index-state {
+            padding: 3rem 1rem;
+            text-align: center;
+            color: var(--atl-muted);
+            font-size: 0.875rem;
+            border: 1px dashed var(--atl-border);
+            border-radius: 0.65rem;
+        }
+        .index-state.error { color: #ff8a8a; }
+        .toast {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1.25rem;
+            background: var(--atl-yellow);
+            color: var(--atl-black);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            padding: 0.65rem 1rem;
+            border-radius: 0.5rem;
+            opacity: 0;
+            transform: translateY(0.5rem);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+    <div class="atl-page">
+        <header class="atl-header">
+            <div class="atl-logo-wrap">
+                <img src="assets/atlantic-logo.png" alt="Atlantic Records logo" width="120" height="72">
+            </div>
+            <div class="atl-title-bar">
+                <h1>Atlantic Records</h1>
+                <p>Campaign report index — domestic &amp; international · by artist</p>
+            </div>
+        </header>
+
+        <div class="atl-toolbar">
+            <input type="search" id="search" class="atl-search" placeholder="Search artist, campaign, or rep…" autocomplete="off">
+            <span class="atl-count" id="count-label">Loading…</span>
+            <div class="atl-actions">
+                <button type="button" class="atl-btn atl-btn-secondary" id="btn-refresh">Refresh</button>
+            </div>
+        </div>
+
+        <div id="content">
+            <div class="index-state">Loading Atlantic reports from database…</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard</div>
+
+    <script>
+        const SB_URL = 'https://obrjpgucgcrclukkvook.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9icmpwZ3VjZ2NyY2x1a2t2b29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzM1OTksImV4cCI6MjA5NzQwOTU5OX0.tN2DmXRTjcvR1azRcvILTxNZEViXkIutVlqYBhbPOq8';
+        const LABEL_FILTER = 'Atlantic';
+        const DOMESTIC_REPS = ['UK', 'JV - UK Lead'];
+        const INTERNATIONAL_REPS = ['US', 'JV - US Lead'];
+        const ACCORDION_CHEVRON = '<svg class="accordion-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+
+        let allReports = [];
+
+        function slugifyReportName(name) {
+            return String(name || 'campaign-report').trim().toLowerCase()
+                .replace(/[^\w\s-]+/g, '').replace(/\s+/g, '-')
+                .replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'campaign-report';
+        }
+
+        function getReportBasePath() {
+            const u = new URL(window.location.href);
+            const parts = u.pathname.split('/').filter(Boolean);
+            if (parts.length && parts[parts.length - 1].endsWith('.html')) parts.pop();
+            return u.origin + (parts.length ? '/' + parts.join('/') : '');
+        }
+
+        function getLiveUrl(report) {
+            const slug = report.campaign_data?.reportSlug || slugifyReportName(report.report_name);
+            return getReportBasePath() + '/' + encodeURIComponent(slug);
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getRepBucket(rep) {
+            const r = String(rep || '').trim();
+            if (DOMESTIC_REPS.includes(r)) return 'domestic';
+            if (INTERNATIONAL_REPS.includes(r)) return 'international';
+            return 'unassigned';
+        }
+
+        function parseGlobalOrders(global) {
+            if (!global?.orders) return 0;
+            return parseInt(String(global.orders).replace(/[^0-9]/g, ''), 10) || 0;
+        }
+
+        function parseGlobalRevenue(global) {
+            if (!global?.revenue) return 0;
+            return parseFloat(String(global.revenue).replace(/[^0-9.-]/g, '')) || 0;
+        }
+
+        function formatRevenue(value) {
+            if (!value) return '£0.00';
+            return '£' + Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatOrders(value) {
+            return Number(value || 0).toLocaleString();
+        }
+
+        function formatLastUpdated(iso) {
+            if (!iso) return '—';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return '—';
+            return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg || 'Copied to clipboard';
+            el.classList.add('show');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => el.classList.remove('show'), 1800);
+        }
+
+        async function copyText(text, btn) {
+            try {
+                await navigator.clipboard.writeText(text);
+                if (btn) {
+                    const prev = btn.textContent;
+                    btn.textContent = 'Copied';
+                    btn.classList.add('copied');
+                    setTimeout(() => { btn.textContent = prev; btn.classList.remove('copied'); }, 1500);
+                }
+                showToast('URL copied');
+            } catch (_err) {
+                window.prompt('Copy this URL:', text);
+            }
+        }
+
+        function filterReports(query) {
+            const q = String(query || '').trim().toLowerCase();
+            if (!q) return allReports;
+            return allReports.filter(r => {
+                const cd = r.campaign_data || {};
+                const haystack = [
+                    r.report_name,
+                    cd.artistName,
+                    cd.rep,
+                    cd.setupBy,
+                    cd.title
+                ].join(' ').toLowerCase();
+                return haystack.includes(q);
+            });
+        }
+
+        function renderReportRow(report) {
+            const cd = report.campaign_data || {};
+            const url = getLiveUrl(report);
+            const rep = String(cd.rep || '').trim() || 'Unassigned';
+            const bucket = getRepBucket(cd.rep);
+            const orders = parseGlobalOrders(cd.global);
+            const revenue = parseGlobalRevenue(cd.global);
+            const updated = formatLastUpdated(cd.lastUpdatedAt);
+            const setupBy = String(cd.setupBy || '').trim();
+
+            return `<li class="report-row">
+                <div>
+                    <div class="report-name">${escapeHtml(report.report_name || 'Untitled')}</div>
+                    ${setupBy ? `<div class="report-meta">Set up by ${escapeHtml(setupBy)}</div>` : ''}
+                </div>
+                <div><span class="rep-tag ${bucket}">${escapeHtml(rep)}</span></div>
+                <div><span class="metric-label">Orders</span><span class="metric-value">${formatOrders(orders)}</span></div>
+                <div><span class="metric-label">Revenue</span><span class="metric-value revenue">${formatRevenue(revenue)}</span></div>
+                <div>
+                    <span class="metric-label">Last updated</span>
+                    <span class="metric-value">${escapeHtml(updated)}</span>
+                    <div class="row-actions" style="margin-top:0.45rem">
+                        <button type="button" class="atl-btn-sm" data-copy="${encodeURIComponent(url)}">Copy</button>
+                        <a class="atl-btn-sm" href="${url}" target="_blank" rel="noopener">Open</a>
+                    </div>
+                </div>
+            </li>`;
+        }
+
+        function groupByRegionThenArtist(reports) {
+            const regions = { domestic: {}, international: {}, unassigned: {} };
+            const sortByName = (a, b) => String(a.report_name || '').localeCompare(String(b.report_name || ''), undefined, { sensitivity: 'base' });
+
+            reports.forEach(r => {
+                const bucket = getRepBucket(r.campaign_data?.rep);
+                const artist = String(r.campaign_data?.artistName || '').trim() || 'Unknown Artist';
+                if (!regions[bucket][artist]) regions[bucket][artist] = [];
+                regions[bucket][artist].push(r);
+            });
+
+            Object.keys(regions).forEach(bucket => {
+                Object.values(regions[bucket]).forEach(list => list.sort(sortByName));
+            });
+
+            return regions;
+        }
+
+        function countRegionReports(artistMap) {
+            return Object.values(artistMap).reduce((sum, list) => sum + list.length, 0);
+        }
+
+        function renderArtistBlock(artist, reports) {
+            const rows = reports.map(renderReportRow).join('');
+            return `<details class="artist-accordion">
+                <summary>
+                    <div class="artist-summary-main">
+                        ${ACCORDION_CHEVRON}
+                        <h2>${escapeHtml(artist)}</h2>
+                    </div>
+                    <span class="artist-count">${reports.length} report${reports.length === 1 ? '' : 's'}</span>
+                </summary>
+                <div class="artist-body">
+                    <ul class="report-list">${rows}</ul>
+                </div>
+            </details>`;
+        }
+
+        function renderRegionAccordion(regionKey, title, subtitle, artistMap) {
+            const total = countRegionReports(artistMap);
+            const artistEntries = Object.entries(artistMap).sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: 'base' }));
+            const body = artistEntries.length
+                ? artistEntries.map(([artist, reps]) => renderArtistBlock(artist, reps)).join('')
+                : '<div class="bucket-empty">No reports in this region.</div>';
+
+            return `<details class="region-accordion ${regionKey}" open>
+                <summary>
+                    <div class="artist-summary-main">
+                        ${ACCORDION_CHEVRON}
+                        <div>
+                            <div>${escapeHtml(title)}</div>
+                            <div class="region-summary-sub">${escapeHtml(subtitle)}</div>
+                        </div>
+                    </div>
+                    <div class="summary-end">
+                        <span class="region-count">${total} report${total === 1 ? '' : 's'}</span>
+                    </div>
+                </summary>
+                <div class="region-body">${body}</div>
+            </details>`;
+        }
+
+        function renderIndex(reports) {
+            const content = document.getElementById('content');
+            const countLabel = document.getElementById('count-label');
+            const atlanticTotal = allReports.length;
+            countLabel.textContent = reports.length === atlanticTotal
+                ? `${reports.length} Atlantic report${reports.length === 1 ? '' : 's'}`
+                : `${reports.length} of ${atlanticTotal} Atlantic reports`;
+
+            if (!reports.length) {
+                content.innerHTML = '<div class="index-state">No Atlantic reports found. Set <strong>Record label</strong> to Atlantic in Admin and publish a campaign.</div>';
+                return;
+            }
+
+            const regions = groupByRegionThenArtist(reports);
+            const html = [
+                renderRegionAccordion('domestic', 'Domestic', 'UK · JV UK Lead reps', regions.domestic),
+                renderRegionAccordion('international', 'International', 'US · JV US Lead reps', regions.international)
+            ];
+            if (countRegionReports(regions.unassigned) > 0) {
+                html.push(renderRegionAccordion('unassigned', 'Unassigned rep', 'Reports missing a rep selection', regions.unassigned));
+            }
+
+            content.innerHTML = html.join('');
+            content.querySelectorAll('[data-copy]').forEach(btn => {
+                btn.addEventListener('click', () => copyText(decodeURIComponent(btn.getAttribute('data-copy')), btn));
+            });
+        }
+
+        async function loadReports() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="index-state">Loading Atlantic reports from database…</div>';
+            try {
+                let data = null;
+                if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
+                    const client = window.supabase.createClient(SB_URL, SB_KEY);
+                    const res = await client.from('reports').select('id, report_name, campaign_data').order('report_name', { ascending: true });
+                    if (res.error) throw res.error;
+                    data = res.data;
+                } else {
+                    const response = await fetch(SB_URL + '/rest/v1/reports?select=id,report_name,campaign_data&order=report_name.asc', {
+                        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                    });
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    data = await response.json();
+                }
+                allReports = (data || []).filter(r => String(r.campaign_data?.recordLabel || '').trim() === LABEL_FILTER);
+                renderIndex(filterReports(document.getElementById('search').value));
+            } catch (err) {
+                content.innerHTML = `<div class="index-state error">Could not load reports.<br><span style="font-size:0.75rem">${escapeHtml(err.message || 'Network error')}</span></div>`;
+                document.getElementById('count-label').textContent = 'Error';
+            }
+        }
+
+        document.getElementById('btn-refresh').addEventListener('click', loadReports);
+        document.getElementById('search').addEventListener('input', (e) => renderIndex(filterReports(e.target.value)));
+        loadReports();
+    </script>
+</body>
+</html>
