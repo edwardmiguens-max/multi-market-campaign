@@ -195,12 +195,17 @@
                     <div class="mt-3 px-1 space-y-4 pb-2">
                         <div class="bg-gray-800/60 p-2 rounded border border-gray-700">
                             <label class="block text-xs font-bold text-yellow-400 uppercase tracking-wider mb-1">Campaign Filter (Campaign D2C Chart Units)</label>
-                            <button type="button" id="btn-campaign-chart-products" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-2 text-white hover:border-yellow-500 text-left flex justify-between items-center gap-2">
-                                <span id="campaign-chart-products-label" class="truncate">All music products</span>
+                            <select id="input-campaign-chart-mode" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-2 text-white mb-2">
+                                <option value="all_music">All music products</option>
+                                <option value="no_focus">No Campaign Focus</option>
+                                <option value="selected">Selected products</option>
+                            </select>
+                            <button type="button" id="btn-campaign-chart-products" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-2 text-white hover:border-yellow-500 text-left flex justify-between items-center gap-2 hidden">
+                                <span id="campaign-chart-products-label" class="truncate">Configure selected products</span>
                                 <span class="text-gray-500 shrink-0">▾</span>
                             </button>
                             <input type="hidden" id="input-campaign-chart-products" value="">
-                            <span class="text-[10px] text-gray-400 block mt-1 leading-tight">Select exact product titles to count as D2C chart units. Territory totals are unaffected.</span>
+                            <span class="text-[10px] text-gray-400 block mt-1 leading-tight">Controls D2C chart units and the standout products table. Territory totals are unaffected.</span>
                         </div>
                         <div class="bg-gray-800/60 p-2 rounded border border-gray-700">
                             <label class="flex items-start gap-2 text-[11px] text-gray-300 cursor-pointer">
@@ -1211,9 +1216,36 @@
             productScope: document.getElementById('input-product-scope')?.value || 'all',
             includeKeywords: splitKeywords(document.getElementById('input-include-keywords')?.value),
             excludeKeywords: splitKeywords(document.getElementById('input-exclude-keywords')?.value),
+            campaignChartMode: getCampaignChartMode(),
             campaignChartProducts: getCampaignChartProducts(),
             storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false
         });
+        function getCampaignChartMode() {
+            return document.getElementById('input-campaign-chart-mode')?.value || 'all_music';
+        }
+        function setCampaignChartMode(mode) {
+            const el = document.getElementById('input-campaign-chart-mode');
+            if(el) el.value = mode || 'all_music';
+            syncCampaignChartModeUi();
+        }
+        function syncCampaignChartModeUi() {
+            const mode = getCampaignChartMode();
+            const btn = document.getElementById('btn-campaign-chart-products');
+            if(btn) btn.classList.toggle('hidden', mode !== 'selected');
+            updateCampaignChartProductsLabel(getCampaignChartProducts());
+        }
+        function getStandoutSectionTitle(mode) {
+            return (mode || getCampaignChartMode()) === 'no_focus' ? 'Standout Products' : 'Standout Campaign Music Formats';
+        }
+        function lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard, chartMode, selectedProducts) {
+            if(isSignedArtCard(name)) return false;
+            const mode = chartMode || 'all_music';
+            const selected = selectedProducts || [];
+            if(mode === 'no_focus') return isMusic || isMerch;
+            if(mode === 'selected') return selected.length > 0 && selected.includes(name);
+            if(selected.length > 0) return selected.includes(name);
+            return isMusic;
+        }
         function getCampaignChartProducts() {
             try {
                 const raw = document.getElementById('input-campaign-chart-products')?.value || '[]';
@@ -1229,7 +1261,10 @@
         function updateCampaignChartProductsLabel(names) {
             const label = document.getElementById('campaign-chart-products-label');
             if(!label) return;
-            if(!names || names.length === 0) label.textContent = 'All music products';
+            const mode = getCampaignChartMode();
+            if(mode === 'no_focus') return;
+            if(mode === 'all_music') { label.textContent = 'All music products'; return; }
+            if(!names || names.length === 0) label.textContent = 'Configure selected products';
             else if(names.length === 1) label.textContent = names[0].length > 42 ? names[0].slice(0, 42) + '…' : names[0];
             else label.textContent = `${names.length} products selected`;
         }
@@ -1237,7 +1272,7 @@
             const list = document.getElementById('campaign-chart-products-list');
             if(!list) return;
             const selected = new Set(getCampaignChartProducts());
-            const musicNames = new Set();
+            const productNames = new Set();
             (windowCurrentCSVData || []).forEach(row => {
                 let name = '', pType = '';
                 Object.keys(row).forEach(k => {
@@ -1249,11 +1284,13 @@
                 if(!name) return;
                 const upperName = name.toUpperCase();
                 const isMusic = pType.toLowerCase().includes('music') || upperName.includes('VINYL') || upperName.includes('CD') || upperName.includes('CASSETTE') || upperName.includes('EP ') || upperName.includes('ALBUM');
-                if(isMusic) musicNames.add(name);
+                const isMerch = !isMusic;
+                if(isSignedArtCard(name)) return;
+                if(isMusic || isMerch) productNames.add(name);
             });
-            const sorted = Array.from(musicNames).sort((a,b) => a.localeCompare(b));
+            const sorted = Array.from(productNames).sort((a,b) => a.localeCompare(b));
             if(sorted.length === 0) {
-                list.innerHTML = '<p class="text-gray-500 italic p-2">Upload a sales CSV with music products first.</p>';
+                list.innerHTML = '<p class="text-gray-500 italic p-2">Upload a sales CSV first.</p>';
                 return;
             }
             list.innerHTML = sorted.map(n => {
@@ -1919,10 +1956,9 @@
             if(/BADGE|TOTE|TEE|SHIRT|HOODIE|JOGGER|POSTER|PATCH|BALACLAVA|BEANIE|CAP\b|HAT\b/.test(u)) return false;
             return u.includes('VINYL') || u.includes('CASSETTE') || u.includes('PICTURE DISC') || /\bCD\b/.test(u) || u.includes('ALBUM');
         }
-        function isChartUnitLine(line, chartProducts, gwpNames) {
+        function isChartUnitLine(line, chartProducts, gwpNames, chartMode) {
             if(!line || isExcludedGwpProduct(line.name, gwpNames)) return false;
-            if(chartProducts.length > 0) return chartProducts.includes(line.name);
-            return line.isMusic && isChartFormatProduct(line.name);
+            return lineMatchesCampaignChart(line.name, line.isMusic, line.isMerch, line.isSignedArtCard, chartMode, chartProducts);
         }
         function getGwpProductNames(config) {
             const name = config?.giftWithPurchase?.productName;
@@ -1937,6 +1973,7 @@
         }
         function aggregateTimedLever(market, cfg, gwpNames) {
             const chartProducts = getCampaignChartProducts();
+            const chartMode = getCampaignChartMode();
             const linesForUnits = (cfg.startDate && cfg.endDate) ? linesInDateWindow(market, cfg.startDate, cfg.endDate) : [];
             const startMs = parseLondonDateTimeMs(cfg.startDate, cfg.startTime || '00:00');
             const endMs = parseLondonDateTimeMs(cfg.endDate, cfg.endTime || '23:59');
@@ -1949,13 +1986,13 @@
             const customers = new Set();
             linesForUnits.forEach(l => {
                 if(l.orderId) customers.add(l.orderId);
-                if(isChartUnitLine(l, chartProducts, gwpNames)) chartUnits += l.units;
+                if(isChartUnitLine(l, chartProducts, gwpNames, chartMode)) chartUnits += l.units;
             });
             linesForRevenue.forEach(l => {
                 if(l.isMusic) musicRev += l.rev;
                 if(l.isMerch) merchRev += l.rev;
                 if(isExcludedGwpProduct(l.name, gwpNames)) return;
-                if(!isChartUnitLine(l, chartProducts, gwpNames)) return;
+                if(!isChartUnitLine(l, chartProducts, gwpNames, chartMode)) return;
                 if(!products[l.name]) products[l.name] = { units: 0, revenue: 0 };
                 products[l.name].units += l.units; products[l.name].revenue += l.rev;
             });
@@ -2325,8 +2362,8 @@
                 upsell: { ...LEVER_MARKETS_OFF, title: 'Upsell', productName: '', discountPercent: 0 },
                 competition: { ...LEVER_MARKETS_OFF, title: 'Competition', startDate: '', startTime: '', endDate: '', endTime: '', prize: '', npnSignups: 0 },
                 sale: { ...LEVER_MARKETS_OFF, title: 'Sale', notes: '', startDate: '', startTime: '', endDate: '', endTime: '', saleProducts: [] },
-                signedUkEu: { ukEnabled: true, euEnabled: true, intEnabled: true, usEnabled: false, title: 'Signed', mode: 'signed_formats' },
-                signedUs: { ukEnabled: false, euEnabled: false, intEnabled: false, usEnabled: true, title: 'Signed', mode: 'signed_formats' }
+                signedUkEu: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' },
+                signedUs: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' }
             });
             LEVER_SHOW_KEYS.forEach(k => renderShowRowsToDom(k, []));
             const gwpSel = document.getElementById('lever-giftWithPurchase-product');
@@ -2364,6 +2401,7 @@
 
             storeData = getEmptyStoreData();
             populateLeverProductDropdowns();
+            resetLeversToDefaults();
             ['uk', 'eu', 'us', 'int'].forEach(clearSegmentPreview);
             LEVER_MARKET_CODES.forEach(m => {
                 const slot = document.getElementById(`${m}-levers-slot`);
@@ -2419,6 +2457,7 @@
             if(document.getElementById('input-campaign-end')) document.getElementById('input-campaign-end').value = '';
 
             setCampaignChartProducts([]);
+            setCampaignChartMode('all_music');
             const usMarketEl = document.getElementById('input-store-has-us-market');
             if(usMarketEl) usMarketEl.checked = true;
             ['uk', 'eu', 'us', 'int'].forEach(mk => {
@@ -2640,11 +2679,11 @@
                 <div class="space-y-4 flex flex-col justify-between">
                     <div class="dashboard-card border-l-4" style="border-color: var(--accent-primary)">
                         <div class="flex justify-between items-start">
-                            <div><p class="preview-header-label font-bold uppercase">Territory Revenue</p><p class="preview-body-data text-2xl font-bold">${d.revenue}</p><p class="preview-small-text mt-1 text-gray-500">${d.items} units shipped across ${d.orders} orders (AOV: ${d.aov})</p></div>
+                            <div><p class="preview-header-label font-bold uppercase">Territory Revenue</p><p class="preview-body-data text-2xl font-bold">${d.revenue}</p><p class="preview-small-text mt-1 text-gray-500">${d.items} units sold across ${d.orders} orders (AOV: ${d.aov})</p></div>
                             <div class="text-right"><p class="preview-header-label font-bold uppercase">Campaign D2C Chart Units</p><p class="preview-body-data text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p>${prefix === 'uk' && getSalesforceUnitsForMarket('uk') ? `<p class="text-[10px] text-gray-400 mt-1">Includes ${getSalesforceUnitsForMarket('uk').toLocaleString()} prior SF units (GB→UK)</p>` : ''}${prefix === 'eu' && getSalesforceUnitsForMarket('eu') ? `<p class="text-[10px] text-gray-400 mt-1">Includes ${getSalesforceUnitsForMarket('eu').toLocaleString()} prior SF units (excl. GB)</p>` : ''}</div>
                         </div>
                     </div>
-                    <div class="dashboard-card flex-1"><h3 class="preview-header-label mb-2 font-bold uppercase">Standout Campaign Music Formats</h3><table class="w-full text-sm"><tbody id="${prefix}-table-preview" class="preview-small-text"></tbody></table></div>
+                    <div class="dashboard-card flex-1"><h3 class="preview-header-label mb-2 font-bold uppercase">${d.standoutSectionTitle || 'Standout Campaign Music Formats'}</h3><table class="w-full text-sm"><tbody id="${prefix}-table-preview" class="preview-small-text"></tbody></table></div>
                     <div class="dashboard-card bg-gray-900/5 border border-gray-200">
                         <p class="preview-header-label mb-2 font-bold uppercase text-indigo-900">Web Traffic & Device Split</p>
                         <div class="grid grid-cols-4 gap-2 mb-4 text-center">
@@ -2678,7 +2717,8 @@
             `;
             
             const tbody = document.getElementById(`${prefix}-table-preview`);
-            if(tbody && d.topMusicFormats) { d.topMusicFormats.forEach(([name, metrics]) => { tbody.innerHTML += `<tr class="border-b"><td class="py-1.5 font-medium max-w-[180px] truncate">${name}</td><td class="py-1.5 text-xs text-gray-500">${metrics.units} units</td><td class="py-1.5 text-right font-semibold">£${metrics.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`; }); }
+            if(tbody && d.topStandoutProducts) { d.topStandoutProducts.forEach(([name, metrics]) => { tbody.innerHTML += `<tr class="border-b"><td class="py-1.5 font-medium max-w-[180px] truncate">${name}</td><td class="py-1.5 text-xs text-gray-500">${metrics.units} units</td><td class="py-1.5 text-right font-semibold">£${metrics.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`; }); }
+            else if(tbody && d.topMusicFormats) { d.topMusicFormats.forEach(([name, metrics]) => { tbody.innerHTML += `<tr class="border-b"><td class="py-1.5 font-medium max-w-[180px] truncate">${name}</td><td class="py-1.5 text-xs text-gray-500">${metrics.units} units</td><td class="py-1.5 text-right font-semibold">£${metrics.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`; }); }
 
             setTimeout(() => {
                 if(typeof Chart === 'undefined') return;
@@ -2727,11 +2767,14 @@
                     const sessions = d.traffic.sessions || (d.orders.size * 35);
                     const atcLines = d.traffic.atc || (d.orders.size * 4);
                     const ordersCount = d.orders.size;
+                    const chartMode = getCampaignChartMode();
+                    const standoutSectionTitle = getStandoutSectionTitle(chartMode);
+                    const topStandoutProducts = Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5);
                     const segmentPayload = {
                         revenue: `£${d.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}`,
                         items: d.items.toLocaleString(), orders: ordersCount.toLocaleString(),
                         aov: `£${(ordersCount > 0 ? d.revenue/ordersCount : 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`,
-                        sessions: sessions, atcRate: sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%', conversionRate: sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%', upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00', mobilePerc: d.traffic.mobile, desktopPct: d.traffic.desktop, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined, intTopCountries: k === 'int' ? getIntTopCountriesForDisplay() : undefined
+                        sessions: sessions, atcRate: sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%', conversionRate: sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%', upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00', mobilePerc: d.traffic.mobile, desktopPct: d.traffic.desktop, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), campaignChartMode: chartMode, euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined, intTopCountries: k === 'int' ? getIntTopCountriesForDisplay() : undefined
                     };
                     renderSegmentPreview(k, segmentPayload);
                     gRev += d.revenue; gItems += d.items; gOrders += ordersCount;
@@ -2847,6 +2890,7 @@
 
             if (Array.isArray(old.campaignChartProducts)) setCampaignChartProducts(old.campaignChartProducts);
             else setCampaignChartProducts([]);
+            setCampaignChartMode(old.campaignChartMode || (old.campaignChartProducts?.length ? 'selected' : 'all_music'));
 
             const usMarketEl = document.getElementById('input-store-has-us-market');
             if (usMarketEl) usMarketEl.checked = old.storeHasUsMarket !== false && old.comparison?.selectedFilters?.storeHasUsMarket !== false;
@@ -3159,13 +3203,14 @@
                 cmpBucket.products[name].revenue += rev;
 
                 if(isMusic) {
-                    const selectedProducts = activeFilters.campaignChartProducts || [];
-                    const matchesCampaignChartFilter = selectedProducts.length === 0 || selectedProducts.includes(name);
-                    if(matchesCampaignChartFilter) {
+                    if(lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
                         storeData[tMk].merch.musicRev += rev;
                         if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
                         storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
                     }
+                } else if(activeFilters.campaignChartMode === 'no_focus' && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
+                    if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
+                    storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
                 } else {
                     storeData[tMk].merch.merchRev += rev;
                     let cat = pType ? pType : 'General Apparel';
@@ -3348,12 +3393,21 @@
             document.querySelectorAll('#levers-config-root input, #levers-config-root select').forEach(el => { el.addEventListener('input', () => calculateGlobalDashboard()); el.addEventListener('change', () => calculateGlobalDashboard()); });
 
             document.getElementById('btn-campaign-chart-products')?.addEventListener('click', openCampaignChartProductModal);
+            document.getElementById('input-campaign-chart-mode')?.addEventListener('change', () => {
+                const mode = getCampaignChartMode();
+                if(mode !== 'selected') setCampaignChartProducts([]);
+                syncCampaignChartModeUi();
+                if(windowCurrentCSVData) runDataAggregation();
+                else calculateGlobalDashboard();
+            });
+            syncCampaignChartModeUi();
             document.getElementById('btn-campaign-chart-products-close')?.addEventListener('click', closeCampaignChartProductModal);
             document.getElementById('btn-campaign-chart-products-cancel')?.addEventListener('click', closeCampaignChartProductModal);
             document.getElementById('btn-campaign-chart-select-all')?.addEventListener('click', () => { document.querySelectorAll('.campaign-chart-product-cb').forEach(cb => { cb.checked = true; }); });
             document.getElementById('btn-campaign-chart-clear-all')?.addEventListener('click', () => { document.querySelectorAll('.campaign-chart-product-cb').forEach(cb => { cb.checked = false; }); });
             document.getElementById('btn-campaign-chart-products-apply')?.addEventListener('click', () => {
                 const selected = Array.from(document.querySelectorAll('.campaign-chart-product-cb:checked')).map(cb => cb.value);
+                setCampaignChartMode('selected');
                 setCampaignChartProducts(selected);
                 closeCampaignChartProductModal();
                 if(windowCurrentCSVData) runDataAggregation();
@@ -3507,16 +3561,19 @@
 
                     const revNum = Number(d.revenue) || 0; const itemsNum = Number(d.items) || 0; const aovNum = ordersCount > 0 ? (revNum / ordersCount) : 0; const atcRate = sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%'; const convRate = sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%'; const upt = ordersCount > 0 ? (itemsNum / ordersCount).toFixed(2) : '0.00';
                     const campaignChartUnits = getMarketChartUnits(prefix);
+                    const chartMode = getCampaignChartMode();
+                    const standoutSectionTitle = getStandoutSectionTitle(chartMode);
+                    const topStandoutProducts = Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5);
                     const euTopCountries = prefix === 'eu' ? getEuTopCountriesForDisplay() : undefined;
                     const intTopCountries = prefix === 'int' ? getIntTopCountriesForDisplay() : undefined;
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topMusicFormats: Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), weekly: d.weekly || {}, daily: d.daily || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
                     sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only' },
-                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, faviconBase64: globalFaviconBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
+                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartMode: getCampaignChartMode(), campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, faviconBase64: globalFaviconBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
                     sectionNames: { global: document.getElementById('input-name-global')?.value || '1. Global Dashboard Summary', uk: document.getElementById('input-name-uk')?.value || '2. United Kingdom Market Insights', eu: document.getElementById('input-name-eu')?.value || '3. European Union Market Insights', us: document.getElementById('input-name-us')?.value || '4. United States Market Insights', int: document.getElementById('input-name-int')?.value || '5. Rest of World / International Insights', countries: document.getElementById('input-name-countries')?.value || '6. Top Countries' },
                     campaignDates: getCampaignDates(),
                     timelineGranularity: timelineForPublish.granularity,
