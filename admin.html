@@ -1011,7 +1011,7 @@
             });
             if(merchRev <= 0 && aggregatedLineRows.length > 0) {
                 aggregatedLineRows.forEach(l => {
-                    if(l.isSignedArtCard || !l.isMerch) return;
+                    if(l.isSignedArtCard || !l.isMerch || l.hasProductTitle === false) return;
                     merchRev += Number(l.rev) || 0;
                     if(!merchProducts[l.name]) merchProducts[l.name] = { units: 0, revenue: 0 };
                     merchProducts[l.name].units += Number(l.units) || 0;
@@ -3540,7 +3540,8 @@
                     else if (cleanK === 'hourofday' || cleanK === 'hour') hourVal = row[k];
                     else if (cleanK.includes('date') || cleanK.includes('timestamp') || cleanK.includes('created')) { if(dayVal === null) dayVal = row[k]; }
                 });
-                if(!name || !String(name).trim()) name = id ? String(id) : '';
+                const hasProductTitle = Boolean(name && String(name).trim());
+                if(!hasProductTitle) name = id ? String(id) : '';
                 if(!name) return;
 
                 const qty = parseInt(rawQty, 10) || 1;
@@ -3568,7 +3569,7 @@
                 const orderKey = id || `row_${rowIdx}`;
                 const unitPrice = derivedQty ? Math.abs(rev / derivedQty) : 0;
                 const isDiscountedFromCsv = (lineDiscount !== null && Math.abs(lineDiscount) > 0.001) || (compareAtPrice !== null && compareAtPrice > 0 && derivedQty && unitPrice < compareAtPrice * 0.995);
-                const lineRec = { orderId: orderKey, market: tMk, timestamp: rowTs, name, upperName, rev, units: derivedQty, unitPrice, compareAtPrice, lineDiscount, isDiscountedFromCsv, isMusic, isMerch, isSignedArtCard: isSignedArtCard(name), isSignedFormat: isMusic && upperName.includes('SIGNED') && !isSignedArtCard(name) };
+                const lineRec = { orderId: orderKey, market: tMk, timestamp: rowTs, name, upperName, rev, units: derivedQty, unitPrice, compareAtPrice, lineDiscount, isDiscountedFromCsv, isMusic, isMerch, hasProductTitle, isSignedArtCard: isSignedArtCard(name), isSignedFormat: isMusic && upperName.includes('SIGNED') && !isSignedArtCard(name) };
                 aggregatedLineRows.push(lineRec);
                 if(!orderIndex[orderKey]) orderIndex[orderKey] = { market: tMk, timestamp: rowTs, lines: [], totalRev: 0 };
                 orderIndex[orderKey].lines.push(lineRec);
@@ -3612,38 +3613,44 @@
                 if(isMusic) {
                     if(lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
                         storeData[tMk].merch.musicRev += rev;
-                        if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
-                        storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
+                        if(hasProductTitle) {
+                            if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
+                            storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
+                        }
                     }
                 } else {
                     storeData[tMk].merch.merchRev += rev;
                     if(activeFilters.campaignChartMode === 'no_focus' && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
-                        if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
-                        storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
+                        if(hasProductTitle) {
+                            if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
+                            storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
+                        }
                     }
-                    let cat = pType ? pType : 'General Apparel';
-                    if(!pType) {
-                        if(upperName.includes('TEE') || upperName.includes('T-SHIRT') || upperName.includes('SHIRT')) cat = 'T-Shirts';
-                        else if(upperName.includes('HOODIE') || upperName.includes('HOOD') || upperName.includes('SWEAT')) cat = 'Hoodies';
-                        else if(upperName.includes('HAT') || upperName.includes('CAP') || upperName.includes('BEANIE')) cat = 'Headwear';
-                        else if(upperName.includes('POSTER') || upperName.includes('PRINT') || upperName.includes('LITH')) cat = 'Posters';
+                    if(hasProductTitle) {
+                        let cat = pType ? pType : 'General Apparel';
+                        if(!pType) {
+                            if(upperName.includes('TEE') || upperName.includes('T-SHIRT') || upperName.includes('SHIRT')) cat = 'T-Shirts';
+                            else if(upperName.includes('HOODIE') || upperName.includes('HOOD') || upperName.includes('SWEAT')) cat = 'Hoodies';
+                            else if(upperName.includes('HAT') || upperName.includes('CAP') || upperName.includes('BEANIE')) cat = 'Headwear';
+                            else if(upperName.includes('POSTER') || upperName.includes('PRINT') || upperName.includes('LITH')) cat = 'Posters';
+                        }
+                        if(!isSignedArtCard(name)) {
+                            if(!storeData[tMk].merchProducts[name]) storeData[tMk].merchProducts[name] = { units: 0, revenue: 0 };
+                            storeData[tMk].merchProducts[name].units += derivedQty;
+                            storeData[tMk].merchProducts[name].revenue += rev;
+                            if(!storeData[tMk].merch.categories[cat]) storeData[tMk].merch.categories[cat] = 0;
+                            storeData[tMk].merch.categories[cat] += rev;
+                        }
+                        const vTokens = variant.split(/[\s\/\-\\_]+/); let sToken = null;
+                        if (variant.includes('3XL') || variant.includes('XXXL')) sToken = '3XL+';
+                        else if (variant.includes('2XL') || variant.includes('XXL')) sToken = 'XXL';
+                        else if (variant.includes('XL') || variant.includes('EXTRA LARGE')) sToken = 'XL';
+                        else if (variant.includes('XS') || variant.includes('EXTRA SMALL')) sToken = 'XS';
+                        else if (variant === 'L' || vTokens.includes('L') || variant.includes('LARGE')) sToken = 'L';
+                        else if (variant === 'M' || vTokens.includes('M') || variant.includes('MEDIUM')) sToken = 'M';
+                        else if (variant === 'S' || vTokens.includes('S') || variant.includes('SMALL')) sToken = 'S';
+                        if(sToken) storeData[tMk].merch.sizes[sToken] += (netItemsSold !== null ? netItemsSold : qty);
                     }
-                    if(!isSignedArtCard(name)) {
-                        if(!storeData[tMk].merchProducts[name]) storeData[tMk].merchProducts[name] = { units: 0, revenue: 0 };
-                        storeData[tMk].merchProducts[name].units += derivedQty;
-                        storeData[tMk].merchProducts[name].revenue += rev;
-                        if(!storeData[tMk].merch.categories[cat]) storeData[tMk].merch.categories[cat] = 0;
-                        storeData[tMk].merch.categories[cat] += rev;
-                    }
-                    const vTokens = variant.split(/[\s\/\-\\_]+/); let sToken = null;
-                    if (variant.includes('3XL') || variant.includes('XXXL')) sToken = '3XL+';
-                    else if (variant.includes('2XL') || variant.includes('XXL')) sToken = 'XXL';
-                    else if (variant.includes('XL') || variant.includes('EXTRA LARGE')) sToken = 'XL';
-                    else if (variant.includes('XS') || variant.includes('EXTRA SMALL')) sToken = 'XS';
-                    else if (variant === 'L' || vTokens.includes('L') || variant.includes('LARGE')) sToken = 'L';
-                    else if (variant === 'M' || vTokens.includes('M') || variant.includes('MEDIUM')) sToken = 'M';
-                    else if (variant === 'S' || vTokens.includes('S') || variant.includes('SMALL')) sToken = 'S';
-                    if(sToken) storeData[tMk].merch.sizes[sToken] += (netItemsSold !== null ? netItemsSold : qty);
                 }
             });
 
