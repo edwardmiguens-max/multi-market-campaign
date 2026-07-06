@@ -82,6 +82,7 @@
             </div>
             <div class="flex gap-2 flex-wrap">
                 <button type="button" class="btn-index btn-index-secondary" id="btn-refresh">Refresh</button>
+                <a class="btn-index btn-index-secondary" href="../Forecasting Files/index.html">Forecasts</a>
                 <a class="btn-index btn-index-primary" href="admin.html">Open Admin</a>
             </div>
         </header>
@@ -121,6 +122,25 @@
         function getLiveUrl(report) {
             const slug = report.campaign_data?.reportSlug || slugifyReportName(report.report_name);
             return getReportBasePath() + '/' + encodeURIComponent(slug);
+        }
+
+        function getForecastUrl(report) {
+            const slug = report.campaign_data?.reportSlug || slugifyReportName(report.report_name);
+            const base = getReportBasePath().replace(/Reporting Files\/?$/, 'Forecasting Files/');
+            return base + 'forecast-planner.html?reportSlug=' + encodeURIComponent(slug);
+        }
+
+        const INDEX_SELECT = 'id,report_name,setupBy:campaign_data->setupBy,reportSlug:campaign_data->reportSlug';
+
+        function indexRowToReport(row) {
+            return {
+                id: row.id,
+                report_name: row.report_name,
+                campaign_data: {
+                    setupBy: row.setupBy ?? '',
+                    reportSlug: row.reportSlug ?? ''
+                }
+            };
         }
 
         function escapeHtml(str) {
@@ -172,6 +192,7 @@
                 const url = getLiveUrl(r);
                 const safeName = escapeHtml(r.report_name || 'Untitled');
                 const setupBy = r.campaign_data?.setupBy || '';
+                const forecastUrl = getForecastUrl(r);
                 return `<tr>
                     <td><div class="report-name">${safeName}</div></td>
                     <td>${renderSetupByTag(setupBy)}</td>
@@ -180,6 +201,7 @@
                         <div class="row-actions">
                             <button type="button" class="btn-index-sm" data-copy="${encodeURIComponent(url)}">Copy URL</button>
                             <a class="btn-index-sm" href="${url}" target="_blank" rel="noopener">Open</a>
+                            <a class="btn-index-sm" href="${forecastUrl}">Forecast</a>
                         </div>
                     </td>
                 </tr>`;
@@ -212,17 +234,17 @@
                 let data = null;
                 if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
                     const client = window.supabase.createClient(SB_URL, SB_KEY);
-                    const res = await client.from('reports').select('id, report_name, campaign_data').order('report_name', { ascending: true });
+                    const res = await client.from('reports').select(INDEX_SELECT).order('report_name', { ascending: true });
                     if (res.error) throw res.error;
                     data = res.data;
                 } else {
-                    const response = await fetch(SB_URL + '/rest/v1/reports?select=id,report_name,campaign_data&order=report_name.asc', {
+                    const response = await fetch(SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(INDEX_SELECT) + '&order=report_name.asc', {
                         headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
                     });
                     if (!response.ok) throw new Error('HTTP ' + response.status);
                     data = await response.json();
                 }
-                allReports = data || [];
+                allReports = (data || []).map(indexRowToReport);
                 renderTable(filterReports(document.getElementById('search').value));
             } catch (err) {
                 content.innerHTML = `<div class="index-state error">Could not load reports.<br><span style="font-size:0.75rem">${escapeHtml(err.message || 'Network error')}</span></div>`;
