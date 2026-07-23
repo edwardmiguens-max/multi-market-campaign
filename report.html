@@ -176,7 +176,7 @@
                 .replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'campaign-report';
         }
         function getReportSlugFromPath() {
-            const reserved = new Set(['admin.html', 'index.html', 'report.html', '404.html']);
+            const reserved = new Set(['admin.html', 'admin-v2.html', 'index.html', 'report.html', 'report-v2.html', '404.html', 'atlantic-index.html', 'v1', 'v2']);
             const parts = window.location.pathname.split('/').filter(Boolean);
             const last = parts[parts.length - 1];
             if(!last || reserved.has(last.toLowerCase()) || last.includes('.')) return null;

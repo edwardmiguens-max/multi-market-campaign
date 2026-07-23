@@ -252,6 +252,51 @@
             border-radius: 9999px;
             white-space: nowrap;
         }
+        .artist-summary-end {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.35rem 0.5rem;
+        }
+        .artist-kpis {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem 0.65rem;
+            font-size: 0.625rem;
+            color: var(--atl-black);
+        }
+        .artist-kpis .metric-label {
+            display: block;
+            font-size: 0.5625rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.65;
+        }
+        .artist-kpis .metric-value {
+            font-weight: 700;
+            font-size: 0.6875rem;
+        }
+        .v2-pill {
+            font-size: 0.5625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #047857;
+            background: #ecfdf5;
+            border: 1px solid #6ee7b7;
+            padding: 0.1rem 0.4rem;
+            border-radius: 9999px;
+        }
+        .quarter-badge {
+            font-size: 0.5625rem;
+            font-weight: 600;
+            color: var(--atl-black);
+            background: #f3f0e8;
+            border: 1px solid var(--atl-border);
+            padding: 0.1rem 0.4rem;
+            border-radius: 9999px;
+        }
         .artist-body { padding: 0.65rem; background: var(--atl-white); }
         .report-list {
             list-style: none;
@@ -415,7 +460,12 @@
             'title:campaign_data->title',
             'reportSlug:campaign_data->reportSlug',
             'lastUpdatedAt:campaign_data->lastUpdatedAt',
-            'global:campaign_data->global'
+            'global:campaign_data->global',
+            'artistRollup:campaign_data->artistRollup',
+            'runtimeVersion:campaign_data->runtimeVersion',
+            'campaignDates:campaign_data->campaignDates',
+            'bankedQuarters:campaign_data->bankedQuarters',
+            'activeQuarter:campaign_data->activeQuarter'
         ].join(', ');
 
         function indexRowToReport(row) {
@@ -428,7 +478,12 @@
                     title: row.title,
                     reportSlug: row.reportSlug,
                     lastUpdatedAt: row.lastUpdatedAt,
-                    global: row.global
+                    global: row.global,
+                    artistRollup: row.artistRollup,
+                    runtimeVersion: row.runtimeVersion,
+                    campaignDates: row.campaignDates,
+                    bankedQuarters: row.bankedQuarters,
+                    activeQuarter: row.activeQuarter
                 }
             });
             return { id: row.id, report_name: row.report_name, campaign_data: cd };
@@ -582,15 +637,48 @@
             return Object.values(artistMap).reduce((sum, list) => sum + list.length, 0);
         }
 
+        function parseChartUnits(rollup) {
+            if (!rollup?.chartUnits) return 0;
+            return parseInt(String(rollup.chartUnits).replace(/[^0-9]/g, ''), 10) || 0;
+        }
+
+        function getArtistRollupFromReports(reports) {
+            for (const r of reports) {
+                const rollup = r.campaign_data?.artistRollup;
+                if (rollup && (rollup.orders || rollup.revenue)) return rollup;
+            }
+            return null;
+        }
+
+        function isV2Report(report) {
+            const v = String(report.campaign_data?.runtimeVersion || '').toLowerCase();
+            return v.includes('v2');
+        }
+
         function renderArtistBlock(artist, reports) {
             const rows = reports.map(renderReportRow).join('');
+            const rollup = getArtistRollupFromReports(reports);
+            const hasV2 = reports.some(isV2Report);
+            const activeQuarter = reports.map(r => r.campaign_data?.activeQuarter).find(Boolean);
+            const kpiHtml = rollup
+                ? `<div class="artist-kpis">
+                    <div><span class="metric-label">Orders</span><span class="metric-value">${formatOrders(parseGlobalOrders(rollup))}</span></div>
+                    <div><span class="metric-label">Revenue</span><span class="metric-value revenue">${escapeHtml(rollup.revenue || formatRevenue(parseGlobalRevenue(rollup)))}</span></div>
+                    ${rollup.chartUnits ? `<div><span class="metric-label">Chart units</span><span class="metric-value">${formatOrders(parseChartUnits(rollup))}</span></div>` : ''}
+                   </div>`
+                : '';
             return `<details class="artist-accordion">
                 <summary>
                     <div class="artist-summary-main">
                         ${ACCORDION_CHEVRON}
                         <h2>${escapeHtml(artist)}</h2>
                     </div>
-                    <span class="artist-count">${reports.length} report${reports.length === 1 ? '' : 's'}</span>
+                    <div class="artist-summary-end">
+                        ${kpiHtml}
+                        ${hasV2 ? '<span class="v2-pill">V2</span>' : ''}
+                        ${activeQuarter ? `<span class="quarter-badge">${escapeHtml(activeQuarter)}</span>` : ''}
+                        <span class="artist-count">${reports.length} report${reports.length === 1 ? '' : 's'}</span>
+                    </div>
                 </summary>
                 <div class="artist-body">
                     <ul class="report-list">${rows}</ul>

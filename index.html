@@ -66,6 +66,11 @@
         }
         .toast.show { opacity: 1; transform: translateY(0); }
         header.index-header { border-bottom: 1px solid var(--shopify-border); }
+        .index-guide { font-size: 0.8125rem; color: var(--rep-v-hdr-txt); line-height: 1.55; }
+        .index-guide strong { color: var(--rep-v-body-txt); }
+        .index-guide ul { margin: 0.5rem 0 0; padding-left: 1.15rem; }
+        .index-guide li + li { margin-top: 0.35rem; }
+        .index-guide code { font-size: 0.75rem; background: #f1f2f3; padding: 0.1rem 0.35rem; border-radius: 0.25rem; }
         @media (max-width: 768px) {
             body { padding: 0.75rem !important; }
             .index-table { min-width: 28rem; }
@@ -83,9 +88,20 @@
             <div class="flex gap-2 flex-wrap">
                 <button type="button" class="btn-index btn-index-secondary" id="btn-refresh">Refresh</button>
                 <a class="btn-index btn-index-secondary" href="../Forecasting Files/index.html">Forecasts</a>
-                <a class="btn-index btn-index-primary" href="admin.html">Open Admin</a>
+                <a class="btn-index btn-index-secondary" href="v1/admin.html">Open Admin (V1)</a>
+                <a class="btn-index btn-index-primary" href="v2/admin.html">Open Admin (V2)</a>
             </div>
         </header>
+
+        <div class="dashboard-card index-guide">
+            <strong>Which file do I use?</strong>
+            <ul>
+                <li><strong>Build &amp; publish reports</strong> — use <a href="v2/admin.html">v2/admin.html</a> (V2, quarter bank + bulk upload) or <a href="v1/admin.html">v1/admin.html</a> (original).</li>
+                <li><strong>View published reports</strong> — use the live URLs in the table below (<code>/{report-slug}</code>). They are served by root <code>404.html</code> on GitHub Pages.</li>
+                <li><strong>Atlantic-branded index</strong> — <a href="atlantic-index.html">atlantic-index.html</a></li>
+                <li>Root <code>admin.html</code> / <code>admin-v2.html</code> are shortcuts only — the real files live in <code>v1/</code> and <code>v2/</code>.</li>
+            </ul>
+        </div>
 
         <div class="dashboard-card">
             <div class="index-toolbar">

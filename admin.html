@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin | Multi-Market Campaign</title>
+    <title>Dashboard Admin V2 | Multi-Market Campaign</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script src="quarter-bank.js"></script>
+    <script src="quarter-bank-supabase.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -101,7 +103,7 @@
         <div class="flex-1">
             <h2>Theme editor</h2>
             <div class="text-[10px] text-gray-400 mb-3">
-                <span id="runtime-version-badge">Runtime v2026.06.24-weekly-v1</span> · Canonical source: `.html`
+                <span id="runtime-version-badge">Runtime v2026.07-v2</span> · Canonical source: `.html`
             </div>
             
             <div class="mb-6 sidebar-panel space-y-3">
@@ -127,9 +129,13 @@
                     <p class="text-[10px] text-gray-500 mt-1 leading-tight">Shown on the report index and live report header.</p>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Artist name</label>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Artist sales data</label>
+                    <select id="select-artist-directory" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500 cursor-pointer mb-1.5">
+                        <option value="">— Select existing artist —</option>
+                        <option value="__new__">＋ New artist…</option>
+                    </select>
                     <input type="text" id="input-artist-name" placeholder="e.g. Erin LeCount" maxlength="120" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500">
-                    <p class="text-[10px] text-gray-500 mt-1 leading-tight">Groups this report under the artist on the label report index.</p>
+                    <p class="text-[10px] text-gray-500 mt-1 leading-tight">Upload sales once per artist, then publish multiple reports with different titles, dates, and filters.</p>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Record label</label>
@@ -156,8 +162,8 @@
                 <button id="btn-publish" type="button" class="w-full text-white font-bold py-2 px-4 rounded text-sm transition-colors">
                     Save
                 </button>
-                <a id="link-report-index" href="index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 transition-colors">Open Report Index</a>
-                <a id="link-atlantic-index" href="atlantic-index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-yellow-500/40 text-yellow-200 hover:bg-yellow-950/40 transition-colors">Open Atlantic Report Index</a>
+                <a id="link-report-index" href="../index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 transition-colors">Open Report Index</a>
+                <a id="link-atlantic-index" href="../atlantic-index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-yellow-500/40 text-yellow-200 hover:bg-yellow-950/40 transition-colors">Open Atlantic Report Index</a>
                 <div id="publish-result" class="mt-2 text-xs hidden break-words text-center p-2 rounded bg-gray-900/80 border border-gray-700"></div>
             </div>
 
@@ -176,8 +182,8 @@
                             <div><label class="block text-[11px] text-gray-400 mb-0.5">Top Countries Accordion Title</label><input type="text" id="input-name-countries" value="6. Top Countries" class="w-full bg-gray-800 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-gray-500"></div>
                         </div>
                         <div class="pt-2 border-t border-gray-700 bg-gray-800/60 p-2 rounded border border-indigo-700">
-                            <label class="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Campaign Dates</label>
-                            <p class="text-[10px] text-gray-400 mb-2 leading-tight">Rows outside this range are excluded from all totals. Narrow the window to filter the preview — dates are only auto-set on CSV upload. Use calendar format (e.g. 21 May 2026 = 2026-05-21).</p>
+                            <label class="block text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2">Campaign Dates (view filter)</label>
+                            <p class="text-[10px] text-gray-400 mb-2 leading-tight">Controls <strong>what you see</strong> in the preview and published report only. Does not affect CSV uploads or the quarter bank. Leave blank to view all uploaded data.</p>
                             <div class="grid grid-cols-2 gap-2">
                                 <div><span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">Start Date</span><input type="date" id="input-campaign-start" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"></div>
                                 <div><span class="text-[10px] text-gray-400 uppercase font-bold block mb-1">End Date</span><input type="date" id="input-campaign-end" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"></div>
@@ -406,6 +412,32 @@
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Data Uploads</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-4 pb-2">
                         <div id="csv-upload-status" class="hidden text-[10px] rounded p-2 border"></div>
+                        <div id="v2-quarter-panel" class="bg-gray-800/60 p-2 rounded border border-emerald-700/70">
+                            <label class="block text-[10px] text-emerald-300 uppercase font-bold mb-1">V2 Quarter bank (artist level)</label>
+                            <p class="text-[10px] text-gray-500 mb-2 leading-tight">Uploads are <strong>auto-split by sale date</strong> into quarters. <strong>Banked</strong> quarters (🔒) ignore new CSV rows for that period — data is kept as-is. Only <strong>unbanked</strong> quarters are overwritten on upload.</p>
+                            <label class="block text-[10px] text-gray-400 mb-1">Quarter to bank / manage</label>
+                            <select id="input-v2-target-quarter" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white mb-2"></select>
+                            <div id="v2-quarter-chips" class="flex flex-wrap gap-1 mb-2"></div>
+                            <div class="flex flex-wrap gap-1.5 mb-2">
+                                <button type="button" id="btn-v2-bank-quarter" class="text-[10px] px-2 py-1 rounded bg-emerald-900/80 text-emerald-200 border border-emerald-700 hover:bg-emerald-800 font-semibold">Bank selected quarter</button>
+                                <button type="button" id="btn-v2-reopen-quarter" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-600 hover:bg-gray-700" title="Only needed to manually replace banked data">Re-open quarter (manual fix)</button>
+                            </div>
+                            <p id="v2-quarter-note" class="text-[10px] text-gray-500 leading-tight"></p>
+                            <p class="text-[10px] text-gray-600 leading-tight mt-1">Row data is saved in your browser (IndexedDB) on upload and when banking. Banking is blocked until that save succeeds.</p>
+                        </div>
+
+                        <div id="csv-month-coverage" class="hidden bg-gray-800/60 p-2 rounded border border-green-700/60">
+                            <label class="block text-[10px] text-green-300 uppercase font-bold mb-1">Months in uploaded sales data</label>
+                            <div id="csv-month-chips" class="flex flex-wrap gap-1.5"></div>
+                            <p id="csv-month-coverage-note" class="text-[10px] text-gray-500 mt-1.5 leading-tight"></p>
+                        </div>
+
+                        <div class="bg-gray-800 p-2.5 rounded border border-green-600/50">
+                            <label class="block text-[11px] font-bold text-green-400 mb-1">Option A: Master Sales File</label>
+                            <p class="text-[10px] text-gray-500 mb-2 leading-tight">Select <strong>one or many</strong> CSV files — rows auto-split by sale date into quarters. <strong>Unlocked</strong> quarters are overwritten; <strong>banked</strong> quarters (🔒) are locked until re-opened.</p>
+                            <p class="text-[10px] text-gray-500 mb-2 leading-tight">For large stores, export month-by-month or week-by-week from Shopify and bulk-select all files at once.</p>
+                            <input type="file" id="csv-master" accept=".csv" multiple class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-green-700 file:text-white hover:file:bg-green-600 cursor-pointer">
+                        </div>
                         <div class="bg-gray-800/60 p-2 rounded border border-indigo-700/80">
                             <label class="block text-[10px] text-indigo-300 uppercase font-bold mb-1">Shopify CSV "Hour of day" timezone</label>
                             <select id="input-csv-hour-timezone" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white">
@@ -415,7 +447,6 @@
                             </select>
                             <p class="text-[10px] text-gray-500 mt-1 leading-tight">The hour column in Shopify Master exports uses your Shopify admin timezone (Settings → Store details). This must match or timed levers will be wrong.</p>
                         </div>
-                        <div class="bg-gray-800 p-2.5 rounded border border-green-600/50"><label class="block text-[11px] font-bold text-green-400 mb-1">Option A: Master Sales File</label><input type="file" id="csv-master" accept=".csv" class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-green-700 file:text-white hover:file:bg-green-600 cursor-pointer"></div>
                         <div class="bg-gray-800 p-2.5 rounded border border-purple-600/50"><label class="block text-[11px] font-bold text-purple-400 mb-1">Append Analytics / Traffic File</label><input type="file" id="csv-traffic" accept=".csv" class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-purple-700 file:text-white hover:file:bg-purple-600 cursor-pointer"></div>
                         <button type="button" id="btn-copy-debug-snapshot" class="w-full text-[10px] px-2 py-1.5 rounded bg-gray-800 text-cyan-300 hover:bg-gray-700 border border-cyan-800 font-semibold">Copy debug snapshot (paste in chat)</button>
                         <button type="button" id="btn-clear-data-uploads" class="w-full text-[10px] px-2 py-1.5 rounded bg-red-900/80 text-red-200 hover:bg-red-800 font-semibold">Clear all data</button>
@@ -540,6 +571,7 @@
                 var u = new URL(window.location.href);
                 var parts = u.pathname.split('/').filter(Boolean);
                 if (parts.length && parts[parts.length - 1].endsWith('.html')) parts.pop();
+                if (parts.length && /^v[12]$/i.test(parts[parts.length - 1])) parts.pop();
                 return u.origin + (parts.length ? '/' + parts.join('/') : '');
             };
             window.getReportLiveUrl = function (reportName, campaignData) {
@@ -675,7 +707,7 @@
                 var versionBadgeEl = document.getElementById('runtime-version-badge');
                 if (versionBadgeEl) {
                     var loadedVersion = old.runtimeVersion || (old.comparison && old.comparison.runtimeVersion) || 'legacy';
-                    versionBadgeEl.textContent = 'Runtime v2026.06.24-shopify-v1 · Loaded ' + loadedVersion;
+                    versionBadgeEl.textContent = 'Runtime v2026.07-v2 · Loaded ' + loadedVersion;
                 }
 
                 var dates = old.campaignDates || (old.comparison && old.comparison.selectedFilters && old.comparison.selectedFilters.campaignDates) || {};
@@ -934,7 +966,7 @@
         const supabaseClient = getSupabaseClient();
 
         const root = document.documentElement;
-        const RUNTIME_VERSION = '2026.06.24-shopify-v1';
+        const RUNTIME_VERSION = '2026.07-v2';
         let regionPieChart, globalTimelineChart, globalMerchMmChart, globalMerchSizeChart;
         let chartInstances = {}; 
         let loadedTopCountriesPayload = null;
@@ -1086,6 +1118,362 @@
         window.__hasCsvData = false;
         window.__csvDataGeneration = 0;
         let loadCampaignInFlight = null;
+        let v2QuarterBank = null;
+        let v2SupabaseReady = null;
+        let v2BankLoadToken = 0;
+
+        function getRecordLabelForBank() {
+            return document.getElementById('input-record-label')?.value?.trim() || null;
+        }
+
+        function setV2QuarterNote(extra) {
+            const note = document.getElementById('v2-quarter-note');
+            if (!note) return;
+            const base = note.dataset.baseNote || '';
+            note.textContent = extra ? `${base}${base ? ' · ' : ''}${extra}` : base;
+        }
+
+        async function probeV2SupabaseTables() {
+            if (v2SupabaseReady !== null) return v2SupabaseReady;
+            const client = typeof RepQuarterBankSupabase !== 'undefined' ? RepQuarterBankSupabase.getClient() : null;
+            if (!client || typeof RepQuarterBankSupabase === 'undefined') {
+                v2SupabaseReady = false;
+                return false;
+            }
+            const probe = await RepQuarterBankSupabase.probeTables(client);
+            v2SupabaseReady = !!probe.ok;
+            if (!probe.ok && probe.reason === 'tables_missing') {
+                setV2QuarterNote('Run v2/supabase-schema.sql (in this repo) in Supabase SQL Editor to enable cloud bank.');
+            }
+            return v2SupabaseReady;
+        }
+
+        function getArtistBankKey() {
+            const name = document.getElementById('input-artist-name')?.value?.trim();
+            return name ? RepQuarterBank.slugifyArtistKey(name) : null;
+        }
+
+        let lastLoadedArtistKey = null;
+        let artistDirectoryCache = [];
+
+        function escapeArtistOptionLabel(name, recordLabel) {
+            const base = String(name || '').trim();
+            if (!base) return '';
+            return recordLabel ? `${base} (${recordLabel})` : base;
+        }
+
+        function escapeHtmlAttr(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;');
+        }
+
+        async function refreshArtistDirectory() {
+            const sel = document.getElementById('select-artist-directory');
+            if (!sel || typeof RepQuarterBank === 'undefined') return;
+            const prev = sel.value;
+            const merged = new Map();
+
+            RepQuarterBank.listLocalBankArtistNames().forEach(name => {
+                merged.set(RepQuarterBank.slugifyArtistKey(name), { artist_name: name, record_label: null, source: 'local' });
+            });
+
+            if (v2SupabaseReady && typeof RepQuarterBankSupabase !== 'undefined') {
+                try {
+                    const client = RepQuarterBankSupabase.getClient();
+                    const rows = await RepQuarterBankSupabase.listArtists(client);
+                    rows.forEach(row => {
+                        const name = String(row.artist_name || '').trim();
+                        if (!name) return;
+                        merged.set(row.artist_key || RepQuarterBank.slugifyArtistKey(name), {
+                            artist_name: name,
+                            record_label: row.record_label || null,
+                            source: 'cloud'
+                        });
+                    });
+                } catch (err) {
+                    console.warn('Artist directory cloud load failed:', err);
+                }
+            }
+
+            artistDirectoryCache = Array.from(merged.values()).sort((a, b) =>
+                a.artist_name.localeCompare(b.artist_name));
+
+            let html = '<option value="">— Select existing artist —</option>';
+            artistDirectoryCache.forEach(entry => {
+                const slug = RepQuarterBank.slugifyArtistKey(entry.artist_name);
+                const label = escapeArtistOptionLabel(entry.artist_name, entry.record_label);
+                html += `<option value="${slug}" data-artist-name="${escapeHtmlAttr(entry.artist_name)}">${escapeHtmlAttr(label)}</option>`;
+            });
+            html += '<option value="__new__">＋ New artist…</option>';
+            sel.innerHTML = html;
+
+            const currentSlug = getArtistBankKey();
+            if (currentSlug && merged.has(currentSlug)) sel.value = currentSlug;
+            else if (prev && prev !== '__new__' && merged.has(prev)) sel.value = prev;
+            else if (currentSlug) sel.value = '';
+            else sel.value = '';
+        }
+
+        function syncArtistDirectorySelect() {
+            const sel = document.getElementById('select-artist-directory');
+            const slug = getArtistBankKey();
+            if (!sel) return;
+            if (!slug) {
+                if (sel.value !== '__new__') sel.value = '';
+                return;
+            }
+            const match = Array.from(sel.options).find(opt => opt.value === slug);
+            sel.value = match ? slug : '';
+        }
+
+        async function applyArtistSelection(artistName, options) {
+            const name = String(artistName || '').trim();
+            const input = document.getElementById('input-artist-name');
+            if (input && input.value.trim() !== name) input.value = name;
+            const slug = name ? RepQuarterBank.slugifyArtistKey(name) : null;
+            if (!options?.force && slug === lastLoadedArtistKey) {
+                syncArtistDirectorySelect();
+                return;
+            }
+            lastLoadedArtistKey = slug;
+
+            if (!name) {
+                v2QuarterBank = null;
+                windowCurrentCSVData = null;
+                window.__hasCsvData = false;
+                renderQuarterBankUI();
+                syncArtistDirectorySelect();
+                return;
+            }
+
+            await initV2QuarterBank();
+            const loaded = await rebuildCsvFromBank();
+            syncArtistDirectorySelect();
+            if (loaded) {
+                const summary = RepQuarterBank.buildBankSummary(v2QuarterBank);
+                ingestionWarnings = [`Loaded ${name} — ${summary.totalRows.toLocaleString()} sales rows in quarter bank.`];
+                renderWarnings();
+                runDataAggregation();
+                renderCsvUploadStatus(`${name} sales bank loaded`, 'ok');
+            } else {
+                ingestionWarnings = [`${name} selected — no sales rows yet. Upload Master Sales CSV below.`];
+                renderWarnings();
+                renderCsvUploadStatus(`${name} — upload sales data to begin`, 'wait');
+            }
+            if (options?.refreshDirectory) await refreshArtistDirectory();
+        }
+
+        async function initV2QuarterBank(options) {
+            const key = getArtistBankKey();
+            const artistName = document.getElementById('input-artist-name')?.value?.trim();
+            if (!key || !artistName || typeof RepQuarterBank === 'undefined') {
+                v2QuarterBank = null;
+                renderQuarterBankUI();
+                return null;
+            }
+            const loadToken = ++v2BankLoadToken;
+            const prevSessionRows = (v2QuarterBank?.artistKey === artistName && v2QuarterBank._sessionRows)
+                ? { ...v2QuarterBank._sessionRows } : null;
+            setV2QuarterNote('Loading bank…');
+            const supabaseOk = await probeV2SupabaseTables();
+            try {
+                if (supabaseOk && typeof RepQuarterBankSupabase !== 'undefined') {
+                    v2QuarterBank = await RepQuarterBankSupabase.loadBankFromSupabase(artistName, getRecordLabelForBank());
+                    if (loadToken !== v2BankLoadToken) return v2QuarterBank;
+                } else {
+                    v2QuarterBank = RepQuarterBank.loadBank(artistName);
+                }
+            } catch (err) {
+                console.warn('Supabase bank load failed, using local cache:', err);
+                v2QuarterBank = RepQuarterBank.loadBank(artistName);
+                setV2QuarterNote(`Cloud load failed — local cache only (${err.message || err})`);
+            }
+            if (options?.hydrateRows !== false) {
+                await RepQuarterBank.hydrateBankRowsLocal(v2QuarterBank);
+                if (supabaseOk && v2QuarterBank?.artistId && typeof RepQuarterBankSupabase !== 'undefined') {
+                    await RepQuarterBankSupabase.hydrateBankRows(v2QuarterBank);
+                }
+            }
+            if (prevSessionRows) {
+                v2QuarterBank._sessionRows = { ...prevSessionRows, ...(v2QuarterBank._sessionRows || {}) };
+            }
+            RepQuarterBank.saveBank(v2QuarterBank);
+            renderQuarterBankUI();
+            return v2QuarterBank;
+        }
+
+        async function ensureBankHydrated(quarterKeys) {
+            if (!v2QuarterBank) return;
+            const keys = quarterKeys?.length
+                ? quarterKeys
+                : RepQuarterBank.listQuarterKeys(v2QuarterBank);
+            if (!keys.length) return;
+            await RepQuarterBank.hydrateBankRowsLocal(v2QuarterBank, { quarterKeys: keys });
+            if (v2SupabaseReady && v2QuarterBank.artistId && typeof RepQuarterBankSupabase !== 'undefined') {
+                await RepQuarterBankSupabase.hydrateBankRows(v2QuarterBank, { quarterKeys: keys });
+            }
+        }
+
+        function getTargetQuarterKey() {
+            const sel = document.getElementById('input-v2-target-quarter');
+            if (sel?.value) return sel.value;
+            return RepQuarterBank.quarterKeyFromDate(new Date().toISOString().slice(0, 10));
+        }
+
+        function populateQuarterSelect() {
+            const sel = document.getElementById('input-v2-target-quarter');
+            if (!sel || typeof RepQuarterBank === 'undefined') return;
+            const previousValue = sel.value;
+            const keys = new Set();
+            const y = new Date().getFullYear();
+            for (let yr = y - 1; yr <= y + 1; yr++) {
+                for (let q = 1; q <= 4; q++) keys.add(`${yr}-Q${q}`);
+            }
+            if (v2QuarterBank) RepQuarterBank.listQuarterKeys(v2QuarterBank).forEach(k => keys.add(k));
+            const sorted = [...keys].sort();
+            const preferred = v2QuarterBank?.activeQuarter || RepQuarterBank.quarterKeyFromDate(new Date().toISOString().slice(0, 10));
+            sel.innerHTML = sorted.map(qk => {
+                const slot = v2QuarterBank?.quarters?.[qk];
+                const status = slot?.status === 'banked' ? ' 🔒' : slot?.status === 'active' ? ' ●' : '';
+                return `<option value="${qk}">${RepQuarterBank.quarterLabel(qk)}${status}</option>`;
+            }).join('');
+            if (previousValue && [...sel.options].some(o => o.value === previousValue)) {
+                sel.value = previousValue;
+            } else if ([...sel.options].some(o => o.value === preferred)) {
+                sel.value = preferred;
+            }
+        }
+
+        function renderQuarterBankUI() {
+            populateQuarterSelect();
+            const chips = document.getElementById('v2-quarter-chips');
+            const note = document.getElementById('v2-quarter-note');
+            if (!chips) return;
+            if (!v2QuarterBank || !getArtistBankKey()) {
+                chips.innerHTML = '<span class="text-[10px] text-gray-500">Enter artist name to enable quarter bank.</span>';
+                if (note) note.textContent = '';
+                return;
+            }
+            const keys = RepQuarterBank.listQuarterKeys(v2QuarterBank);
+            const selectedQk = getTargetQuarterKey();
+            chips.innerHTML = keys.length
+                ? keys.map(qk => {
+                    const slot = v2QuarterBank.quarters[qk];
+                    const isBanked = slot.status === 'banked';
+                    const isUploadActive = v2QuarterBank.activeQuarter === qk;
+                    const isSelected = selectedQk === qk;
+                    let cls = 'bg-gray-800 text-gray-400 border-gray-600';
+                    if (isSelected) cls = 'bg-indigo-900/70 text-indigo-100 border-indigo-500 ring-2 ring-indigo-400';
+                    else if (isBanked) cls = 'bg-gray-700 text-gray-300 border-gray-600';
+                    else if (isUploadActive) cls = 'bg-emerald-900/60 text-emerald-200 border-emerald-700';
+                    const icon = isBanked ? '🔒' : isUploadActive ? '●' : '○';
+                    const rows = (slot.rowCount || RepQuarterBank.getQuarterRows(v2QuarterBank, qk).length || 0).toLocaleString();
+                    const title = isSelected
+                        ? `${qk} selected — click Bank selected quarter`
+                        : `Select ${qk} to bank or re-open`;
+                    return `<button type="button" data-v2-qk="${qk}" class="text-[9px] px-1.5 py-0.5 rounded border cursor-pointer ${cls}" title="${title}">${icon} ${qk} · ${rows} rows</button>`;
+                }).join('')
+                : '<span class="text-[10px] text-gray-500">No quarters uploaded yet.</span>';
+            const summary = RepQuarterBank.buildBankSummary(v2QuarterBank);
+            const storeLabel = v2QuarterBank._supabase && v2SupabaseReady ? 'Supabase' : 'local cache';
+            const metaRowTotal = keys.reduce((sum, qk) => sum + (v2QuarterBank.quarters[qk]?.rowCount || 0), 0);
+            let baseNote = `Selected: ${selectedQk} · Upload active: ${summary.activeQuarter || '—'} · Banked: ${summary.bankedQuarters.length} · Combined: ${summary.totalRows.toLocaleString()} rows · ${storeLabel}`;
+            if (metaRowTotal > summary.totalRows) {
+                baseNote += ` · ${(metaRowTotal - summary.totalRows).toLocaleString()} rows in bank metadata but not loaded — select artist again or re-bank after upload.`;
+            }
+            note.dataset.baseNote = baseNote;
+            note.textContent = baseNote;
+        }
+
+        async function rebuildCsvFromBank() {
+            if (!v2QuarterBank) return false;
+            try {
+                setV2QuarterNote('Loading quarter rows…');
+                await ensureBankHydrated();
+            } catch (err) {
+                console.error('Failed to hydrate bank rows:', err);
+                ingestionWarnings.push(`Could not load quarter rows: ${err.message || err}`);
+                renderWarnings();
+                return false;
+            }
+            const combined = RepQuarterBank.getCombinedRows(v2QuarterBank);
+            if (!combined.length) {
+                windowCurrentCSVData = null;
+                window.__hasCsvData = false;
+                renderQuarterBankUI();
+                return false;
+            }
+            windowCurrentCSVData = combined;
+            windowCurrentCSVMk = 'master';
+            markCsvUploadReady();
+            renderQuarterBankUI();
+            return true;
+        }
+
+        async function persistQuarterToSupabase(quarterKey, rows, meta) {
+            if (!v2SupabaseReady || typeof RepQuarterBankSupabase === 'undefined') return;
+            const artistName = document.getElementById('input-artist-name')?.value?.trim();
+            if (!artistName) return;
+            if (!v2QuarterBank?.artistId) {
+                const artist = await RepQuarterBankSupabase.ensureArtist(
+                    RepQuarterBankSupabase.getClient(),
+                    artistName,
+                    getRecordLabelForBank()
+                );
+                if (!v2QuarterBank) v2QuarterBank = RepQuarterBank.createEmptyBank(artistName);
+                v2QuarterBank.artistId = artist.id;
+                v2QuarterBank._supabase = true;
+            }
+            setV2QuarterNote(`Saving ${rows.length.toLocaleString()} rows to Supabase…`);
+            await RepQuarterBankSupabase.saveQuarterRows(v2QuarterBank, quarterKey, rows, meta);
+        }
+
+        function restoreV2BankFromPayload(old) {
+            if (!old || typeof RepQuarterBank === 'undefined') return;
+            initV2QuarterBank().then(() => {
+                if (!v2QuarterBank) return;
+                if (old.activeQuarter) v2QuarterBank.activeQuarter = old.activeQuarter;
+                (old.bankedQuarters || []).forEach(qk => {
+                    if (!v2QuarterBank.quarters[qk]) {
+                        v2QuarterBank.quarters[qk] = { status: 'banked', rowCount: 0, bankedAt: old.lastUpdatedAt || null };
+                    } else if (v2QuarterBank.quarters[qk].status !== 'banked') {
+                        v2QuarterBank.quarters[qk].status = 'banked';
+                    }
+                });
+                if (old.activeQuarter && v2QuarterBank.quarters[old.activeQuarter]) {
+                    v2QuarterBank.quarters[old.activeQuarter].status = 'active';
+                }
+                RepQuarterBank.saveBank(v2QuarterBank);
+                renderQuarterBankUI();
+            });
+        }
+
+        function buildArtistRollupForPublish() {
+            const startEl = document.getElementById('input-campaign-start');
+            const endEl = document.getElementById('input-campaign-end');
+            const prevStart = startEl?.value || '';
+            const prevEnd = endEl?.value || '';
+            const range = getCsvDataDateRange();
+            if (range) {
+                if (startEl) startEl.value = range.start;
+                if (endEl) endEl.value = range.end;
+            }
+            runDataAggregation();
+            const chartUnits = ['uk', 'eu', 'us', 'int'].reduce((sum, mk) => sum + getMarketChartUnits(mk), 0);
+            const rollup = {
+                revenue: document.getElementById('kpi-revenue')?.textContent || '£0.00',
+                orders: document.getElementById('kpi-orders')?.textContent || '0',
+                items: document.getElementById('kpi-items')?.textContent || '0',
+                aov: document.getElementById('kpi-aov')?.textContent || '£0.00',
+                chartUnits: chartUnits.toLocaleString()
+            };
+            if (startEl) startEl.value = prevStart;
+            if (endEl) endEl.value = prevEnd;
+            runDataAggregation();
+            return rollup;
+        }
         function hasLiveCsvUpload() {
             return !!(windowCurrentCSVData && windowCurrentCSVData.length > 0);
         }
@@ -1106,24 +1494,8 @@
                 return out;
             });
         }
-        function syncCampaignDatesToCsvRange(options = {}) {
-            const range = getCsvDataDateRange();
-            if(!range) return false;
-            const startEl = document.getElementById('input-campaign-start');
-            const endEl = document.getElementById('input-campaign-end');
-            const curStart = startEl?.value || '';
-            const curEnd = endEl?.value || '';
-            let changed = false;
-            if(options.alignOnUpload) {
-                if(startEl && startEl.value !== range.start) { startEl.value = range.start; changed = true; }
-                if(endEl && endEl.value !== range.end) { endEl.value = range.end; changed = true; }
-                if(changed) ingestionWarnings.push(`Campaign dates aligned to CSV sales range (${range.start} to ${range.end}).`);
-                return changed;
-            }
-            if(!curStart && startEl) { startEl.value = range.start; changed = true; }
-            if(!curEnd && endEl) { endEl.value = range.end; changed = true; }
-            if(changed) ingestionWarnings.push(`Campaign dates set from CSV sales range (${range.start} to ${range.end}).`);
-            return changed;
+        function syncCampaignDatesToCsvRange() {
+            return false;
         }
         function countRawCsvSalesRows() {
             if(!windowCurrentCSVData || windowCurrentCSVData.length === 0) return 0;
@@ -1153,6 +1525,139 @@
         let windowCurrentCSVHasMarket = false;
         let windowCurrentCSVFileStart = null;
         let windowCurrentCSVFileEnd = null;
+        let uploadedMonthsMeta = {};
+        let lastPublishedSalesMonths = [];
+
+        function getRowDayValFromCsvRow(row) {
+            if(!row || typeof row !== 'object') return null;
+            let dayVal = null;
+            Object.keys(row).forEach(k => {
+                if(!k) return;
+                const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+                if(cleanK === 'day' || cleanK === 'reportingday' || cleanK.includes('date') || cleanK.includes('timestamp') || cleanK.includes('created')) {
+                    if(dayVal === null) dayVal = row[k];
+                }
+            });
+            return dayVal;
+        }
+        function getRowMonthKeyFromCsvRow(row) {
+            const dayKey = csvIsoDayKey(getRowDayValFromCsvRow(row));
+            return dayKey ? dayKey.slice(0, 7) : null;
+        }
+        function getUploadedMonthKeys(rows) {
+            const source = rows || windowCurrentCSVData || [];
+            const keys = new Set();
+            source.forEach(row => {
+                const mk = getRowMonthKeyFromCsvRow(row);
+                if(mk) keys.add(mk);
+            });
+            return Array.from(keys).sort();
+        }
+        function monthKeyLabel(ym) {
+            const [y, m] = String(ym).split('-').map(Number);
+            if(!y || !m) return ym;
+            return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+        }
+        function listMonthKeysBetween(startIso, endIso) {
+            if(!startIso || !endIso) return [];
+            const start = new Date(startIso + 'T12:00:00');
+            const end = new Date(endIso + 'T12:00:00');
+            if(isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return [];
+            const out = [];
+            let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+            const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+            while(cursor <= endMonth) {
+                out.push(`${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`);
+                cursor = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+            }
+            return out;
+        }
+        function renderMonthCoverage() {
+            const wrap = document.getElementById('csv-month-coverage');
+            const chips = document.getElementById('csv-month-chips');
+            const note = document.getElementById('csv-month-coverage-note');
+            if(!wrap || !chips) return;
+            const uploaded = getUploadedMonthKeys();
+            const campaign = getCampaignDates();
+            const expected = (campaign.start && campaign.end) ? listMonthKeysBetween(campaign.start, campaign.end) : [];
+            const showExpected = expected.length > 0;
+            const monthsToShow = showExpected ? expected : uploaded;
+
+            if(!uploaded.length && !lastPublishedSalesMonths.length) {
+                wrap.classList.add('hidden');
+                chips.innerHTML = '';
+                if(note) note.textContent = '';
+                return;
+            }
+            wrap.classList.remove('hidden');
+
+            if(!uploaded.length && lastPublishedSalesMonths.length) {
+                chips.innerHTML = lastPublishedSalesMonths.map(ym =>
+                    `<span class="text-[10px] px-1.5 py-0.5 rounded border border-blue-700 bg-blue-950/50 text-blue-200" title="Last published">${monthKeyLabel(ym)} ✓</span>`
+                ).join('');
+                if(note) note.textContent = 'Showing months from the last published snapshot — upload Master Sales CSV to refresh live data.';
+                return;
+            }
+
+            const uploadedSet = new Set(uploaded);
+            chips.innerHTML = monthsToShow.map(ym => {
+                const has = uploadedSet.has(ym);
+                const cls = has
+                    ? 'border-green-700 bg-green-950/50 text-green-200'
+                    : 'border-amber-700 bg-amber-950/40 text-amber-200';
+                const meta = uploadedMonthsMeta[ym];
+                const title = has
+                    ? (meta ? `${meta.rowCount.toLocaleString()} rows · ${meta.files.join(', ')}` : 'Uploaded')
+                    : 'Missing — export this month from Shopify and upload with Add month';
+                return `<span class="text-[10px] px-1.5 py-0.5 rounded border ${cls}" title="${title.replace(/"/g, '&quot;')}">${monthKeyLabel(ym)}${has ? ' ✓' : ' —'}</span>`;
+            }).join('');
+
+            const missing = showExpected ? expected.filter(ym => !uploadedSet.has(ym)) : [];
+            const totalRows = windowCurrentCSVData?.length || 0;
+            let noteText = `${uploaded.length} month${uploaded.length === 1 ? '' : 's'} uploaded · ${totalRows.toLocaleString()} total rows.`;
+            if(missing.length) noteText += ` Missing: ${missing.map(monthKeyLabel).join(', ')}.`;
+            else if(showExpected) noteText += ' Full campaign range covered.';
+            if(note) note.textContent = noteText;
+        }
+        function updateUploadedMonthsMeta(rows, fileName) {
+            const byMonth = {};
+            (rows || []).forEach(row => {
+                const mk = getRowMonthKeyFromCsvRow(row);
+                if(!mk) return;
+                if(!byMonth[mk]) byMonth[mk] = 0;
+                byMonth[mk] += 1;
+            });
+            Object.entries(byMonth).forEach(([mk, count]) => {
+                if(!uploadedMonthsMeta[mk]) uploadedMonthsMeta[mk] = { rowCount: 0, files: [] };
+                uploadedMonthsMeta[mk].rowCount += count;
+                if(fileName && !uploadedMonthsMeta[mk].files.includes(fileName)) uploadedMonthsMeta[mk].files.push(fileName);
+            });
+        }
+        function csvRowFingerprint(row) {
+            let name = '', id = '', rev = '', dayKey = '', variant = '';
+            Object.keys(row || {}).forEach(k => {
+                if(!k) return;
+                const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+                if(cleanK.includes('producttitle') || cleanK.includes('lineitemname') || cleanK === 'title') name = String(row[k] || '');
+                else if(cleanK.includes('ordername') || cleanK === 'orderid') id = String(row[k] || '');
+                else if(cleanK.includes('netsales') || cleanK === 'revenue' || (cleanK.includes('sales') && !cleanK.includes('country'))) rev = String(row[k] ?? '');
+                else if(cleanK.includes('productvarianttitle') || cleanK.includes('variant')) variant = String(row[k] || '');
+            });
+            dayKey = csvIsoDayKey(getRowDayValFromCsvRow(row)) || '';
+            return [id, dayKey, name.trim(), variant.trim(), rev].join('|');
+        }
+        function mergeCsvRows(existingRows, incomingRows) {
+            const map = new Map();
+            (existingRows || []).forEach(row => map.set(csvRowFingerprint(row), row));
+            let added = 0, replaced = 0;
+            (incomingRows || []).forEach(row => {
+                const fp = csvRowFingerprint(row);
+                if(map.has(fp)) replaced += 1;
+                else added += 1;
+                map.set(fp, row);
+            });
+            return { rows: Array.from(map.values()), added, replaced };
+        }
         let aggregatedLineRows = [];
         let orderIndex = {};
         let loadedLeversPayload = null;
@@ -1238,12 +1743,8 @@
             el.classList.remove('hidden');
         }
         function getEmptyStoreData() {
-            return {
-                uk: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                eu: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 90, desktop: 10 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                us: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 80, desktop: 20 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} },
-                int: { loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, traffic: { sessions: 0, atc: 0, mobile: 75, desktop: 25 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} }
-            };
+            const emptyMarket = () => ({ loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, weeklyUnits: {}, dailyUnits: {}, weeklyMusicRev: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} });
+            return { uk: emptyMarket(), eu: emptyMarket(), us: emptyMarket(), int: emptyMarket() };
         }
         let storeData = getEmptyStoreData();
 
@@ -1342,15 +1843,7 @@
             if(!windowCurrentCSVData || windowCurrentCSVData.length === 0) return null;
             let min = null, max = null;
             windowCurrentCSVData.forEach(row => {
-                let dayVal = null;
-                Object.keys(row).forEach(k => {
-                    if(!k) return;
-                    const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if(cleanK === 'day' || cleanK === 'reportingday' || cleanK.includes('date') || cleanK.includes('timestamp') || cleanK.includes('created')) {
-                        if(dayVal === null) dayVal = row[k];
-                    }
-                });
-                const key = csvIsoDayKey(dayVal);
+                const key = csvIsoDayKey(getRowDayValFromCsvRow(row));
                 if(!key) return;
                 if(!min || key < min) min = key;
                 if(!max || key > max) max = key;
@@ -1564,6 +2057,7 @@
                 hasCsvUpload: hasLiveCsvUpload(),
                 csvRowCount: windowCurrentCSVData?.length || 0,
                 csvFileKind: windowCurrentCSVMk || null,
+                uploadedMonths: getUploadedMonthKeys(),
                 loadedCampaignId: activeLoadedReportId || null,
                 campaignName: document.getElementById('input-campaign-name')?.value || '',
                 campaignDates: getCampaignDates(),
@@ -1768,6 +2262,19 @@
             if(!comparisonModel.markets[market]) comparisonModel.markets[market] = { periods: {} };
             if(!comparisonModel.markets[market].periods[period]) comparisonModel.markets[market].periods[period] = { revenue: 0, units: 0, orders: new Set(), products: {} };
             return comparisonModel.markets[market].periods[period];
+        }
+        function buildWeeklyProductUnits(market) {
+            const periods = comparisonModel.markets?.[market]?.periods || {};
+            const out = {};
+            Object.entries(periods).forEach(([weekKey, bucket]) => {
+                const prods = {};
+                Object.entries(bucket.products || {}).forEach(([name, metrics]) => {
+                    const units = Math.round(Number(metrics?.units) || 0);
+                    if(units > 0) prods[name] = units;
+                });
+                if(Object.keys(prods).length) out[weekKey] = prods;
+            });
+            return out;
         }
         function normalizeCountryName(raw) {
             const c = String(raw || '').trim();
@@ -2734,6 +3241,8 @@
             windowCurrentCSVHasMarket = false;
             windowCurrentCSVFileStart = null;
             windowCurrentCSVFileEnd = null;
+            uploadedMonthsMeta = {};
+            lastPublishedSalesMonths = [];
             aggregatedLineRows = [];
             orderIndex = {};
             comparisonModel = { markets: {}, periodOrder: [] };
@@ -2747,6 +3256,7 @@
             ingestionWarnings = [];
             renderWarnings();
             renderCsvUploadStatus('');
+            renderMonthCoverage();
 
             const csvMaster = document.getElementById('csv-master');
             const csvTraffic = document.getElementById('csv-traffic');
@@ -2789,6 +3299,8 @@
                 try { setupByInput.value = localStorage.getItem('rep-admin-setup-by') || ''; } catch (_e) { setupByInput.value = ''; }
             }
             if(document.getElementById('input-artist-name')) document.getElementById('input-artist-name').value = '';
+            lastLoadedArtistKey = null;
+            refreshArtistDirectory();
             if(document.getElementById('input-record-label')) document.getElementById('input-record-label').value = '';
             if(document.getElementById('input-rep')) document.getElementById('input-rep').value = '';
             document.getElementById('btn-clear-load')?.classList.add('hidden');
@@ -3239,6 +3751,13 @@
             if (document.getElementById('input-campaign-name')) document.getElementById('input-campaign-name').value = data.report_name || '';
             if (document.getElementById('input-setup-by')) document.getElementById('input-setup-by').value = old.setupBy || '';
             if (document.getElementById('input-artist-name')) document.getElementById('input-artist-name').value = old.artistName || '';
+            if (typeof RepQuarterBank !== 'undefined' && old.artistName) {
+                lastLoadedArtistKey = RepQuarterBank.slugifyArtistKey(old.artistName);
+            } else {
+                lastLoadedArtistKey = null;
+            }
+            refreshArtistDirectory().then(() => syncArtistDirectorySelect());
+            restoreV2BankFromPayload(old);
             if (document.getElementById('input-record-label')) document.getElementById('input-record-label').value = old.recordLabel || '';
             if (document.getElementById('input-rep')) document.getElementById('input-rep').value = old.rep || '';
             const versionBadgeEl = document.getElementById('runtime-version-badge');
@@ -3273,6 +3792,8 @@
                 const loadedCampaignDates = old.campaignDates || old.comparison?.selectedFilters?.campaignDates || {};
                 if (document.getElementById('input-campaign-start')) document.getElementById('input-campaign-start').value = loadedCampaignDates.start || '';
                 if (document.getElementById('input-campaign-end')) document.getElementById('input-campaign-end').value = loadedCampaignDates.end || '';
+                lastPublishedSalesMonths = Array.isArray(old.salesMonthsCovered) ? old.salesMonthsCovered.slice() : [];
+                renderMonthCoverage();
             }
             if (old.sectionVisibility) {
                 REPORT_SECTION_KEYS.forEach(k => {
@@ -3343,9 +3864,8 @@
             for (const slot of ['p1', 'p2', 'p3', 'p4']) applyProductImage(slot, old.productImages?.[slot] || null);
             setSalesforcePriorUnits(old.salesforcePriorUnits || null, false);
 
+            rebuildCsvFromBank().then(() => {
             if (hasLiveCsvUpload()) {
-                resetCompareFiltersForNewUpload();
-                ingestionWarnings.push('CSV upload detected — saved compare filters were cleared so Shopify export totals are not blocked.');
                 runDataAggregation();
             } else {
             const snapRev = old.global?.revenue || '£0.00';
@@ -3397,6 +3917,7 @@
             }
             window.__pendingCampaignLoadId = null;
             window.showLiveReportLinkInSidebar(data.report_name, old, `✅ Loaded <strong>${data.report_name || 'campaign'}</strong>`);
+            });
         }
         window.applyLogoBase64 = applyLogoBase64;
         window.applyLoadedCampaignRecord = applyLoadedCampaignRecord;
@@ -3491,7 +4012,7 @@
 
             Object.keys(storeData).forEach(m => {
                 storeData[m].loaded = true; storeData[m].revenue = 0; storeData[m].items = 0; storeData[m].orders.clear();
-                storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].merchProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {};
+                storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].merchProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {}; storeData[m].weeklyUnits = {}; storeData[m].dailyUnits = {}; storeData[m].weeklyMusicRev = {};
                 storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
             });
 
@@ -3535,6 +4056,8 @@
                     else if (cleanK.includes('compareatprice') || cleanK.includes('compareprice')) { const p = parseFloat(row[k]); if(!isNaN(p)) compareAtPrice = p; }
                     else if (cleanK.includes('linediscount') || cleanK.includes('discountamount') || cleanK === 'discount') { const p = parseFloat(row[k]); if(!isNaN(p)) lineDiscount = p; }
                     else if (cleanK.includes('shippingcountry') || cleanK === 'shipcountry') shippingCountry = String(row[k] || '');
+                    else if (!shippingCountry && (cleanK.includes('billingcountry') || cleanK === 'billingcountry')) shippingCountry = String(row[k] || '');
+                    else if (!shippingCountry && (cleanK === 'country' || cleanK === 'destinationcountry' || cleanK === 'customercountry')) shippingCountry = String(row[k] || '');
                     else if (cleanK === 'market') marketVal = String(row[k] || '').toLowerCase();
                     else if (cleanK === 'day' || cleanK === 'reportingday') dayVal = row[k];
                     else if (cleanK === 'hourofday' || cleanK === 'hour') hourVal = row[k];
@@ -3601,14 +4124,29 @@
                     if(!storeData[tMk].daily[dayKey]) storeData[tMk].daily[dayKey] = 0;
                     storeData[tMk].daily[dayKey] += rev;
                 }
+                const countsForChart = isMusic && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts);
+                if(countsForChart && derivedQty) {
+                    if(!storeData[tMk].weeklyUnits[weekKey]) storeData[tMk].weeklyUnits[weekKey] = 0;
+                    storeData[tMk].weeklyUnits[weekKey] += derivedQty;
+                    if(dayKey) {
+                        if(!storeData[tMk].dailyUnits[dayKey]) storeData[tMk].dailyUnits[dayKey] = 0;
+                        storeData[tMk].dailyUnits[dayKey] += derivedQty;
+                    }
+                    if(isMusic) {
+                        if(!storeData[tMk].weeklyMusicRev[weekKey]) storeData[tMk].weeklyMusicRev[weekKey] = 0;
+                        storeData[tMk].weeklyMusicRev[weekKey] += rev;
+                    }
+                }
 
                 const cmpBucket = ensureComparisonBucket(tMk, weekKey);
                 cmpBucket.revenue += rev;
                 cmpBucket.units += derivedQty;
                 if(id) cmpBucket.orders.add(id);
-                if(!cmpBucket.products[name]) cmpBucket.products[name] = { units: 0, revenue: 0 };
-                cmpBucket.products[name].units += derivedQty;
-                cmpBucket.products[name].revenue += rev;
+                if(countsForChart && derivedQty) {
+                    if(!cmpBucket.products[name]) cmpBucket.products[name] = { units: 0, revenue: 0 };
+                    cmpBucket.products[name].units += derivedQty;
+                    cmpBucket.products[name].revenue += rev;
+                }
 
                 if(isMusic) {
                     if(lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
@@ -3684,24 +4222,21 @@
             const totalAccepted = Object.values(acceptedRowsByMarket).reduce((a,b)=>a+b,0);
             const csvRange = getCsvDataDateRange();
             if(csvRange) ingestionWarnings.push(`CSV sales dates in file: ${csvRange.start} to ${csvRange.end}.`);
+            const uploadedMonths = getUploadedMonthKeys();
+            if(uploadedMonths.length) ingestionWarnings.push(`Uploaded months: ${uploadedMonths.map(monthKeyLabel).join(', ')}.`);
             if(totalAccepted === 0 && !options.autoRetried) {
                 const { start, end } = getCampaignDates();
                 const activeFiltersNow = getAdvancedFilters();
-                const hadBlockingFilters = !!(start || end || activeFiltersNow.excludeKeywords.length || activeFiltersNow.includeKeywords.length || activeFiltersNow.productScope !== 'all' || activeFiltersNow.from || activeFiltersNow.to);
-                if(hadBlockingFilters && uploadGeneration === (window.__csvDataGeneration || 0)) {
-                    if(csvRange) {
-                        if(document.getElementById('input-campaign-start')) document.getElementById('input-campaign-start').value = csvRange.start;
-                        if(document.getElementById('input-campaign-end')) document.getElementById('input-campaign-end').value = csvRange.end;
-                    }
-                    resetCompareFiltersForNewUpload();
-                    ingestionWarnings.push('No rows matched filters — auto-cleared campaign dates and Advanced Compare Filters, then re-processed the CSV.');
-                    runDataAggregation({ skipDateSync: true, autoRetried: true });
-                    return;
-                }
-                if(csvRange && (start || end)) {
-                    ingestionWarnings.push(`No rows matched current filters. Campaign dates are ${start || '…'} to ${end || '…'} but uploaded sales are ${csvRange.start} to ${csvRange.end}. Update Campaign Dates or clear them.`);
+                const filterBits = [];
+                if(start || end) filterBits.push(`campaign dates (${start || '…'} to ${end || '…'})`);
+                if(activeFiltersNow.excludeKeywords.length) filterBits.push('exclude keywords');
+                if(activeFiltersNow.includeKeywords.length) filterBits.push('include keywords');
+                if(activeFiltersNow.productScope !== 'all') filterBits.push(`product scope (${activeFiltersNow.productScope})`);
+                if(activeFiltersNow.from || activeFiltersNow.to) filterBits.push('compare period');
+                if(csvRange) {
+                    ingestionWarnings.push(`No rows in current view. Uploaded bank spans ${csvRange.start} to ${csvRange.end}${filterBits.length ? ' — check ' + filterBits.join(', ') : ''}. Campaign dates filter the preview only; uploads are unchanged.`);
                 } else {
-                    ingestionWarnings.push('No rows matched current filters. Check campaign dates (use YYYY-MM-DD), market checkboxes, and product scope.');
+                    ingestionWarnings.push(`No rows in current view${filterBits.length ? ' — check ' + filterBits.join(', ') : ''}.`);
                 }
             } else if(totalAccepted > 0 && rawSalesLineCount > 0 && totalAccepted / rawSalesLineCount < 0.15) {
                 const activeFiltersNow = getAdvancedFilters();
@@ -3732,13 +4267,14 @@
             ingestionWarnings.push(`Post-filter ingest revenue — UK: £${acceptedRevenueByMarket.uk.toFixed(2)}, EU: £${acceptedRevenueByMarket.eu.toFixed(2)}, US: £${acceptedRevenueByMarket.us.toFixed(2)}, INT: £${acceptedRevenueByMarket.int.toFixed(2)}`);
             const publishedRev = Object.values(acceptedRevenueByMarket).reduce((a,b)=>a+b,0);
             const publishedOrders = Object.values(storeData).reduce((sum, m) => sum + (m.orders?.size || 0), 0);
-            ingestionWarnings.push(`Dashboard totals after upload — ${publishedOrders.toLocaleString()} orders · £${publishedRev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} revenue. Click Update/Publish for this to appear on the live report URL.`);
+            ingestionWarnings.push(`Dashboard totals (campaign date filter applied) — ${publishedOrders.toLocaleString()} orders · £${publishedRev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} revenue.`);
             renderWarnings();
             populateLeverProductDropdowns();
             calculateGlobalDashboard();
             const gRev = Object.values(storeData).reduce((sum, d) => sum + (d.revenue || 0), 0);
             const gOrders = Object.values(storeData).reduce((sum, d) => sum + (d.orders?.size || 0), 0);
             renderCsvUploadStatus(`CSV processed — ${gOrders.toLocaleString()} orders · £${gRev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} in preview.`, gRev > 0 ? 'ok' : 'err');
+            renderMonthCoverage();
             } catch (aggErr) {
                 console.error('runDataAggregation failed:', aggErr);
                 ingestionWarnings.push(`Aggregation error: ${aggErr?.message || aggErr}. Click "Copy debug snapshot" and send to support.`);
@@ -3747,19 +4283,251 @@
             }
         }
 
+        function sortMasterUploadFiles(fileList) {
+            return Array.from(fileList || []).sort((a, b) => {
+                const da = (String(a.name).match(/\d{4}-\d{2}-\d{2}/) || [])[0] || a.name;
+                const db = (String(b.name).match(/\d{4}-\d{2}-\d{2}/) || [])[0] || b.name;
+                return da.localeCompare(db) || a.name.localeCompare(b.name);
+            });
+        }
+
+        function parseCsvFileAsync(file) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(file, {
+                    header: true, dynamicTyping: true, skipEmptyLines: true,
+                    error: reject,
+                    complete: (res) => resolve({ data: res.data || [], meta: res.meta || {}, file })
+                });
+            });
+        }
+
+        function bankHasStoredRows() {
+            if (!v2QuarterBank) return false;
+            return RepQuarterBank.listQuarterKeys(v2QuarterBank).some(qk =>
+                RepQuarterBank.getQuarterRows(v2QuarterBank, qk).length > 0);
+        }
+
+        function appendCsvFieldWarnings(fields, mk) {
+            const normalizedFields = (fields || []).map(f => String(f || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
+            if(!normalizedFields.some(f => f.includes('netsales') || f.includes('sales') || f === 'revenue')) {
+                ingestionWarnings.push('Missing revenue column. Expected Net Sales / Sales / Revenue.');
+            }
+            if(!normalizedFields.some(f => f.includes('producttitle') || f.includes('lineitemname') || f === 'title' || f === 'name')) {
+                ingestionWarnings.push('Missing product title column. Expected Product Title / Line Item Name / Name.');
+            }
+            if(!normalizedFields.some(f => f.includes('date') || f.includes('timestamp') || f.includes('created') || f === 'day' || f === 'reportingday')) {
+                ingestionWarnings.push('No date-like column detected. Time series may rely on inferred periods.');
+            }
+            if(normalizedFields.some(f => f.includes('hourofday') || f === 'hour')) {
+                ingestionWarnings.push(`Hour-of-day column detected — rows timed using CSV hour timezone (${getLeverTimeZoneLabel(getCsvHourTimeZone())}). Lever windows use lever timezone (${getLeverTimeZoneLabel()}).`);
+            }
+            const hasCountryColumn = normalizedFields.some(f =>
+                f.includes('shippingcountry') || f === 'shipcountry' || f.includes('billingcountry')
+                || f === 'country' || f === 'destinationcountry' || f === 'customercountry');
+            if(mk === 'master' && !hasCountryColumn) {
+                ingestionWarnings.push('No Shipping country / Billing country column — EU & Top Countries will show Salesforce prior units only. Add Shipping country to your Shopify export.');
+            }
+            windowCurrentCSVHasMarket = false;
+            (fields || []).forEach(f => {
+                if (!f) return;
+                const cleanF = String(f).toLowerCase().replace(/[^a-z0-9]/g, '');
+                if(cleanF.includes('market') || cleanF.includes('country')) windowCurrentCSVHasMarket = true;
+            });
+            if(!windowCurrentCSVHasMarket && mk === 'master') {
+                ingestionWarnings.push('No market/country field detected. Uploads will use fallback market mapping.');
+            }
+        }
+
+        async function ingestMasterRowsToBank(newRows, file) {
+            const cloudWarnings = [];
+            await ensureBankHydrated(RepQuarterBank.listQuarterKeys(v2QuarterBank));
+            const ingest = RepQuarterBank.ingestRowsIntoBank(v2QuarterBank, newRows, {
+                mode: 'replace',
+                fileName: file.name
+            });
+            const persistResults = await RepQuarterBank.persistAllBankRowsLocal(v2QuarterBank);
+            const persistFailed = persistResults.filter(r => !r.ok);
+            if (persistFailed.length) {
+                cloudWarnings.push(`Browser row save failed for ${persistFailed.map(f => f.quarterKey).join(', ')} — bank metadata only until re-upload.`);
+            }
+            RepQuarterBank.saveBank(v2QuarterBank);
+            if (v2SupabaseReady) {
+                for (const slot of ingest.applied) {
+                    try {
+                        const qRows = RepQuarterBank.getQuarterRows(v2QuarterBank, slot.quarterKey);
+                        await persistQuarterToSupabase(slot.quarterKey, qRows, { fileName: file.name });
+                    } catch (cloudErr) {
+                        cloudWarnings.push(`Supabase save failed for ${slot.quarterKey}: ${cloudErr.message || cloudErr}`);
+                    }
+                }
+            }
+            ingest.cloudWarnings = cloudWarnings;
+            return ingest;
+        }
+
+        async function processMasterUploadBatch(fileList) {
+            const files = sortMasterUploadFiles(fileList);
+            if (!files.length) return;
+
+            const artistName = document.getElementById('input-artist-name')?.value?.trim();
+            if (!artistName) {
+                ingestionWarnings = ['Enter Artist name before uploading (V2 quarter bank is per artist).'];
+                renderWarnings();
+                renderCsvUploadStatus('Artist name required for V2 upload.', 'err');
+                return;
+            }
+            if (typeof RepQuarterBank === 'undefined') {
+                ingestionWarnings = ['Quarter bank module failed to load. Hard refresh and try again.'];
+                renderWarnings();
+                renderCsvUploadStatus('quarter-bank.js not loaded.', 'err');
+                return;
+            }
+
+            await probeV2SupabaseTables();
+            if (!v2QuarterBank || v2QuarterBank.artistKey !== artistName) {
+                await initV2QuarterBank({ hydrateRows: true });
+                if (!v2QuarterBank) v2QuarterBank = RepQuarterBank.loadBank(artistName);
+            } else {
+                await ensureBankHydrated();
+            }
+
+            const batchNotes = [];
+            let lastMeta = null;
+            let combinedRows = [];
+            let parsedFileCount = 0;
+            const wasEmptyBank = !bankHasStoredRows();
+            if (wasEmptyBank) uploadedMonthsMeta = {};
+
+            if (files.length > 1) {
+                ingestionWarnings = [`Bulk upload: ${files.length} files (sorted by filename date). Unlocked quarters overwritten; banked quarters skipped.`];
+            } else {
+                ingestionWarnings = [];
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                renderCsvUploadStatus(`Reading ${i + 1}/${files.length}: ${file.name}…`, 'wait');
+                let parsed;
+                try {
+                    parsed = await parseCsvFileAsync(file);
+                } catch (parseErr) {
+                    batchNotes.push(`${file.name}: parse failed — ${parseErr?.message || parseErr}`);
+                    continue;
+                }
+                const newRows = normalizeCsvRows(parsed.data);
+                lastMeta = parsed.meta;
+                if (!newRows.length) {
+                    batchNotes.push(`${file.name}: 0 data rows, skipped.`);
+                    continue;
+                }
+                parsedFileCount += 1;
+                combinedRows = combinedRows.length ? mergeCsvRows(combinedRows, newRows).rows : newRows;
+                batchNotes.push(`${file.name}: ${newRows.length.toLocaleString()} rows read`);
+                updateUploadedMonthsMeta(newRows, file.name);
+
+                const dateMatches = file.name.match(/\d{4}-\d{2}-\d{2}/g);
+                if (dateMatches && dateMatches.length >= 2 && i === 0) {
+                    windowCurrentCSVFileStart = new Date(dateMatches[0]).getTime();
+                    windowCurrentCSVFileEnd = new Date(dateMatches[dateMatches.length - 1]).getTime();
+                }
+            }
+
+            if (!parsedFileCount || !combinedRows.length) {
+                ingestionWarnings.push(...batchNotes, 'No usable rows in selected file(s).');
+                renderWarnings();
+                renderCsvUploadStatus('Upload finished — no data rows loaded.', 'err');
+                return;
+            }
+
+            renderCsvUploadStatus(`Writing ${combinedRows.length.toLocaleString()} rows to quarter bank…`, 'wait');
+            const batchLabel = files.length > 1 ? `${files.length} files` : files[0].name;
+            try {
+                const ingest = await ingestMasterRowsToBank(combinedRows, { name: batchLabel });
+                const appliedText = ingest.applied.map(a => `${a.quarterKey}: ${a.rowCount.toLocaleString()}`).join(', ');
+                batchNotes.push(`Applied → ${appliedText || 'none'}`);
+                if (ingest.cloudWarnings?.length) batchNotes.push(...ingest.cloudWarnings.map(w => `  ↳ ${w}`));
+                if (ingest.skipped.length) {
+                    const skippedRows = ingest.skipped.reduce((sum, s) => sum + (s.rowCount || 0), 0);
+                    batchNotes.push(`  ↳ ${skippedRows.toLocaleString()} rows ignored — ${ingest.skipped.map(s => `${s.quarterKey} is banked (${s.rowCount.toLocaleString()} in file, existing data kept)`).join('; ')}`);
+                }
+                if (ingest.undated) {
+                    batchNotes.push(`  ↳ ${ingest.undated.toLocaleString()} undated row(s) skipped`);
+                }
+            } catch (bankErr) {
+                ingestionWarnings = [bankErr?.message || String(bankErr), ...batchNotes];
+                renderWarnings();
+                renderCsvUploadStatus(bankErr?.message || 'Quarter bank error.', 'err');
+                return;
+            }
+
+            renderQuarterBankUI();
+            await ensureBankHydrated();
+            await rebuildCsvFromBank();
+            if (!windowCurrentCSVData?.length) {
+                ingestionWarnings.push(...batchNotes, 'Bank updated but combined preview is empty.');
+                renderWarnings();
+                renderCsvUploadStatus('Upload finished but preview has 0 rows.', 'err');
+                return;
+            }
+
+            windowCurrentCSVMk = 'master';
+            markCsvUploadReady();
+            renderMonthCoverage();
+            ensureCompareMarketsSelected();
+            const bankDateRange = getCsvDataDateRange();
+            if (bankDateRange) {
+                windowCurrentCSVFileStart = new Date(bankDateRange.start).getTime();
+                windowCurrentCSVFileEnd = new Date(bankDateRange.end).getTime();
+            }
+            appendCsvFieldWarnings(lastMeta?.fields, 'master');
+
+            const summary = RepQuarterBank.buildBankSummary(v2QuarterBank);
+            ingestionWarnings.push(...batchNotes);
+            const bankedMissing = (summary.bankedQuarters || []).filter(qk =>
+                !RepQuarterBank.getQuarterRows(v2QuarterBank, qk).length);
+            if (bankedMissing.length) {
+                ingestionWarnings.push(`Warning: banked ${bankedMissing.join(', ')} has row counts but no loaded rows — re-select artist or re-bank those quarters after confirming data in preview.`);
+            }
+            const doneLabel = files.length > 1 ? 'Bulk complete' : 'Upload complete';
+            const { start, end } = getCampaignDates();
+            const viewNote = (start || end)
+                ? ` View filter: ${start || '…'} to ${end || '…'} (change Campaign Dates to see other periods).`
+                : ' Viewing all uploaded data (no campaign date filter).';
+            ingestionWarnings.push(`${doneLabel} — ${parsedFileCount} file(s), ${summary.totalRows.toLocaleString()} rows in bank across ${RepQuarterBank.listQuarterKeys(v2QuarterBank).length} quarter(s).${viewNote}`);
+            renderWarnings();
+            runDataAggregation();
+            const gRev = Object.values(storeData).reduce((sum, d) => sum + (d.revenue || 0), 0);
+            const gOrders = Object.values(storeData).reduce((sum, d) => sum + (d.orders?.size || 0), 0);
+            const statusLabel = files.length > 1 ? 'Bulk upload done' : 'Upload done';
+            renderCsvUploadStatus(`${statusLabel} — ${parsedFileCount} file(s) · ${gOrders.toLocaleString()} orders · £${gRev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`, gRev > 0 ? 'ok' : 'err');
+            await refreshArtistDirectory();
+            syncArtistDirectorySelect();
+        }
+
         function handleFileUpload(event, mk) {
-            const file = event.target.files[0]; if (!file) return;
+            const files = event.target.files;
+            if (!files?.length) return;
             if(typeof Papa === 'undefined') {
                 ingestionWarnings = ['CSV parser (Papa Parse) did not load. Disable ad blockers or hard-refresh, then upload again.'];
                 renderWarnings();
                 renderCsvUploadStatus('CSV parser blocked — check network/ad blocker.', 'err');
                 return;
             }
-            renderCsvUploadStatus(`Reading ${file.name}…`, 'wait');
-            const dateMatches = file.name.match(/\d{4}-\d{2}-\d{2}/g);
-            windowCurrentCSVFileStart = null; windowCurrentCSVFileEnd = null;
-            if (dateMatches && dateMatches.length >= 2) { windowCurrentCSVFileStart = new Date(dateMatches[0]).getTime(); windowCurrentCSVFileEnd = new Date(dateMatches[1]).getTime(); if(mk === 'master') applyCampaignDatesFromFilename(dateMatches, true); else applyCampaignDatesFromFilename(dateMatches); }
 
+            if (mk === 'master') {
+                processMasterUploadBatch(files).catch(err => {
+                    console.error('Bulk upload failed:', err);
+                    ingestionWarnings = [`Bulk upload error: ${err?.message || err}`];
+                    renderWarnings();
+                    renderCsvUploadStatus(`Bulk upload error: ${err?.message || err}`, 'err');
+                }).finally(() => {
+                    event.target.value = '';
+                });
+                return;
+            }
+
+            const file = files[0];
+            renderCsvUploadStatus(`Reading ${file.name}…`, 'wait');
             Papa.parse(file, {
                 header: true, dynamicTyping: true, skipEmptyLines: true,
                 error: function(err) {
@@ -3768,8 +4536,12 @@
                     renderCsvUploadStatus(`CSV parse failed: ${err?.message || 'Unknown error'}`, 'err');
                 },
                 complete: function(res) {
+                    (async function() {
                     try {
-                    windowCurrentCSVData = normalizeCsvRows(res.data || []); windowCurrentCSVMk = mk; windowCurrentCSVHasMarket = false;
+                    const newRows = normalizeCsvRows(res.data || []);
+                    windowCurrentCSVData = newRows;
+                    ingestionWarnings = [`Loaded ${windowCurrentCSVData.length.toLocaleString()} rows from ${file.name}.`];
+                    windowCurrentCSVMk = mk;
                     if(!windowCurrentCSVData.length) {
                         ingestionWarnings = ['CSV parsed but contained no data rows. Check the file is a Shopify export with headers.'];
                         renderWarnings();
@@ -3777,29 +4549,7 @@
                         return;
                     }
                     markCsvUploadReady();
-                    ingestionWarnings = [`Loaded ${windowCurrentCSVData.length.toLocaleString()} rows from ${file.name}.`];
-                    if(mk === 'master') {
-                        resetCompareFiltersForNewUpload();
-                        ensureCompareMarketsSelected();
-                        syncCampaignDatesToCsvRange({ alignOnUpload: true });
-                    }
-                    const fields = (res.meta && Array.isArray(res.meta.fields)) ? res.meta.fields : [];
-                    const normalizedFields = fields.map(f => String(f || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
-                    const hasDateColumn = normalizedFields.some(f => f.includes('date') || f.includes('timestamp') || f.includes('created') || f === 'day' || f === 'reportingday');
-                    const hasRevenueColumn = normalizedFields.some(f => f.includes('netsales') || f.includes('sales') || f === 'revenue');
-                    const hasNameColumn = normalizedFields.some(f => f.includes('producttitle') || f.includes('lineitemname') || f === 'title' || f === 'name');
-                    if(!hasRevenueColumn) ingestionWarnings.push('Missing revenue column. Expected Net Sales / Sales / Revenue.');
-                    if(!hasNameColumn) ingestionWarnings.push('Missing product title column. Expected Product Title / Line Item Name / Name.');
-                    const hasHourColumn = normalizedFields.some(f => f.includes('hourofday') || f === 'hour');
-                    if(hasHourColumn) ingestionWarnings.push(`Hour-of-day column detected — rows timed using CSV hour timezone (${getLeverTimeZoneLabel(getCsvHourTimeZone())}). Lever windows use lever timezone (${getLeverTimeZoneLabel()}).`);
-                    if(!hasDateColumn) ingestionWarnings.push('No date-like column detected. Time series may rely on inferred periods.');
-                    fields.forEach(f => {
-                        if (!f) return; const cleanF = String(f).toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if(cleanF.includes('market') || cleanF.includes('country')) windowCurrentCSVHasMarket = true;
-                    });
-                    if(!windowCurrentCSVHasMarket && mk === 'master') {
-                        ingestionWarnings.push('No market/country field detected. Uploads will use fallback market mapping.');
-                    }
+                    appendCsvFieldWarnings(res.meta?.fields, mk);
                     renderWarnings();
                     runDataAggregation();
                     } catch (uploadErr) {
@@ -3808,6 +4558,7 @@
                         renderWarnings();
                         renderCsvUploadStatus(`Upload handling error: ${uploadErr?.message || uploadErr}`, 'err');
                     }
+                    })();
                 }
             });
         }
@@ -3876,6 +4627,113 @@
             });
             document.getElementById('btn-clear-salesforce-country')?.addEventListener('click', () => { clearAllIngestedData(); });
             document.getElementById('btn-clear-data-uploads')?.addEventListener('click', () => { clearAllIngestedData(); });
+            document.getElementById('select-artist-directory')?.addEventListener('change', async (e) => {
+                const val = e.target.value;
+                if (val === '__new__') {
+                    const input = document.getElementById('input-artist-name');
+                    if (input) {
+                        input.value = '';
+                        input.focus();
+                    }
+                    lastLoadedArtistKey = null;
+                    v2QuarterBank = null;
+                    windowCurrentCSVData = null;
+                    window.__hasCsvData = false;
+                    renderQuarterBankUI();
+                    renderCsvUploadStatus('Enter a new artist name, then upload sales data.', 'wait');
+                    return;
+                }
+                if (!val) {
+                    await applyArtistSelection('');
+                    return;
+                }
+                const opt = e.target.selectedOptions?.[0];
+                const name = opt?.getAttribute('data-artist-name') || opt?.textContent?.replace(/\s+\([^)]+\)$/, '') || '';
+                await applyArtistSelection(name);
+            });
+            document.getElementById('input-artist-name')?.addEventListener('change', () => {
+                applyArtistSelection(document.getElementById('input-artist-name')?.value?.trim() || '');
+            });
+            document.getElementById('input-artist-name')?.addEventListener('blur', () => {
+                applyArtistSelection(document.getElementById('input-artist-name')?.value?.trim() || '');
+            });
+            document.getElementById('input-v2-target-quarter')?.addEventListener('change', renderQuarterBankUI);
+            document.getElementById('v2-quarter-chips')?.addEventListener('click', (e) => {
+                const chip = e.target.closest('[data-v2-qk]');
+                if (!chip) return;
+                const sel = document.getElementById('input-v2-target-quarter');
+                if (sel) sel.value = chip.getAttribute('data-v2-qk');
+                renderQuarterBankUI();
+            });
+            document.getElementById('btn-v2-bank-quarter')?.addEventListener('click', async () => {
+                if (!v2QuarterBank) return alert('Enter artist name and upload data first.');
+                const qk = getTargetQuarterKey();
+                if (!v2QuarterBank.quarters[qk]) return alert(`No data in ${qk} to bank.`);
+                const rows = RepQuarterBank.getQuarterRows(v2QuarterBank, qk);
+                if (!rows.length) {
+                    return alert(`No rows loaded for ${qk}. Re-select the artist or re-upload before banking.`);
+                }
+                setV2QuarterNote(`Saving ${rows.length.toLocaleString()} rows before banking ${qk}…`);
+                const localSave = await RepQuarterBank.persistQuarterRowsLocal(v2QuarterBank, qk, rows);
+                if (!localSave.ok) {
+                    alert(`Banking cancelled — rows could not be saved to browser storage (${localSave.error || 'unknown error'}). Data is not safe to bank yet.`);
+                    return;
+                }
+                try {
+                    if (v2SupabaseReady && typeof RepQuarterBankSupabase !== 'undefined') {
+                        await persistQuarterToSupabase(qk, rows, { fileName: v2QuarterBank.quarters[qk]?.fileName || 'bank-save' });
+                    }
+                } catch (err) {
+                    ingestionWarnings.push(`Supabase save failed for ${qk}: ${err.message || err}. Rows saved in browser only.`);
+                    renderWarnings();
+                }
+                RepQuarterBank.bankQuarter(v2QuarterBank, qk);
+                try {
+                    if (v2SupabaseReady && v2QuarterBank.artistId) {
+                        await RepQuarterBankSupabase.setQuarterStatus(v2QuarterBank, qk, 'banked');
+                    } else {
+                        RepQuarterBank.saveBank(v2QuarterBank);
+                    }
+                } catch (err) {
+                    ingestionWarnings.push(`Supabase bank status failed: ${err.message || err}`);
+                    renderWarnings();
+                    return;
+                }
+                renderQuarterBankUI();
+                const storeBits = ['browser storage ✓'];
+                if (v2SupabaseReady && v2QuarterBank.artistId) storeBits.push('Supabase ✓');
+                ingestionWarnings.push(`Banked ${qk} — ${rows.length.toLocaleString()} rows locked (${storeBits.join(', ')}). New CSV rows for this quarter will be ignored.`);
+                renderWarnings();
+            });
+            document.getElementById('btn-v2-reopen-quarter')?.addEventListener('click', async () => {
+                if (!v2QuarterBank) return;
+                const qk = getTargetQuarterKey();
+                if (!v2QuarterBank.quarters[qk]) return alert(`No quarter slot for ${qk}.`);
+                RepQuarterBank.reopenQuarter(v2QuarterBank, qk);
+                try {
+                    if (v2SupabaseReady && v2QuarterBank.artistId) {
+                        await RepQuarterBankSupabase.setQuarterStatus(v2QuarterBank, qk, 'active');
+                    } else {
+                        RepQuarterBank.saveBank(v2QuarterBank);
+                    }
+                } catch (err) {
+                    ingestionWarnings.push(`Supabase re-open failed: ${err.message || err}`);
+                    renderWarnings();
+                    return;
+                }
+                renderQuarterBankUI();
+                ingestionWarnings.push(`Re-opened ${qk} for overwrite uploads.`);
+                renderWarnings();
+            });
+            probeV2SupabaseTables().then(async () => {
+                await refreshArtistDirectory();
+                const bootArtist = document.getElementById('input-artist-name')?.value?.trim();
+                if (bootArtist && !window.__pendingCampaignLoadId && !activeLoadedReportId) {
+                    await applyArtistSelection(bootArtist, { force: true });
+                } else {
+                    syncArtistDirectorySelect();
+                }
+            });
             ['global', 'uk', 'eu', 'us', 'int', 'countries'].forEach(mk => { document.getElementById(`input-name-${mk}`)?.addEventListener('input', (e) => { const titleTarget = document.getElementById(`preview-title-${mk}`); if(titleTarget) titleTarget.textContent = e.target.value; }); });
             REPORT_SECTION_KEYS.forEach(k => { document.getElementById(`section-toggle-${k}`)?.addEventListener('change', () => applySectionVisibility(getSectionVisibility(), true)); });
             document.querySelectorAll('[data-add-show]').forEach(btn => { btn.addEventListener('click', () => { addShowRow(btn.getAttribute('data-add-show'), {}); calculateGlobalDashboard(); }); });
@@ -3925,8 +4783,14 @@
                 .forEach(id => {
                     const el = document.getElementById(id);
                     if (!el) return;
-                    el.addEventListener('input', () => { if(windowCurrentCSVData) runDataAggregation(); });
-                    el.addEventListener('change', () => { if(windowCurrentCSVData) runDataAggregation(); });
+                    el.addEventListener('input', () => {
+                        if(windowCurrentCSVData) runDataAggregation();
+                        else if(id === 'input-campaign-start' || id === 'input-campaign-end') renderMonthCoverage();
+                    });
+                    el.addEventListener('change', () => {
+                        if(windowCurrentCSVData) runDataAggregation();
+                        else if(id === 'input-campaign-start' || id === 'input-campaign-end') renderMonthCoverage();
+                    });
                 });
 
             document.getElementById('csv-master')?.addEventListener('change', (e) => handleFileUpload(e, 'master'));
@@ -4066,13 +4930,15 @@
                     const topStandoutProducts = Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5);
                     const euTopCountries = prefix === 'eu' ? getEuTopCountriesForDisplay() : undefined;
                     const intTopCountries = prefix === 'int' ? getIntTopCountriesForDisplay() : undefined;
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);
+                const bankSummary = v2QuarterBank ? RepQuarterBank.buildBankSummary(v2QuarterBank) : { bankedQuarters: [], activeQuarter: null, totalRows: 0 };
+                const artistRollup = buildArtistRollupForPublish();
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
-                    sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only' },
+                    sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only', model: 'v2-quarter-bank' },
                     title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', artistName: document.getElementById('input-artist-name')?.value.trim() || '', recordLabel: document.getElementById('input-record-label')?.value || '', rep: document.getElementById('input-rep')?.value || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartMode: getCampaignChartMode(), campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, faviconBase64: globalFaviconBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
                     sectionNames: { global: document.getElementById('input-name-global')?.value || '1. Global Dashboard Summary', uk: document.getElementById('input-name-uk')?.value || '2. United Kingdom Market Insights', eu: document.getElementById('input-name-eu')?.value || '3. European Union Market Insights', us: document.getElementById('input-name-us')?.value || '4. United States Market Insights', int: document.getElementById('input-name-int')?.value || '5. Rest of World / International Insights', countries: document.getElementById('input-name-countries')?.value || '6. Top Countries' },
                     campaignDates: getCampaignDates(),
@@ -4086,7 +4952,11 @@
                     topCountries: buildTopCountriesPayload(),
                     globalMerch: buildGlobalMerchPayload(),
                     salesforcePriorUnits: salesforcePriorUnits || null,
-                    csvHourTimeZone: getCsvHourTimeZone()
+                    csvHourTimeZone: getCsvHourTimeZone(),
+                    salesMonthsCovered: getUploadedMonthKeys(),
+                    bankedQuarters: bankSummary.bankedQuarters,
+                    activeQuarter: bankSummary.activeQuarter,
+                    artistRollup
                 };
 
                 try {
@@ -4110,6 +4980,13 @@
                     if (!data || data.length === 0) throw new Error("Insert returned no ID.");
                     targetId = data[0].id; activeLoadedReportId = targetId;
                     applyLastUpdatedDisplay(publishPayload.lastUpdatedAt || null);
+                    if (v2SupabaseReady && v2QuarterBank?.artistId && typeof RepQuarterBankSupabase !== 'undefined') {
+                        try {
+                            await RepQuarterBankSupabase.saveArtistRollup(v2QuarterBank, artistRollup);
+                        } catch (rollupErr) {
+                            console.warn('Artist rollup cloud save failed:', rollupErr);
+                        }
+                    }
                     try {
                         const setupBySaved = document.getElementById('input-setup-by')?.value.trim();
                         if(setupBySaved) localStorage.setItem('rep-admin-setup-by', setupBySaved);
@@ -4121,6 +4998,7 @@
                         resDiv.innerHTML = `✅ Successfully Saved!<br>${window.formatLiveReportLinkHtml(nameInput, publishPayload)}`;
                     }
                     refreshCampaignDirectory();
+                    refreshArtistDirectory().then(() => syncArtistDirectorySelect());
 
                 } catch(err) { 
                     console.error("Native Fetch Exception:", err); 
