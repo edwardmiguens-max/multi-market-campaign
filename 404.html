@@ -600,6 +600,11 @@
                 const top = (d.top5||[]).map(([n,m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">${formatGBP(m.revenue)}</td></tr>`).join('');
                 return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:${colors?.tertiary||'#4b5563'}"><h3 class="text-base font-bold">${d.title||'Signed'}</h3><p class="text-xs text-gray-500">${d.mode==='signed_art_card'?'Signed art card attribution':'Signed formats'}</p><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed D2C Chart units</p><p class="text-2xl font-bold">${Number(d.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(d.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed revenue</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Top products</p><table class="w-full text-sm"><tbody>${top||'<tr><td class="italic text-gray-400 py-2">No signed products</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
             };
+            const attachedPrior = (d) => {
+                const rows = (d.formats || []).map(r => `<tr class="border-b"><td class="py-1.5 font-medium leading-tight">${r.productTitle}</td><td class="py-1.5 text-right whitespace-nowrap">${Number(r.units || 0).toLocaleString()}</td><td class="py-1.5 text-right whitespace-nowrap">${formatGBP(r.revenue)}</td></tr>`).join('');
+                const totals = d.totals || { units: 0, revenue: 0 };
+                return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:#7c3aed"><h3 class="text-base font-bold">${d.title || 'Prior Campaign Album Sales'}</h3><div class="grid grid-cols-2 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Album units (attached)</p><p class="text-2xl font-bold">${Number(totals.units || 0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Album net sales (attached)</p><p class="text-2xl font-bold">${formatGBP(totals.revenue)}</p></div></div><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Selected album formats</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Format</th><th class="text-right py-1">Units</th><th class="text-right py-1">Net sales</th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No formats selected</td></tr>'}</tbody></table></div></div></div>`;
+            };
             let html = '';
             if(data.preOrder1) html += timed('preOrder1', data.preOrder1);
             if(data.preOrder2) html += timed('preOrder2', data.preOrder2);
@@ -611,6 +616,7 @@
             if(data.signedUkEu) html += signedCard(data.signedUkEu, 'signedUkEu');
             if(data.signedUs) html += signedCard(data.signedUs, 'signedUs');
             if(data.signed && !data.signedUkEu && !data.signedUs) html += signedCard(data.signed, 'signed');
+            if(data.attachedPriorCampaign) html += attachedPrior(data.attachedPriorCampaign);
             pane.innerHTML = html;
             if(typeof Chart === 'undefined') return;
             registerPiePercentOverlayPlugin();
