@@ -302,6 +302,21 @@
                             </select>
                             <p class="text-[10px] text-gray-500 mt-1 leading-tight">Start/end date &amp; time fields for all timed levers are interpreted in this zone.</p>
                         </div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="attachedPriorCampaign">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-violet-300">Attached Prior Campaign Sales</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="prior-campaign-market-uk" checked class="mr-0.5">UK</label><label><input type="checkbox" id="prior-campaign-market-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="prior-campaign-market-us" class="mr-0.5">US</label><label><input type="checkbox" id="prior-campaign-market-int" class="mr-0.5">ROW</label></div></div>
+                            <p class="text-[10px] text-gray-400 leading-tight">Select prior album formats from the master sales CSV. Units count when the format is on the same order as a current-campaign product.</p>
+                            <input type="text" id="input-prior-campaign-name" placeholder="Prior campaign name (e.g. You'll Be Alright, Kid)" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white">
+                            <select id="input-prior-campaign-mode" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white">
+                                <option value="selected">Selected album formats</option>
+                                <option value="name_match">Match product titles containing campaign name</option>
+                            </select>
+                            <button type="button" id="btn-prior-campaign-formats" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white hover:border-violet-500 text-left flex justify-between items-center gap-2">
+                                <span id="prior-campaign-formats-label" class="truncate">Configure selected formats</span>
+                                <span class="text-gray-500 shrink-0">▾</span>
+                            </button>
+                            <input type="hidden" id="input-prior-campaign-formats" value="">
+                            <p id="prior-campaign-summary" class="text-[10px] text-gray-400 leading-tight">Upload master sales CSV, then select prior album formats.</p>
+                        </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="preOrder1">
                             <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-amber-300">Pre-order for Pre-sale</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-preOrder1-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-preOrder1-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-preOrder1-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-preOrder1-int" class="mr-0.5">ROW</label></div></div>
                             <input type="text" id="lever-preOrder1-title" placeholder="Section title on report" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Pre-order for Pre-sale">
@@ -535,6 +550,24 @@
             <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
                 <button type="button" id="btn-campaign-chart-products-cancel" class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
                 <button type="button" id="btn-campaign-chart-products-apply" class="text-xs px-3 py-1.5 rounded bg-yellow-600 text-white font-semibold hover:bg-yellow-500">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="prior-campaign-formats-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+        <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center px-4 py-3 border-b border-gray-700">
+                <h3 class="text-sm font-bold text-violet-300">Prior Campaign — Select Album Formats</h3>
+                <button type="button" id="btn-prior-campaign-formats-close" class="text-gray-400 hover:text-white text-lg leading-none">&times;</button>
+            </div>
+            <div class="px-4 py-2 border-b border-gray-800 flex gap-2">
+                <button type="button" id="btn-prior-campaign-select-all" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700">Select all</button>
+                <button type="button" id="btn-prior-campaign-clear-all" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700">Clear all</button>
+            </div>
+            <div id="prior-campaign-formats-list" class="overflow-y-auto flex-1 p-3 space-y-1 text-xs text-gray-200"></div>
+            <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
+                <button type="button" id="btn-prior-campaign-formats-cancel" class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
+                <button type="button" id="btn-prior-campaign-formats-apply" class="text-xs px-3 py-1.5 rounded bg-violet-700 text-white font-semibold hover:bg-violet-600">Apply</button>
             </div>
         </div>
     </div>
@@ -1661,6 +1694,7 @@
         let aggregatedLineRows = [];
         let orderIndex = {};
         let loadedLeversPayload = null;
+        let loadedAttachedPriorCampaign = null;
 
         const LEVER_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signedUkEu', 'signedUs'];
         const LEVER_TIMED_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'competition', 'sale'];
@@ -2037,6 +2071,278 @@
         }
         function closeCampaignChartProductModal() {
             document.getElementById('campaign-chart-products-modal')?.classList.add('hidden');
+        }
+        function normalizeProductTitleKey(title) {
+            return String(title || '').trim().replace(/[\u2018\u2019]/g, "'").toLowerCase();
+        }
+        function getPriorCampaignMode() {
+            return document.getElementById('input-prior-campaign-mode')?.value || 'all';
+        }
+        function setPriorCampaignMode(mode) {
+            const el = document.getElementById('input-prior-campaign-mode');
+            if(el) el.value = mode || 'all';
+            syncPriorCampaignModeUi();
+        }
+        function getPriorCampaignSelectedFormats() {
+            try {
+                const raw = document.getElementById('input-prior-campaign-formats')?.value || '[]';
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            } catch (_err) { return []; }
+        }
+        function setPriorCampaignSelectedFormats(names) {
+            const input = document.getElementById('input-prior-campaign-formats');
+            if(input) input.value = JSON.stringify(names || []);
+            updatePriorCampaignFormatsLabel(names || []);
+        }
+        function syncPriorCampaignModeUi() {
+            const mode = getPriorCampaignMode();
+            const btn = document.getElementById('btn-prior-campaign-formats');
+            if(btn) btn.classList.toggle('hidden', mode !== 'selected');
+            updatePriorCampaignFormatsLabel(getPriorCampaignSelectedFormats());
+        }
+        function getPriorCampaignMarketFlags() {
+            return {
+                uk: document.getElementById('prior-campaign-market-uk')?.checked !== false,
+                eu: document.getElementById('prior-campaign-market-eu')?.checked === true,
+                us: document.getElementById('prior-campaign-market-us')?.checked === true,
+                int: document.getElementById('prior-campaign-market-int')?.checked === true
+            };
+        }
+        function setPriorCampaignMarketFlags(flags) {
+            const f = flags || {};
+            if(document.getElementById('prior-campaign-market-uk')) document.getElementById('prior-campaign-market-uk').checked = f.uk !== false;
+            if(document.getElementById('prior-campaign-market-eu')) document.getElementById('prior-campaign-market-eu').checked = !!f.eu;
+            if(document.getElementById('prior-campaign-market-us')) document.getElementById('prior-campaign-market-us').checked = !!f.us;
+            if(document.getElementById('prior-campaign-market-int')) document.getElementById('prior-campaign-market-int').checked = !!f.int;
+        }
+        function syncPriorCampaignModeUi() {
+            const mode = getPriorCampaignMode();
+            const btn = document.getElementById('btn-prior-campaign-formats');
+            if(btn) btn.classList.toggle('hidden', mode !== 'selected');
+            updatePriorCampaignFormatsLabel(getPriorCampaignSelectedFormats());
+        }
+        function updatePriorCampaignFormatsLabel(names) {
+            const label = document.getElementById('prior-campaign-formats-label');
+            if(!label) return;
+            const mode = getPriorCampaignMode();
+            if(mode !== 'selected') return;
+            if(!names || names.length === 0) label.textContent = 'Configure selected formats';
+            else if(names.length === 1) label.textContent = names[0].length > 42 ? names[0].slice(0, 42) + '…' : names[0];
+            else label.textContent = `${names.length} formats selected`;
+        }
+        function getPriorCampaignAnchorProductKeys() {
+            const chartMode = getCampaignChartMode();
+            const chartProducts = getCampaignChartProducts();
+            if(chartMode === 'selected' && chartProducts.length) {
+                return new Set(chartProducts.map(normalizeProductTitleKey));
+            }
+            return null;
+        }
+        function listMasterCsvMusicProducts() {
+            const names = new Set();
+            aggregatedLineRows.forEach(l => {
+                if(l?.name && l.isMusic) names.add(l.name);
+            });
+            return Array.from(names).sort((a, b) => a.localeCompare(b));
+        }
+        function resolvePriorFormatNames() {
+            const mode = getPriorCampaignMode();
+            const selected = getPriorCampaignSelectedFormats();
+            if(mode === 'selected') return selected.slice();
+            const campaignName = document.getElementById('input-prior-campaign-name')?.value?.trim() || '';
+            if(!campaignName) return [];
+            const needle = normalizeProductTitleKey(campaignName);
+            return listMasterCsvMusicProducts().filter(name => normalizeProductTitleKey(name).includes(needle));
+        }
+        function computeAttachedPriorCampaignForMarket(market, priorFormatNames) {
+            if(!market || !priorFormatNames?.length || !Object.keys(orderIndex).length) return [];
+            const priorKeys = new Set(priorFormatNames.map(normalizeProductTitleKey));
+            const anchorKeys = getPriorCampaignAnchorProductKeys();
+            const byProduct = new Map();
+            Object.values(orderIndex).forEach(order => {
+                if(order.market !== market) return;
+                const lines = order.lines || [];
+                const hasPrior = lines.some(l => priorKeys.has(normalizeProductTitleKey(l.name)));
+                if(!hasPrior) return;
+                const hasAnchor = anchorKeys
+                    ? lines.some(l => anchorKeys.has(normalizeProductTitleKey(l.name)))
+                    : lines.some(l => !priorKeys.has(normalizeProductTitleKey(l.name)) && (l.isMusic || l.isMerch));
+                if(!hasAnchor) return;
+                lines.forEach(l => {
+                    if(!priorKeys.has(normalizeProductTitleKey(l.name))) return;
+                    const key = l.name;
+                    if(!byProduct.has(key)) byProduct.set(key, { productTitle: key, units: 0, revenue: 0 });
+                    const rec = byProduct.get(key);
+                    rec.units += Number(l.units || 0);
+                    rec.revenue += Number(l.rev || 0);
+                });
+            });
+            return Array.from(byProduct.values()).filter(r => r.units || r.revenue);
+        }
+        function computeAttachedPriorCampaignAllMarkets(priorFormatNames) {
+            const out = {};
+            LEVER_MARKET_CODES.forEach(m => {
+                out[m] = computeAttachedPriorCampaignForMarket(m, priorFormatNames);
+            });
+            return out;
+        }
+        function filterAttachedPriorCampaignRows(rows, mode, selectedFormats) {
+            const list = Array.isArray(rows) ? rows : [];
+            if(mode !== 'selected' || !selectedFormats?.length) return list.slice();
+            const selectedKeys = new Set(selectedFormats.map(normalizeProductTitleKey));
+            return list.filter(r => selectedKeys.has(normalizeProductTitleKey(r.productTitle)));
+        }
+        function summarizeAttachedPriorCampaignRows(rows) {
+            return (rows || []).reduce((acc, r) => {
+                acc.units += Number(r.units || 0);
+                acc.revenue += Number(r.revenue || 0);
+                return acc;
+            }, { units: 0, revenue: 0 });
+        }
+        function renderPriorCampaignSummary() {
+            const el = document.getElementById('prior-campaign-summary');
+            if(!el) return;
+            if(!aggregatedLineRows.length) {
+                el.textContent = loadedAttachedPriorCampaign?.computed
+                    ? 'Showing saved prior campaign snapshot — upload master sales CSV to recalculate live.'
+                    : 'Upload master sales CSV, then select prior album formats.';
+                return;
+            }
+            const priorFormatNames = resolvePriorFormatNames();
+            if(!priorFormatNames.length) {
+                el.textContent = getPriorCampaignMode() === 'selected'
+                    ? 'Select prior album formats from the master CSV.'
+                    : 'Enter a prior campaign name to match album product titles.';
+                return;
+            }
+            const marketFlags = getPriorCampaignMarketFlags();
+            const activeMarkets = LEVER_MARKET_CODES.filter(m => marketFlags[m]);
+            const parts = activeMarkets.map(m => {
+                const rows = computeAttachedPriorCampaignForMarket(m, priorFormatNames);
+                const totals = summarizeAttachedPriorCampaignRows(rows);
+                return `${m.toUpperCase()}: ${totals.units.toLocaleString()} units · £${totals.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }).filter(Boolean);
+            const name = document.getElementById('input-prior-campaign-name')?.value?.trim() || 'Prior campaign';
+            el.textContent = parts.length
+                ? `${name} (attached, same order): ${parts.join(' · ')}`
+                : `${name}: no attached sales found for selected formats/markets.`;
+        }
+        function buildAttachedPriorCampaignPayload() {
+            const campaignName = document.getElementById('input-prior-campaign-name')?.value?.trim() || '';
+            const mode = getPriorCampaignMode();
+            const selectedFormats = getPriorCampaignSelectedFormats();
+            const marketFlags = getPriorCampaignMarketFlags();
+            if(!campaignName && mode === 'name_match') return loadedAttachedPriorCampaign;
+            const priorFormatNames = resolvePriorFormatNames();
+            if(!priorFormatNames.length && !loadedAttachedPriorCampaign) return null;
+            const computed = {};
+            if(priorFormatNames.length && aggregatedLineRows.length) {
+                LEVER_MARKET_CODES.forEach(m => {
+                    if(!marketFlags[m]) return;
+                    const rows = computeAttachedPriorCampaignForMarket(m, priorFormatNames);
+                    if(!rows.length) return;
+                    const totals = summarizeAttachedPriorCampaignRows(rows);
+                    computed[m] = {
+                        title: `Prior Campaign — ${campaignName || 'Prior campaign'}`,
+                        campaignName: campaignName || 'Prior campaign',
+                        formats: rows.slice().sort((a, b) => Number(b.units || 0) - Number(a.units || 0)),
+                        totals
+                    };
+                });
+            } else if(loadedAttachedPriorCampaign?.computed) {
+                Object.assign(computed, loadedAttachedPriorCampaign.computed);
+            }
+            if(!Object.keys(computed).length) return null;
+            const allRows = [];
+            LEVER_MARKET_CODES.forEach(m => {
+                (computed[m]?.formats || []).forEach(r => allRows.push(r));
+            });
+            return {
+                campaignName: campaignName || 'Prior campaign',
+                mode,
+                selectedFormats,
+                markets: marketFlags,
+                rows: allRows,
+                computed,
+                title: `Prior Campaign — ${campaignName || 'Prior campaign'}`
+            };
+        }
+        function buildAttachedPriorCampaignComputed() {
+            const payload = buildAttachedPriorCampaignPayload();
+            if(!payload) {
+                if(loadedAttachedPriorCampaign?.computed) return loadedAttachedPriorCampaign.computed;
+                return {};
+            }
+            return payload.computed || {};
+        }
+        function mergeAttachedPriorCampaignIntoComputed(computed) {
+            const prior = buildAttachedPriorCampaignComputed();
+            LEVER_MARKET_CODES.forEach(m => {
+                if(!prior[m]) return;
+                computed[m] = computed[m] || {};
+                computed[m].attachedPriorCampaign = prior[m];
+            });
+            return computed;
+        }
+        function applyAttachedPriorCampaignToForm(data) {
+            if(!data) return;
+            if(document.getElementById('input-prior-campaign-name')) document.getElementById('input-prior-campaign-name').value = data.campaignName || '';
+            setPriorCampaignMode(data.mode === 'all' ? 'name_match' : (data.mode || (data.selectedFormats?.length ? 'selected' : 'name_match')));
+            setPriorCampaignSelectedFormats(Array.isArray(data.selectedFormats) ? data.selectedFormats : []);
+            setPriorCampaignMarketFlags(data.markets || { uk: true });
+            loadedAttachedPriorCampaign = data;
+            renderPriorCampaignSummary();
+        }
+        function clearAttachedPriorCampaignData() {
+            loadedAttachedPriorCampaign = null;
+            if(document.getElementById('input-prior-campaign-name')) document.getElementById('input-prior-campaign-name').value = '';
+            setPriorCampaignMode('selected');
+            setPriorCampaignSelectedFormats([]);
+            setPriorCampaignMarketFlags({ uk: true, eu: false, us: false, int: false });
+            renderPriorCampaignSummary();
+        }
+        function populatePriorCampaignFormatsModal() {
+            const list = document.getElementById('prior-campaign-formats-list');
+            if(!list) return;
+            const selected = new Set(getPriorCampaignSelectedFormats());
+            const products = listMasterCsvMusicProducts();
+            if(!products.length) {
+                list.innerHTML = '<p class="text-gray-500 italic p-2">Upload master sales CSV first.</p>';
+                return;
+            }
+            const preview = computeAttachedPriorCampaignAllMarkets(products);
+            const previewMap = new Map();
+            LEVER_MARKET_CODES.forEach(m => {
+                (preview[m] || []).forEach(r => {
+                    const key = r.productTitle;
+                    if(!previewMap.has(key)) previewMap.set(key, { units: 0, revenue: 0 });
+                    const rec = previewMap.get(key);
+                    rec.units += Number(r.units || 0);
+                    rec.revenue += Number(r.revenue || 0);
+                });
+            });
+            list.innerHTML = products.map(name => {
+                const safe = name.replace(/"/g, '&quot;');
+                const checked = selected.has(name) ? 'checked' : '';
+                const stats = previewMap.get(name) || { units: 0, revenue: 0 };
+                const units = Number(stats.units || 0).toLocaleString();
+                const rev = Number(stats.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                return `<label class="flex items-start gap-2 p-1.5 rounded hover:bg-gray-800 cursor-pointer"><input type="checkbox" class="prior-campaign-format-cb mt-0.5 rounded" value="${safe}" ${checked}><span class="leading-tight"><span class="block">${name}</span><span class="text-gray-500">${units} attached units · £${rev}</span></span></label>`;
+            }).join('');
+        }
+        function openPriorCampaignFormatsModal() {
+            populatePriorCampaignFormatsModal();
+            document.getElementById('prior-campaign-formats-modal')?.classList.remove('hidden');
+        }
+        function closePriorCampaignFormatsModal() {
+            document.getElementById('prior-campaign-formats-modal')?.classList.add('hidden');
+        }
+        function renderAttachedPriorCampaignLeverCard(data, panePrefix) {
+            if(!data) return '';
+            const rows = (data.formats || []).map(r => `<tr class="border-b border-gray-700"><td class="py-1.5 font-medium leading-tight">${r.productTitle}</td><td class="py-1.5 text-right whitespace-nowrap">${Number(r.units || 0).toLocaleString()}</td><td class="py-1.5 text-right whitespace-nowrap">£${Number(r.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td></tr>`).join('');
+            const totals = data.totals || { units: 0, revenue: 0 };
+            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color:#7c3aed"><h3 class="preview-header-label text-base">${data.title || 'Prior Campaign Album Sales'}</h3><div class="grid grid-cols-2 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Album units (attached)</p><p class="preview-body-data text-2xl font-bold">${Number(totals.units || 0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Album net sales (attached)</p><p class="preview-body-data text-2xl font-bold">£${Number(totals.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p></div></div><div><p class="preview-header-label mb-2">Selected album formats</p><table class="w-full text-xs"><thead><tr class="border-b border-gray-700"><th class="text-left py-1">Format</th><th class="text-right py-1">Units</th><th class="text-right py-1">Net sales</th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No formats selected</td></tr>'}</tbody></table></div></div>`;
         }
         function renderCsvUploadStatus(message, tone = 'wait') {
             const el = document.getElementById('csv-upload-status');
@@ -3101,6 +3407,7 @@
             if(data.signedUkEu) html += renderSignedLeverCard('signedUkEu', data.signedUkEu, prefix);
             if(data.signedUs) html += renderSignedLeverCard('signedUs', data.signedUs, prefix);
             if(data.signed && !data.signedUkEu && !data.signedUs) html += renderSignedLeverCard('signed', data.signed, prefix);
+            if(data.attachedPriorCampaign) html += renderAttachedPriorCampaignLeverCard(data.attachedPriorCampaign, prefix);
             pane.innerHTML = html;
             setTimeout(() => {
                 registerPiePercentOverlayPlugin();
@@ -3114,7 +3421,8 @@
         }
         function buildLeversPayload() {
             const config = getLeversConfigFromForm();
-            const computed = aggregatedLineRows.length ? buildLeversComputed(config) : (loadedLeversPayload?.computed || { uk: {}, eu: {}, us: {}, int: {} });
+            let computed = aggregatedLineRows.length ? buildLeversComputed(config) : (loadedLeversPayload?.computed || { uk: {}, eu: {}, us: {}, int: {} });
+            computed = mergeAttachedPriorCampaignIntoComputed(computed);
             return { config, computed, leverTimeZone: config.leverTimeZone || getLeverTimeZone(), csvHourTimeZone: config.csvHourTimeZone || getCsvHourTimeZone() };
         }
         function buildComparisonPayload() {
@@ -3253,6 +3561,7 @@
             loadedEuTopCountriesPayload = null;
             loadedIntTopCountriesPayload = null;
             loadedLeversPayload = null;
+            clearAttachedPriorCampaignData();
             ingestionWarnings = [];
             renderWarnings();
             renderCsvUploadStatus('');
@@ -3714,6 +4023,7 @@
             renderTopCountriesPreview(countryPayload);
             const leversPayload = buildLeversPayload();
             LEVER_MARKET_CODES.forEach(m => renderLeversPane(m, leversPayload.computed, `${m}-levers-slot`));
+            renderPriorCampaignSummary();
             syncUsMarketDerivedUi();
         }
 
@@ -3772,6 +4082,9 @@
             if (Array.isArray(old.campaignChartProducts)) setCampaignChartProducts(old.campaignChartProducts);
             else setCampaignChartProducts([]);
             setCampaignChartMode(old.campaignChartMode || (old.campaignChartProducts?.length ? 'selected' : 'all_music'));
+
+            if (old.attachedPriorCampaign) applyAttachedPriorCampaignToForm(old.attachedPriorCampaign);
+            else clearAttachedPriorCampaignData();
 
             const usMarketEl = document.getElementById('input-store-has-us-market');
             if (usMarketEl) usMarketEl.checked = old.storeHasUsMarket !== false && old.comparison?.selectedFilters?.storeHasUsMarket !== false;
@@ -4761,6 +5074,29 @@
                 closeCampaignChartProductModal();
                 if(windowCurrentCSVData) runDataAggregation();
             });
+            document.getElementById('btn-prior-campaign-formats')?.addEventListener('click', openPriorCampaignFormatsModal);
+            document.getElementById('input-prior-campaign-mode')?.addEventListener('change', () => {
+                syncPriorCampaignModeUi();
+                renderPriorCampaignSummary();
+                calculateGlobalDashboard();
+            });
+            syncPriorCampaignModeUi();
+            document.getElementById('btn-prior-campaign-formats-close')?.addEventListener('click', closePriorCampaignFormatsModal);
+            document.getElementById('btn-prior-campaign-formats-cancel')?.addEventListener('click', closePriorCampaignFormatsModal);
+            document.getElementById('btn-prior-campaign-select-all')?.addEventListener('click', () => { document.querySelectorAll('.prior-campaign-format-cb').forEach(cb => { cb.checked = true; }); });
+            document.getElementById('btn-prior-campaign-clear-all')?.addEventListener('click', () => { document.querySelectorAll('.prior-campaign-format-cb').forEach(cb => { cb.checked = false; }); });
+            document.getElementById('btn-prior-campaign-formats-apply')?.addEventListener('click', () => {
+                const selected = Array.from(document.querySelectorAll('.prior-campaign-format-cb:checked')).map(cb => cb.value);
+                setPriorCampaignMode('selected');
+                setPriorCampaignSelectedFormats(selected);
+                closePriorCampaignFormatsModal();
+                renderPriorCampaignSummary();
+                calculateGlobalDashboard();
+            });
+            document.getElementById('input-prior-campaign-name')?.addEventListener('input', () => { renderPriorCampaignSummary(); calculateGlobalDashboard(); });
+            ['prior-campaign-market-uk', 'prior-campaign-market-eu', 'prior-campaign-market-us', 'prior-campaign-market-int'].forEach(id => {
+                document.getElementById(id)?.addEventListener('change', () => calculateGlobalDashboard());
+            });
             document.getElementById('btn-lever-sale-products')?.addEventListener('click', openLeverSaleProductModal);
             document.getElementById('btn-lever-sale-products-close')?.addEventListener('click', closeLeverSaleProductModal);
             document.getElementById('btn-lever-sale-products-cancel')?.addEventListener('click', closeLeverSaleProductModal);
@@ -4945,6 +5281,7 @@
                     timelineGranularity: timelineForPublish.granularity,
                     sectionVisibility: getResolvedSectionVisibility(),
                     levers: buildLeversPayload(),
+                    attachedPriorCampaign: buildAttachedPriorCampaignPayload(),
                     colors: { logo: document.getElementById('color-logo')?.value || '#202223', accordion: document.getElementById('color-accordion')?.value || '#202223', bg: document.getElementById('color-bg')?.value || '#f6f6f7', cardBg: document.getElementById('color-card')?.value || '#ffffff', primary: document.getElementById('color-primary')?.value || '#008060', secondary: document.getElementById('color-secondary')?.value || '#5c6ac4', tertiary: document.getElementById('color-tertiary')?.value || '#9c6ade', quaternary: document.getElementById('color-quaternary')?.value || '#47c1bf', toteBag: document.getElementById('color-tote-bag')?.value || '#6371c7', mapGradientDark: document.getElementById('color-map-gradient-dark')?.value || '#005bd3', cardHeaderText: document.getElementById('color-card-header-text')?.value || '#6d7175', accordionHeaderText: document.getElementById('color-accordion-header-text')?.value || '#ffffff', textColor: document.getElementById('color-body-font')?.value || '#202223' },
                     globalChartData: [ Number(storeData.uk?.revenue || 0), Number(storeData.eu?.revenue || 0), Number(storeData.us?.revenue || 0), Number(storeData.int?.revenue || 0) ],
                     global: { revenue: document.getElementById('kpi-revenue')?.textContent || '£0.00', items: document.getElementById('kpi-items')?.textContent || '0', orders: document.getElementById('kpi-orders')?.textContent || '0', aov: document.getElementById('kpi-aov')?.textContent || '£0.00' },
