@@ -1,40 +1,51 @@
-# Multi-Market Campaign Dashboard
+# Reporting Files — layout
 
-A comprehensive campaign management and reporting dashboard for multi-market campaigns.
+## Start here
 
-## Features
+| What you want | File to open |
+|---|---|
+| **Admin V2** (quarter bank, bulk upload) | `v2/admin.html` |
+| **Admin V1** (original workflow) | `v1/admin.html` |
+| **List all published reports** | `index.html` |
+| **Atlantic-branded report index** | `atlantic-index.html` |
 
-- **Admin Dashboard**: Create and manage campaigns
-- **Public Reports**: View campaign analytics
-- **Multi-Market Support**: UK, EU, US, International
-- **Real-time Analytics**: Charts and visualizations
-- **CSV Upload**: Data import and processing
+Live report URLs (`https://…/your-report-slug`) are **not** a file you open directly — GitHub Pages routes them through root `404.html`.
 
-## Getting Started
+---
 
-### GitHub Pages Setup
+## Folder structure
 
-1. Repository: `edwardmiguens-max/multi-market-campaign`
-2. Go to **Settings** → **Pages**
-3. Set source to `main` branch
-4. Your site will be live at: `https://edwardmiguens-max.github.io/multi-market-campaign/`
+```
+Reporting Files/
+├── index.html              ← report URL list (shared)
+├── atlantic-index.html     ← Atlantic index (shared)
+├── 404.html                ← live report viewer (deploy copy — see below)
+├── admin.html              ← shortcut → v1/admin.html (bookmarks only)
+├── admin-v2.html           ← shortcut → v2/admin.html (bookmarks only)
+├── assets/                 ← shared images
+├── v1/
+│   ├── admin.html          ← canonical Admin V1
+│   ├── report.html         ← canonical report viewer source
+│   └── sync-404.sh         ← copies v1/report.html → ../404.html
+└── v2/
+    ├── admin.html          ← canonical Admin V2
+    ├── quarter-bank.js
+    ├── quarter-bank-supabase.js
+    └── supabase-schema.sql
+```
 
-### Accessing the Dashboard
+## After editing the report viewer
 
-- **Admin**: `https://edwardmiguens-max.github.io/multi-market-campaign/admin.html`
-- **Report**: `https://edwardmiguens-max.github.io/multi-market-campaign/report.html?id=CAMPAIGN_ID`
+Edit `v1/report.html`, then run:
 
-## Technologies
+```bash
+./v1/sync-404.sh
+```
 
-- HTML5, CSS3, JavaScript (ES6+)
-- Tailwind CSS
-- Chart.js, Plotly.js
-- PapaParse (CSV)
-- Supabase (Backend)
-- GitHub Pages (Hosting)
+That updates root `404.html` for GitHub Pages. Do **not** edit `404.html` directly — it gets overwritten.
 
-## Support
+## V1 vs V2
 
-For issues or questions, contact the development team.
-
-<!-- redeploy -->
+- **V1 and V2 run in parallel.** Use V2 for new work; V1 stays available for existing workflows.
+- Both publish to the same Supabase `reports` table. Live URLs work the same way regardless of version.
+- V2-only logic lives in `v2/quarter-bank.js` and `v2/quarter-bank-supabase.js`.
