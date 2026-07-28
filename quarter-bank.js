@@ -1,15 +1,34 @@
 /**
- * V2 quarter bank — artist-level sales storage.
+ * V2 quarter bank — artist-level sales and traffic storage.
  * Banked quarters ignore new uploads for that period; only unbanked quarters are overwritten.
- * Artist rollups must come from the bank, never by summing report snapshots.
+ * Pass bankKind 'traffic' to loadBank/createEmptyBank for traffic analytics CSVs.
  */
 (function (global) {
     'use strict';
 
-    const STORAGE_PREFIX = 'rep-v2-quarter-bank:';
-    const IDB_NAME = 'rep-v2-quarter-bank-rows';
+    const BANK_KINDS = {
+        sales: { storagePrefix: 'rep-v2-quarter-bank:', idbName: 'rep-v2-quarter-bank-rows' },
+        traffic: { storagePrefix: 'rep-v2-traffic-bank:', idbName: 'rep-v2-traffic-bank-rows' }
+    };
     const IDB_STORE = 'quarter_rows';
     const LOCAL_CHUNK_SIZE = 5000;
+    const _rowDbPromises = {};
+
+    function normalizeBankKind(bankKind) {
+        return bankKind === 'traffic' ? 'traffic' : 'sales';
+    }
+
+    function getBankKind(bank) {
+        return normalizeBankKind(bank?.bankKind);
+    }
+
+    function bankConfig(bankKind) {
+        return BANK_KINDS[normalizeBankKind(bankKind)];
+    }
+
+    function storageKey(artistKey, bankKind) {
+        return bankConfig(bankKind).storagePrefix + slugifyArtistKey(artistKey);
+    }
 
     function rowsFromStoredPayload(stored) {
         if (!stored) return [];
@@ -28,13 +47,15 @@
         return `${slugifyArtistKey(artistKey)}::${quarterKey}`;
     }
 
-    function openRowDb() {
-        return new Promise((resolve, reject) => {
+    function openRowDb(bankKind) {
+        const idbName = bankConfig(bankKind).idbName;
+        if (_rowDbPromises[idbName]) return _rowDbPromises[idbName];
+        _rowDbPromises[idbName] = new Promise((resolve, reject) => {
             if (typeof indexedDB === 'undefined') {
                 reject(new Error('IndexedDB unavailable'));
                 return;
             }
-            const req = indexedDB.open(IDB_NAME, 1);
+            const req = indexedDB.open(idbName, 1);
             req.onerror = () => reject(req.error);
             req.onupgradeneeded = () => {
                 if (!req.result.objectStoreNames.contains(IDB_STORE)) {
@@ -43,11 +64,12 @@
             };
             req.onsuccess = () => resolve(req.result);
         });
+        return _rowDbPromises[idbName];
     }
 
     async function readStoredPayload(bank, quarterKey) {
         if (!bank?.artistKey || !quarterKey) return null;
-        const db = await openRowDb();
+        const db = await openRowDb(getBankKind(bank));
         const stored = await new Promise((resolve, reject) => {
             const tx = db.transaction(IDB_STORE, 'readonly');
             const req = tx.objectStore(IDB_STORE).get(rowStoreKey(bank.artistKey, quarterKey));
@@ -68,7 +90,7 @@
                 chunks.push(rows.slice(i, i + LOCAL_CHUNK_SIZE));
             }
             const payload = { v: 1, rowCount: rows.length, chunks, savedAt: new Date().toISOString() };
-            const db = await openRowDb();
+            const db = await openRowDb(getBankKind(bank));
             await new Promise((resolve, reject) => {
                 const tx = db.transaction(IDB_STORE, 'readwrite');
                 tx.objectStore(IDB_STORE).put(payload, rowStoreKey(bank.artistKey, quarterKey));
@@ -288,29 +310,28 @@
         return { applied, skipped, undated, quarterKeys };
     }
 
-    function createEmptyBank(artistKey) {
+    function createEmptyBank(artistKey, bankKind) {
         return {
             artistKey: artistKey || 'unknown-artist',
+            bankKind: normalizeBankKind(bankKind),
             activeQuarter: null,
             quarters: {}
         };
     }
 
-    function storageKey(artistKey) {
-        return STORAGE_PREFIX + slugifyArtistKey(artistKey);
-    }
-
-    function loadBank(artistKey) {
+    function loadBank(artistKey, bankKind) {
+        const kind = normalizeBankKind(bankKind);
         try {
-            const raw = localStorage.getItem(storageKey(artistKey));
-            if (!raw) return createEmptyBank(artistKey);
+            const raw = localStorage.getItem(storageKey(artistKey, kind));
+            if (!raw) return createEmptyBank(artistKey, kind);
             const parsed = JSON.parse(raw);
-            if (!parsed || typeof parsed !== 'object') return createEmptyBank(artistKey);
+            if (!parsed || typeof parsed !== 'object') return createEmptyBank(artistKey, kind);
             parsed.quarters = parsed.quarters || {};
             parsed.artistKey = artistKey;
+            parsed.bankKind = kind;
             return parsed;
         } catch (_err) {
-            return createEmptyBank(artistKey);
+            return createEmptyBank(artistKey, kind);
         }
     }
 
@@ -332,7 +353,7 @@
             };
         });
         try {
-            localStorage.setItem(storageKey(bank.artistKey), JSON.stringify(payload));
+            localStorage.setItem(storageKey(bank.artistKey, getBankKind(bank)), JSON.stringify(payload));
         } catch (_err) { /* quota — bank metadata only */ }
         bank._sessionRows = bank._sessionRows || {};
     }
@@ -422,7 +443,7 @@
         if (typeof localStorage === 'undefined') return [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (!key || !key.startsWith(STORAGE_PREFIX)) continue;
+            if (!key || !key.startsWith(BANK_KINDS.sales.storagePrefix)) continue;
             try {
                 const parsed = JSON.parse(localStorage.getItem(key));
                 const artistKey = String(parsed?.artistKey || '').trim();

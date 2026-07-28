@@ -448,7 +448,10 @@
                         </div>
 
                         <div class="bg-gray-800 p-2.5 rounded border border-green-600/50">
-                            <label class="block text-[11px] font-bold text-green-400 mb-1">Option A: Master Sales File</label>
+                            <div class="flex items-start justify-between gap-2 mb-1">
+                                <label class="block text-[11px] font-bold text-green-400">Option A: Master Sales File</label>
+                                <button type="button" id="btn-master-sales-instructions" class="shrink-0 text-[10px] px-2 py-0.5 rounded bg-gray-700 text-green-200 border border-green-700 hover:bg-gray-600 font-semibold">Instructions</button>
+                            </div>
                             <p class="text-[10px] text-gray-500 mb-2 leading-tight">Select <strong>one or many</strong> CSV files — rows auto-split by sale date into quarters. <strong>Unlocked</strong> quarters are overwritten; <strong>banked</strong> quarters (🔒) are locked until re-opened.</p>
                             <p class="text-[10px] text-gray-500 mb-2 leading-tight">For large stores, export month-by-month or week-by-week from Shopify and bulk-select all files at once.</p>
                             <input type="file" id="csv-master" accept=".csv" multiple class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-green-700 file:text-white hover:file:bg-green-600 cursor-pointer">
@@ -462,7 +465,27 @@
                             </select>
                             <p class="text-[10px] text-gray-500 mt-1 leading-tight">The hour column in Shopify Master exports uses your Shopify admin timezone (Settings → Store details). This must match or timed levers will be wrong.</p>
                         </div>
-                        <div class="bg-gray-800 p-2.5 rounded border border-purple-600/50"><label class="block text-[11px] font-bold text-purple-400 mb-1">Append Analytics / Traffic File</label><input type="file" id="csv-traffic" accept=".csv" class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-purple-700 file:text-white hover:file:bg-purple-600 cursor-pointer"></div>
+                        <div class="bg-gray-800 p-2.5 rounded border border-purple-600/50">
+                            <div class="flex items-start justify-between gap-2 mb-1">
+                                <label class="block text-[11px] font-bold text-purple-400">Append Analytics / Traffic File</label>
+                                <button type="button" id="btn-traffic-instructions" class="shrink-0 text-[10px] px-2 py-0.5 rounded bg-gray-700 text-purple-200 border border-purple-700 hover:bg-gray-600 font-semibold">Instructions</button>
+                            </div>
+                            <p class="text-[10px] text-gray-500 mb-2 leading-tight">Select <strong>one or many</strong> CSV files — rows auto-split by day into quarters. <strong>Unlocked</strong> quarters are overwritten; <strong>banked</strong> quarters (🔒) are locked until re-opened.</p>
+                            <p class="text-[10px] text-gray-500 mb-2 leading-tight">For large stores, export month-by-month or quarter-by-quarter from Shopify and bulk-select all files at once.</p>
+                            <input type="file" id="csv-traffic" accept=".csv" multiple class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-purple-700 file:text-white hover:file:bg-purple-600 cursor-pointer">
+                            <div id="v2-traffic-quarter-panel" class="mt-2.5 pt-2.5 border-t border-purple-700/40">
+                                <label class="block text-[10px] text-purple-300 uppercase font-bold mb-1">Traffic quarter bank</label>
+                                <p class="text-[10px] text-gray-500 mb-2 leading-tight">Same banking rules as sales — banked quarters ignore new traffic uploads for that period.</p>
+                                <label class="block text-[10px] text-gray-400 mb-1">Quarter to bank / manage</label>
+                                <select id="input-v2-traffic-target-quarter" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white mb-2"></select>
+                                <div id="v2-traffic-quarter-chips" class="flex flex-wrap gap-1 mb-2"></div>
+                                <div class="flex flex-wrap gap-1.5 mb-2">
+                                    <button type="button" id="btn-v2-traffic-bank-quarter" class="text-[10px] px-2 py-1 rounded bg-purple-900/80 text-purple-200 border border-purple-700 hover:bg-purple-800 font-semibold">Bank selected quarter</button>
+                                    <button type="button" id="btn-v2-traffic-reopen-quarter" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-600 hover:bg-gray-700" title="Only needed to manually replace banked traffic data">Re-open quarter (manual fix)</button>
+                                </div>
+                                <p id="v2-traffic-quarter-note" class="text-[10px] text-gray-500 leading-tight"></p>
+                            </div>
+                        </div>
                         <button type="button" id="btn-copy-debug-snapshot" class="w-full text-[10px] px-2 py-1.5 rounded bg-gray-800 text-cyan-300 hover:bg-gray-700 border border-cyan-800 font-semibold">Copy debug snapshot (paste in chat)</button>
                         <button type="button" id="btn-clear-data-uploads" class="w-full text-[10px] px-2 py-1.5 rounded bg-red-900/80 text-red-200 hover:bg-red-800 font-semibold">Clear all data</button>
                     </div>
@@ -535,6 +558,22 @@
             <div id="report-section-countries-preview"><details class="group analytics-panel"><summary class="accordion-summary-bar flex justify-between items-center font-bold cursor-pointer px-6 py-4 rounded-t-lg select-none" id="summary-header-countries-preview"><span class="accordion-title-text" id="preview-title-countries">6. Top Countries</span><span class="accordion-chevron" aria-hidden="true"><svg fill="none" height="20" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20"><path d="M6 9l6 6 6-6"></path></svg></span></summary><div class="p-6 rounded-b-lg space-y-4"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><h3 class="preview-header-label">Global country distribution</h3><span id="preview-top-countries-metric" class="text-xs text-gray-500">Metric: Orders</span></div><div id="preview-top-countries-map" class="w-full" style="height: 440px;"></div></div><div class="dashboard-card"><h3 class="preview-header-label mb-2">Top 10 countries</h3><table class="w-full text-sm"><thead><tr class="border-b"><th class="text-left py-1">Country</th><th class="text-right py-1">Orders</th><th class="text-right py-1">Net Revenue</th></tr></thead><tbody id="preview-top-countries-table"></tbody></table></div></div></details></div>
         </div>
     </main>
+
+    <div id="shopify-instructions-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+        <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center px-4 py-3 border-b border-gray-700">
+                <h3 id="shopify-instructions-title" class="text-sm font-bold text-white">Shopify Analytics Instructions</h3>
+                <button type="button" id="btn-shopify-instructions-close" class="text-gray-400 hover:text-white text-lg leading-none">&times;</button>
+            </div>
+            <div class="overflow-y-auto flex-1 p-4 space-y-3 text-xs text-gray-300 leading-relaxed">
+                <p id="shopify-instructions-intro" class="text-[11px] text-gray-400"></p>
+                <pre id="shopify-instructions-query" class="text-[10px] bg-gray-950 border border-gray-700 rounded p-3 overflow-x-auto whitespace-pre-wrap font-mono text-emerald-200/90 select-all"></pre>
+            </div>
+            <div class="px-4 py-3 border-t border-gray-700 flex justify-end">
+                <button type="button" id="btn-shopify-instructions-dismiss" class="text-xs px-3 py-1.5 rounded bg-gray-700 text-white font-semibold hover:bg-gray-600">Close</button>
+            </div>
+        </div>
+    </div>
 
     <div id="campaign-chart-products-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
         <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
@@ -1152,8 +1191,58 @@
         window.__csvDataGeneration = 0;
         let loadCampaignInFlight = null;
         let v2QuarterBank = null;
+        let v2TrafficQuarterBank = null;
         let v2SupabaseReady = null;
         let v2BankLoadToken = 0;
+
+        const SHOPIFY_REPORT_INSTRUCTIONS = {
+            master: {
+                title: 'Option A: Master Sales File',
+                intro: 'In Shopify Analytics, open any sales report and replace the parameters with the below. Once generated, save the report with the title "Master Data Report". If the report is slow to load then change the timeframe to "Month to Date" or "Quarter to Date" and upload multiple files:',
+                query: `FROM sales
+  SHOW net_items_sold, net_sales
+  WHERE order_name IS NOT NULL
+  GROUP BY order_name, product_variant_title, market, product_title,
+    line_item_id, day, day_of_week, hour_of_day, shipping_country, product_type,
+    customer_id WITH TOTALS
+  SINCE startOfYear(0y) UNTIL today
+  ORDER BY day ASC
+  LIMIT 9999999`
+            },
+            traffic: {
+                title: 'Append Analytics / Traffic File',
+                intro: 'In Shopify Analytics, open any sales report and replace the parameters with the below. Once generated, save the report with the title "Traffic Data Report". If the report is slow to load then change the timeframe to "Month to Date" or "Quarter to Date" and upload multiple files:',
+                query: `FROM sessions
+  SHOW sessions, sessions_with_cart_additions, sessions_that_reached_checkout,
+    sessions_that_completed_checkout
+  WHERE session_country IS NOT NULL
+    AND human_or_bot_session IN ('human', 'bot')
+  GROUP BY session_country, session_device_type, day, day_of_week, hour_of_day
+    WITH GROUP_TOTALS, TOTALS, CURRENCY 'GBP'
+  SINCE startOfYear(0y) UNTIL today
+  ORDER BY sessions__session_country_totals DESC,
+    sessions__session_country_session_device_type_totals DESC,
+    sessions__session_country_session_device_type_day_totals DESC,
+    sessions__session_country_session_device_type_day_day_of_week_totals DESC,
+    sessions DESC, session_country ASC, session_device_type ASC, day ASC,
+    day_of_week ASC, hour_of_day ASC
+  LIMIT 99999
+VISUALIZE sessions TYPE horizontal_bar`
+            }
+        };
+
+        function openShopifyInstructionsModal(kind) {
+            const cfg = SHOPIFY_REPORT_INSTRUCTIONS[kind];
+            if (!cfg) return;
+            document.getElementById('shopify-instructions-title').textContent = cfg.title;
+            document.getElementById('shopify-instructions-intro').textContent = cfg.intro;
+            document.getElementById('shopify-instructions-query').textContent = cfg.query;
+            document.getElementById('shopify-instructions-modal')?.classList.remove('hidden');
+        }
+
+        function closeShopifyInstructionsModal() {
+            document.getElementById('shopify-instructions-modal')?.classList.add('hidden');
+        }
 
         function getRecordLabelForBank() {
             return document.getElementById('input-record-label')?.value?.trim() || null;
@@ -1164,6 +1253,19 @@
             if (!note) return;
             const base = note.dataset.baseNote || '';
             note.textContent = extra ? `${base}${base ? ' · ' : ''}${extra}` : base;
+        }
+
+        function setV2TrafficQuarterNote(extra) {
+            const note = document.getElementById('v2-traffic-quarter-note');
+            if (!note) return;
+            const base = note.dataset.baseNote || '';
+            note.textContent = extra ? `${base}${base ? ' · ' : ''}${extra}` : base;
+        }
+
+        function getTargetTrafficQuarterKey() {
+            const sel = document.getElementById('input-v2-traffic-target-quarter');
+            if (sel?.value) return sel.value;
+            return RepQuarterBank?.quarterKeyFromDate(new Date().toISOString().slice(0, 10));
         }
 
         async function probeV2SupabaseTables() {
@@ -1274,15 +1376,19 @@
 
             if (!name) {
                 v2QuarterBank = null;
+                v2TrafficQuarterBank = null;
                 windowCurrentCSVData = null;
                 window.__hasCsvData = false;
                 renderQuarterBankUI();
+                renderTrafficQuarterBankUI();
                 syncArtistDirectorySelect();
                 return;
             }
 
             await initV2QuarterBank();
+            await initV2TrafficQuarterBank();
             const loaded = await rebuildCsvFromBank();
+            const trafficLoaded = await rebuildTrafficFromBank();
             syncArtistDirectorySelect();
             if (loaded) {
                 const summary = RepQuarterBank.buildBankSummary(v2QuarterBank);
@@ -1290,6 +1396,12 @@
                 renderWarnings();
                 runDataAggregation();
                 renderCsvUploadStatus(`${name} sales bank loaded`, 'ok');
+            } else if (trafficLoaded) {
+                const trafficSummary = RepQuarterBank.buildBankSummary(v2TrafficQuarterBank);
+                ingestionWarnings = [`Loaded ${name} — ${trafficSummary.totalRows.toLocaleString()} traffic rows in quarter bank. Upload Master Sales CSV for revenue data.`];
+                renderWarnings();
+                calculateGlobalDashboard();
+                renderCsvUploadStatus(`${name} traffic bank loaded`, 'ok');
             } else {
                 ingestionWarnings = [`${name} selected — no sales rows yet. Upload Master Sales CSV below.`];
                 renderWarnings();
@@ -1418,6 +1530,272 @@
             }
             note.dataset.baseNote = baseNote;
             note.textContent = baseNote;
+        }
+
+        function populateTrafficQuarterSelect() {
+            const sel = document.getElementById('input-v2-traffic-target-quarter');
+            if (!sel || typeof RepQuarterBank === 'undefined') return;
+            const previousValue = sel.value;
+            const keys = new Set();
+            const y = new Date().getFullYear();
+            for (let yr = y - 1; yr <= y + 1; yr++) {
+                for (let q = 1; q <= 4; q++) keys.add(`${yr}-Q${q}`);
+            }
+            if (v2TrafficQuarterBank) RepQuarterBank.listQuarterKeys(v2TrafficQuarterBank).forEach(k => keys.add(k));
+            const sorted = [...keys].sort();
+            const preferred = v2TrafficQuarterBank?.activeQuarter || RepQuarterBank.quarterKeyFromDate(new Date().toISOString().slice(0, 10));
+            sel.innerHTML = sorted.map(qk => {
+                const slot = v2TrafficQuarterBank?.quarters?.[qk];
+                const status = slot?.status === 'banked' ? ' 🔒' : slot?.status === 'active' ? ' ●' : '';
+                return `<option value="${qk}">${RepQuarterBank.quarterLabel(qk)}${status}</option>`;
+            }).join('');
+            if (previousValue && [...sel.options].some(o => o.value === previousValue)) {
+                sel.value = previousValue;
+            } else if ([...sel.options].some(o => o.value === preferred)) {
+                sel.value = preferred;
+            }
+        }
+
+        function renderTrafficQuarterBankUI() {
+            populateTrafficQuarterSelect();
+            const chips = document.getElementById('v2-traffic-quarter-chips');
+            const note = document.getElementById('v2-traffic-quarter-note');
+            if (!chips) return;
+            if (!v2TrafficQuarterBank || !getArtistBankKey()) {
+                chips.innerHTML = '<span class="text-[10px] text-gray-500">Enter artist name to enable traffic quarter bank.</span>';
+                if (note) note.textContent = '';
+                return;
+            }
+            const keys = RepQuarterBank.listQuarterKeys(v2TrafficQuarterBank);
+            const selectedQk = getTargetTrafficQuarterKey();
+            chips.innerHTML = keys.length
+                ? keys.map(qk => {
+                    const slot = v2TrafficQuarterBank.quarters[qk];
+                    const isBanked = slot.status === 'banked';
+                    const isUploadActive = v2TrafficQuarterBank.activeQuarter === qk;
+                    const isSelected = selectedQk === qk;
+                    let cls = 'bg-gray-800 text-gray-400 border-gray-600';
+                    if (isSelected) cls = 'bg-purple-900/70 text-purple-100 border-purple-500 ring-2 ring-purple-400';
+                    else if (isBanked) cls = 'bg-gray-700 text-gray-300 border-gray-600';
+                    else if (isUploadActive) cls = 'bg-purple-900/60 text-purple-200 border-purple-700';
+                    const icon = isBanked ? '🔒' : isUploadActive ? '●' : '○';
+                    const rows = (slot.rowCount || RepQuarterBank.getQuarterRows(v2TrafficQuarterBank, qk).length || 0).toLocaleString();
+                    const title = isSelected
+                        ? `${qk} selected — click Bank selected quarter`
+                        : `Select ${qk} to bank or re-open`;
+                    return `<button type="button" data-v2-traffic-qk="${qk}" class="text-[9px] px-1.5 py-0.5 rounded border cursor-pointer ${cls}" title="${title}">${icon} ${qk} · ${rows} rows</button>`;
+                }).join('')
+                : '<span class="text-[10px] text-gray-500">No traffic quarters uploaded yet.</span>';
+            const summary = RepQuarterBank.buildBankSummary(v2TrafficQuarterBank);
+            const metaRowTotal = keys.reduce((sum, qk) => sum + (v2TrafficQuarterBank.quarters[qk]?.rowCount || 0), 0);
+            let baseNote = `Selected: ${selectedQk} · Upload active: ${summary.activeQuarter || '—'} · Banked: ${summary.bankedQuarters.length} · Combined: ${summary.totalRows.toLocaleString()} rows · local cache`;
+            if (metaRowTotal > summary.totalRows) {
+                baseNote += ` · ${(metaRowTotal - summary.totalRows).toLocaleString()} rows in bank metadata but not loaded — select artist again or re-bank after upload.`;
+            }
+            if (note) {
+                note.dataset.baseNote = baseNote;
+                note.textContent = baseNote;
+            }
+        }
+
+        async function initV2TrafficQuarterBank(options) {
+            const key = getArtistBankKey();
+            const artistName = document.getElementById('input-artist-name')?.value?.trim();
+            if (!key || !artistName || typeof RepQuarterBank === 'undefined') {
+                v2TrafficQuarterBank = null;
+                renderTrafficQuarterBankUI();
+                return null;
+            }
+            v2TrafficQuarterBank = RepQuarterBank.loadBank(artistName, 'traffic');
+            if (options?.hydrateRows !== false) {
+                await RepQuarterBank.hydrateBankRowsLocal(v2TrafficQuarterBank);
+            }
+            RepQuarterBank.saveBank(v2TrafficQuarterBank);
+            renderTrafficQuarterBankUI();
+            return v2TrafficQuarterBank;
+        }
+
+        async function ensureTrafficBankHydrated(quarterKeys) {
+            if (!v2TrafficQuarterBank) return;
+            const keys = quarterKeys?.length
+                ? quarterKeys
+                : RepQuarterBank.listQuarterKeys(v2TrafficQuarterBank);
+            await RepQuarterBank.hydrateBankRowsLocal(v2TrafficQuarterBank, { quarterKeys: keys });
+        }
+
+        function applyTrafficRowsToStoreData(rows) {
+            Object.keys(storeData).forEach(m => { storeData[m].traffic = { sessions: 0, atc: 0, mobile: 0, desktop: 0 }; });
+            const ukCountries = ['united kingdom', 'jersey', 'guernsey', 'isle of man', 'gibraltar'];
+            const usCountries = ['united states', 'puerto rico', 'guam', 'american samoa'];
+            const euCountries = ['netherlands', 'ireland', 'germany', 'france', 'spain', 'switzerland', 'sweden', 'italy', 'austria', 'denmark', 'norway', 'poland', 'portugal', 'belgium', 'finland', 'greece', 'czechia', 'romania', 'hungary', 'slovakia', 'slovenia', 'bulgaria', 'luxembourg', 'croatia', 'lithuania', 'latvia', 'estonia', 'cyprus', 'malta', 'iceland', 'andorra', 'monaco', 'liechtenstein', 'san marino', 'albania', 'bosnia and herzegovina', 'montenegro', 'north macedonia', 'serbia', 'kosovo', 'ukraine', 'belarus', 'moldova', 'russia', 'türkiye', 'turkey'];
+            (rows || []).forEach(row => {
+                let countryVal = '', sessions = 0, atc = 0, device = '';
+                Object.keys(row).forEach(k => {
+                    if (!k) return;
+                    const cleanK = String(k).replace(/^\uFEFF/, '').trim().toLowerCase();
+                    if (cleanK === 'session country') countryVal = String(row[k] || '').toLowerCase().trim();
+                    else if (cleanK === 'sessions') sessions = parseInt(row[k]) || 0;
+                    else if (cleanK.includes('cart additions')) atc = parseInt(row[k]) || 0;
+                    else if (cleanK.includes('device')) device = String(row[k] || '').toLowerCase().trim();
+                });
+                if (!countryVal || countryVal.includes('total') || countryVal.includes('group')) return;
+                let target = 'int';
+                if (ukCountries.includes(countryVal)) target = 'uk';
+                else if (euCountries.includes(countryVal)) target = 'eu';
+                else if (usCountries.includes(countryVal)) target = applyMarketRemap('us') || 'int';
+                storeData[target].traffic.sessions += sessions;
+                storeData[target].traffic.atc += atc;
+                if (device === 'mobile' || device === 'tablet') storeData[target].traffic.mobile += sessions;
+                else storeData[target].traffic.desktop += sessions;
+            });
+            Object.keys(storeData).forEach(m => {
+                const t = storeData[m].traffic;
+                const total = t.mobile + t.desktop;
+                if (total > 0) {
+                    const mPerc = Math.round((t.mobile / total) * 100);
+                    t.mobile = mPerc;
+                    t.desktop = 100 - mPerc;
+                } else {
+                    t.mobile = 85;
+                    t.desktop = 15;
+                }
+            });
+        }
+
+        async function rebuildTrafficFromBank() {
+            if (!v2TrafficQuarterBank) return false;
+            try {
+                setV2TrafficQuarterNote('Loading traffic quarter rows…');
+                await ensureTrafficBankHydrated();
+            } catch (err) {
+                console.error('Failed to hydrate traffic bank rows:', err);
+                ingestionWarnings.push(`Could not load traffic quarter rows: ${err.message || err}`);
+                renderWarnings();
+                return false;
+            }
+            const combined = RepQuarterBank.getCombinedRows(v2TrafficQuarterBank);
+            renderTrafficQuarterBankUI();
+            if (!combined.length) return false;
+            applyTrafficRowsToStoreData(combined);
+            setV2TrafficQuarterNote('');
+            return true;
+        }
+
+        async function ingestTrafficRowsToBank(newRows, fileMeta) {
+            await ensureTrafficBankHydrated(RepQuarterBank.listQuarterKeys(v2TrafficQuarterBank));
+            const ingest = RepQuarterBank.ingestRowsIntoBank(v2TrafficQuarterBank, newRows, {
+                mode: 'replace',
+                fileName: fileMeta?.name || null
+            });
+            const persistResults = await RepQuarterBank.persistAllBankRowsLocal(v2TrafficQuarterBank);
+            const persistFailed = persistResults.filter(r => !r.ok);
+            const cloudWarnings = [];
+            if (persistFailed.length) {
+                cloudWarnings.push(`Browser row save failed for ${persistFailed.map(f => f.quarterKey).join(', ')} — bank metadata only until re-upload.`);
+            }
+            RepQuarterBank.saveBank(v2TrafficQuarterBank);
+            ingest.cloudWarnings = cloudWarnings;
+            return ingest;
+        }
+
+        async function processTrafficUploadBatch(fileList) {
+            const files = sortMasterUploadFiles(fileList);
+            if (!files.length) return;
+
+            const artistName = document.getElementById('input-artist-name')?.value?.trim();
+            if (!artistName) {
+                ingestionWarnings = ['Enter Artist name before uploading traffic (V2 quarter bank is per artist).'];
+                renderWarnings();
+                renderCsvUploadStatus('Artist name required for traffic upload.', 'err');
+                return;
+            }
+            if (typeof RepQuarterBank === 'undefined') {
+                ingestionWarnings = ['Quarter bank module failed to load. Hard refresh and try again.'];
+                renderWarnings();
+                renderCsvUploadStatus('quarter-bank.js not loaded.', 'err');
+                return;
+            }
+
+            if (!v2TrafficQuarterBank || v2TrafficQuarterBank.artistKey !== artistName) {
+                await initV2TrafficQuarterBank({ hydrateRows: true });
+                if (!v2TrafficQuarterBank) v2TrafficQuarterBank = RepQuarterBank.loadBank(artistName, 'traffic');
+            } else {
+                await ensureTrafficBankHydrated();
+            }
+
+            const batchNotes = [];
+            let combinedRows = [];
+            let parsedFileCount = 0;
+
+            if (files.length > 1) {
+                ingestionWarnings = [`Traffic bulk upload: ${files.length} files (sorted by filename date). Unlocked quarters overwritten; banked quarters skipped.`];
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                renderCsvUploadStatus(`Reading traffic ${i + 1}/${files.length}: ${file.name}…`, 'wait');
+                let parsed;
+                try {
+                    parsed = await parseCsvFileAsync(file);
+                } catch (parseErr) {
+                    batchNotes.push(`${file.name}: parse failed — ${parseErr?.message || parseErr}`);
+                    continue;
+                }
+                const newRows = parsed.data || [];
+                if (!newRows.length) {
+                    batchNotes.push(`${file.name}: 0 data rows, skipped.`);
+                    continue;
+                }
+                parsedFileCount += 1;
+                combinedRows = combinedRows.length ? combinedRows.concat(newRows) : newRows;
+                batchNotes.push(`${file.name}: ${newRows.length.toLocaleString()} rows read`);
+            }
+
+            if (!parsedFileCount || !combinedRows.length) {
+                ingestionWarnings.push(...batchNotes, 'No usable traffic rows in selected file(s).');
+                renderWarnings();
+                renderCsvUploadStatus('Traffic upload finished — no data rows loaded.', 'err');
+                return;
+            }
+
+            renderCsvUploadStatus(`Writing ${combinedRows.length.toLocaleString()} traffic rows to quarter bank…`, 'wait');
+            const batchLabel = files.length > 1 ? `${files.length} traffic files` : files[0].name;
+            try {
+                const ingest = await ingestTrafficRowsToBank(combinedRows, { name: batchLabel });
+                const appliedText = ingest.applied.map(a => `${a.quarterKey}: ${a.rowCount.toLocaleString()}`).join(', ');
+                batchNotes.push(`Applied → ${appliedText || 'none'}`);
+                if (ingest.cloudWarnings?.length) batchNotes.push(...ingest.cloudWarnings.map(w => `  ↳ ${w}`));
+                if (ingest.skipped.length) {
+                    const skippedRows = ingest.skipped.reduce((sum, s) => sum + (s.rowCount || 0), 0);
+                    batchNotes.push(`  ↳ ${skippedRows.toLocaleString()} rows ignored — ${ingest.skipped.map(s => `${s.quarterKey} is banked (${s.rowCount.toLocaleString()} in file, existing data kept)`).join('; ')}`);
+                }
+                if (ingest.undated) {
+                    batchNotes.push(`  ↳ ${ingest.undated.toLocaleString()} undated row(s) skipped`);
+                }
+            } catch (bankErr) {
+                ingestionWarnings = [bankErr?.message || String(bankErr), ...batchNotes];
+                renderWarnings();
+                renderCsvUploadStatus(bankErr?.message || 'Traffic quarter bank error.', 'err');
+                return;
+            }
+
+            renderTrafficQuarterBankUI();
+            await ensureTrafficBankHydrated();
+            const loaded = await rebuildTrafficFromBank();
+            if (!loaded) {
+                ingestionWarnings.push(...batchNotes, 'Traffic bank updated but combined preview is empty.');
+                renderWarnings();
+                renderCsvUploadStatus('Traffic upload finished but preview has 0 rows.', 'err');
+                return;
+            }
+
+            const summary = RepQuarterBank.buildBankSummary(v2TrafficQuarterBank);
+            ingestionWarnings.push(...batchNotes);
+            const doneLabel = files.length > 1 ? 'Traffic bulk complete' : 'Traffic upload complete';
+            ingestionWarnings.push(`${doneLabel} — ${parsedFileCount} file(s), ${summary.totalRows.toLocaleString()} traffic rows in bank across ${RepQuarterBank.listQuarterKeys(v2TrafficQuarterBank).length} quarter(s).`);
+            renderWarnings();
+            calculateGlobalDashboard();
+            renderCsvUploadStatus(`${doneLabel} — ${parsedFileCount} file(s) · ${summary.totalRows.toLocaleString()} traffic rows`, 'ok');
         }
 
         async function rebuildCsvFromBank() {
@@ -4877,34 +5255,21 @@
         }
 
         function handleTrafficUpload(event) {
-            const file = event.target.files[0]; if(!file) return;
-            Papa.parse(file, {
-                header: true, dynamicTyping: true, skipEmptyLines: true,
-                complete: function(res) {
-                    Object.keys(storeData).forEach(m => { storeData[m].traffic = { sessions: 0, atc: 0, mobile: 0, desktop: 0 }; });
-                    const ukCountries = ['united kingdom', 'jersey', 'guernsey', 'isle of man', 'gibraltar']; const usCountries = ['united states', 'puerto rico', 'guam', 'american samoa'];
-                    const euCountries = ['netherlands', 'ireland', 'germany', 'france', 'spain', 'switzerland', 'sweden', 'italy', 'austria', 'denmark', 'norway', 'poland', 'portugal', 'belgium', 'finland', 'greece', 'czechia', 'romania', 'hungary', 'slovakia', 'slovenia', 'bulgaria', 'luxembourg', 'croatia', 'lithuania', 'latvia', 'estonia', 'cyprus', 'malta', 'iceland', 'andorra', 'monaco', 'liechtenstein', 'san marino', 'albania', 'bosnia and herzegovina', 'montenegro', 'north macedonia', 'serbia', 'kosovo', 'ukraine', 'belarus', 'moldova', 'russia', 'türkiye', 'turkey'];
-                    res.data.forEach(row => {
-                        let countryVal = '', sessions = 0, atc = 0, device = '';
-                        Object.keys(row).forEach(k => {
-                            if(!k) return;
-                            const cleanK = String(k).replace(/^\uFEFF/, '').trim().toLowerCase();
-                            if(cleanK === 'session country') countryVal = String(row[k] || '').toLowerCase().trim();
-                            else if(cleanK === 'sessions') sessions = parseInt(row[k]) || 0;
-                            else if(cleanK.includes('cart additions')) atc = parseInt(row[k]) || 0;
-                            else if(cleanK.includes('device')) device = String(row[k] || '').toLowerCase().trim();
-                        });
-
-                        if(!countryVal || countryVal.includes('total') || countryVal.includes('group')) return;
-                        let target = 'int';
-                        if(ukCountries.includes(countryVal)) target = 'uk';
-                        else if(euCountries.includes(countryVal)) target = 'eu';
-                        else if(usCountries.includes(countryVal)) target = applyMarketRemap('us') || 'int';
-                        storeData[target].traffic.sessions += sessions; storeData[target].traffic.atc += atc; if(device === 'mobile' || device === 'tablet') { storeData[target].traffic.mobile += sessions; } else { storeData[target].traffic.desktop += sessions; }
-                    });
-                    Object.keys(storeData).forEach(m => { const t = storeData[m].traffic; const total = t.mobile + t.desktop; if(total > 0) { const mPerc = Math.round((t.mobile / total) * 100); t.mobile = mPerc; t.desktop = 100 - mPerc; } else { t.mobile = 85; t.desktop = 15; } });
-                    calculateGlobalDashboard();
-                }
+            const files = event.target.files;
+            if (!files?.length) return;
+            if (typeof Papa === 'undefined') {
+                ingestionWarnings = ['CSV parser (Papa Parse) did not load. Disable ad blockers or hard-refresh, then upload again.'];
+                renderWarnings();
+                renderCsvUploadStatus('CSV parser blocked — check network/ad blocker.', 'err');
+                return;
+            }
+            processTrafficUploadBatch(files).catch(err => {
+                console.error('Traffic bulk upload failed:', err);
+                ingestionWarnings = [`Traffic upload error: ${err?.message || err}`];
+                renderWarnings();
+                renderCsvUploadStatus(`Traffic upload error: ${err?.message || err}`, 'err');
+            }).finally(() => {
+                event.target.value = '';
             });
         }
 
@@ -4950,9 +5315,11 @@
                     }
                     lastLoadedArtistKey = null;
                     v2QuarterBank = null;
+                    v2TrafficQuarterBank = null;
                     windowCurrentCSVData = null;
                     window.__hasCsvData = false;
                     renderQuarterBankUI();
+                    renderTrafficQuarterBankUI();
                     renderCsvUploadStatus('Enter a new artist name, then upload sales data.', 'wait');
                     return;
                 }
@@ -5036,6 +5403,44 @@
                 }
                 renderQuarterBankUI();
                 ingestionWarnings.push(`Re-opened ${qk} for overwrite uploads.`);
+                renderWarnings();
+            });
+            document.getElementById('input-v2-traffic-target-quarter')?.addEventListener('change', renderTrafficQuarterBankUI);
+            document.getElementById('v2-traffic-quarter-chips')?.addEventListener('click', (e) => {
+                const chip = e.target.closest('[data-v2-traffic-qk]');
+                if (!chip) return;
+                const sel = document.getElementById('input-v2-traffic-target-quarter');
+                if (sel) sel.value = chip.getAttribute('data-v2-traffic-qk');
+                renderTrafficQuarterBankUI();
+            });
+            document.getElementById('btn-v2-traffic-bank-quarter')?.addEventListener('click', async () => {
+                if (!v2TrafficQuarterBank) return alert('Enter artist name and upload traffic data first.');
+                const qk = getTargetTrafficQuarterKey();
+                if (!v2TrafficQuarterBank.quarters[qk]) return alert(`No traffic data in ${qk} to bank.`);
+                const rows = RepQuarterBank.getQuarterRows(v2TrafficQuarterBank, qk);
+                if (!rows.length) {
+                    return alert(`No traffic rows loaded for ${qk}. Re-select the artist or re-upload before banking.`);
+                }
+                setV2TrafficQuarterNote(`Saving ${rows.length.toLocaleString()} rows before banking ${qk}…`);
+                const localSave = await RepQuarterBank.persistQuarterRowsLocal(v2TrafficQuarterBank, qk, rows);
+                if (!localSave.ok) {
+                    alert(`Banking cancelled — rows could not be saved to browser storage (${localSave.error || 'unknown error'}). Data is not safe to bank yet.`);
+                    return;
+                }
+                RepQuarterBank.bankQuarter(v2TrafficQuarterBank, qk);
+                RepQuarterBank.saveBank(v2TrafficQuarterBank);
+                renderTrafficQuarterBankUI();
+                ingestionWarnings.push(`Banked traffic ${qk} — ${rows.length.toLocaleString()} rows locked. New traffic CSV rows for this quarter will be ignored.`);
+                renderWarnings();
+            });
+            document.getElementById('btn-v2-traffic-reopen-quarter')?.addEventListener('click', async () => {
+                if (!v2TrafficQuarterBank) return;
+                const qk = getTargetTrafficQuarterKey();
+                if (!v2TrafficQuarterBank.quarters[qk]) return alert(`No traffic quarter slot for ${qk}.`);
+                RepQuarterBank.reopenQuarter(v2TrafficQuarterBank, qk);
+                RepQuarterBank.saveBank(v2TrafficQuarterBank);
+                renderTrafficQuarterBankUI();
+                ingestionWarnings.push(`Re-opened traffic ${qk} for overwrite uploads.`);
                 renderWarnings();
             });
             probeV2SupabaseTables().then(async () => {
@@ -5131,6 +5536,13 @@
 
             document.getElementById('csv-master')?.addEventListener('change', (e) => handleFileUpload(e, 'master'));
             document.getElementById('csv-traffic')?.addEventListener('change', handleTrafficUpload);
+            document.getElementById('btn-master-sales-instructions')?.addEventListener('click', () => openShopifyInstructionsModal('master'));
+            document.getElementById('btn-traffic-instructions')?.addEventListener('click', () => openShopifyInstructionsModal('traffic'));
+            document.getElementById('btn-shopify-instructions-close')?.addEventListener('click', closeShopifyInstructionsModal);
+            document.getElementById('btn-shopify-instructions-dismiss')?.addEventListener('click', closeShopifyInstructionsModal);
+            document.getElementById('shopify-instructions-modal')?.addEventListener('click', (e) => {
+                if (e.target.id === 'shopify-instructions-modal') closeShopifyInstructionsModal();
+            });
             document.getElementById('btn-copy-debug-snapshot')?.addEventListener('click', () => { copyAdminDebugSnapshot(); });
 
             document.getElementById('upload-logo')?.addEventListener('change', function(e) { if (e.target.files[0]) compressImageToBase64(e.target.files[0], applyLogoBase64, { flattenTransparent: false }); });
