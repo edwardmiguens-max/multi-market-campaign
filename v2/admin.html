@@ -168,7 +168,7 @@
             </div>
 
             <div class="space-y-3">
-                <details class="group" open>
+                <details class="group">
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Campaign Details</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-4 pb-2">
                         <div><label class="block text-xs font-semibold mb-1 text-gray-400">Dashboard Main Title</label><input type="text" id="input-title" value="GLOBAL ROLLUP REPORT" class="w-full bg-gray-800 text-sm border border-gray-700 rounded p-2 focus:outline-none focus:border-gray-500 text-white"></div>
@@ -379,7 +379,7 @@
                     </div>
                 </details>
 
-                <details class="group" open>
+                <details class="group">
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Fonts</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-4 pb-2">
                         <div>
@@ -423,24 +423,10 @@
                     </div>
                 </details>
 
-                <details class="group" open>
+                <details class="group">
                     <summary class="flex justify-between items-center font-semibold cursor-pointer bg-gray-800 px-4 py-3 rounded-md text-sm text-white border border-gray-700 hover:bg-gray-700 transition-colors"><span>Data Uploads</span><span class="transition group-open:rotate-180"><svg fill="none" height="16" stroke-width="2" stroke="currentColor" viewBox="0 0 24 24" width="16"><path d="M6 9l6 6 6-6"></path></svg></span></summary>
                     <div class="mt-3 px-1 space-y-4 pb-2">
                         <div id="csv-upload-status" class="hidden text-[10px] rounded p-2 border"></div>
-                        <div id="v2-quarter-panel" class="bg-gray-800/60 p-2 rounded border border-emerald-700/70">
-                            <label class="block text-[10px] text-emerald-300 uppercase font-bold mb-1">V2 Quarter bank (artist level)</label>
-                            <p class="text-[10px] text-gray-500 mb-2 leading-tight">Uploads are <strong>auto-split by sale date</strong> into quarters. <strong>Banked</strong> quarters (🔒) ignore new CSV rows for that period — data is kept as-is. Only <strong>unbanked</strong> quarters are overwritten on upload.</p>
-                            <label class="block text-[10px] text-gray-400 mb-1">Quarter to bank / manage</label>
-                            <select id="input-v2-target-quarter" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white mb-2"></select>
-                            <div id="v2-quarter-chips" class="flex flex-wrap gap-1 mb-2"></div>
-                            <div class="flex flex-wrap gap-1.5 mb-2">
-                                <button type="button" id="btn-v2-bank-quarter" class="text-[10px] px-2 py-1 rounded bg-emerald-900/80 text-emerald-200 border border-emerald-700 hover:bg-emerald-800 font-semibold">Bank selected quarter</button>
-                                <button type="button" id="btn-v2-reopen-quarter" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-600 hover:bg-gray-700" title="Only needed to manually replace banked data">Re-open quarter (manual fix)</button>
-                            </div>
-                            <p id="v2-quarter-note" class="text-[10px] text-gray-500 leading-tight"></p>
-                            <p class="text-[10px] text-gray-600 leading-tight mt-1">Row data is saved in your browser (IndexedDB) on upload and when banking. Banking is blocked until that save succeeds.</p>
-                        </div>
-
                         <div id="csv-month-coverage" class="hidden bg-gray-800/60 p-2 rounded border border-green-700/60">
                             <label class="block text-[10px] text-green-300 uppercase font-bold mb-1">Months in uploaded sales data</label>
                             <div id="csv-month-chips" class="flex flex-wrap gap-1.5"></div>
@@ -455,6 +441,19 @@
                             <p class="text-[10px] text-gray-500 mb-2 leading-tight">Select <strong>one or many</strong> CSV files — rows auto-split by sale date into quarters. <strong>Unlocked</strong> quarters are overwritten; <strong>banked</strong> quarters (🔒) are locked until re-opened.</p>
                             <p class="text-[10px] text-gray-500 mb-2 leading-tight">For large stores, export month-by-month or week-by-week from Shopify and bulk-select all files at once.</p>
                             <input type="file" id="csv-master" accept=".csv" multiple class="block w-full text-[11px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-green-700 file:text-white hover:file:bg-green-600 cursor-pointer">
+                            <div id="v2-quarter-panel" class="mt-2.5 pt-2.5 border-t border-green-700/40">
+                                <label class="block text-[10px] text-green-300 uppercase font-bold mb-1">Sales quarter bank</label>
+                                <p class="text-[10px] text-gray-500 mb-2 leading-tight">Uploads are <strong>auto-split by sale date</strong> into quarters. <strong>Banked</strong> quarters (🔒) ignore new CSV rows for that period — data is kept as-is. Only <strong>unbanked</strong> quarters are overwritten on upload.</p>
+                                <label class="block text-[10px] text-gray-400 mb-1">Quarter to bank / manage</label>
+                                <select id="input-v2-target-quarter" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white mb-2"></select>
+                                <div id="v2-quarter-chips" class="flex flex-wrap gap-1 mb-2"></div>
+                                <div class="flex flex-wrap gap-1.5 mb-2">
+                                    <button type="button" id="btn-v2-bank-quarter" class="text-[10px] px-2 py-1 rounded bg-green-900/80 text-green-200 border border-green-700 hover:bg-green-800 font-semibold">Bank selected quarter</button>
+                                    <button type="button" id="btn-v2-reopen-quarter" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 border border-gray-600 hover:bg-gray-700" title="Only needed to manually replace banked data">Re-open quarter (manual fix)</button>
+                                </div>
+                                <p id="v2-quarter-note" class="text-[10px] text-gray-500 leading-tight"></p>
+                                <p class="text-[10px] text-gray-600 leading-tight mt-1">Row data is saved in your browser (IndexedDB) on upload and when banking. Banking is blocked until that save succeeds.</p>
+                            </div>
                         </div>
                         <div class="bg-gray-800/60 p-2 rounded border border-indigo-700/80">
                             <label class="block text-[10px] text-indigo-300 uppercase font-bold mb-1">Shopify CSV "Hour of day" timezone</label>
@@ -1510,9 +1509,9 @@ VISUALIZE sessions TYPE horizontal_bar`
                     const isUploadActive = v2QuarterBank.activeQuarter === qk;
                     const isSelected = selectedQk === qk;
                     let cls = 'bg-gray-800 text-gray-400 border-gray-600';
-                    if (isSelected) cls = 'bg-indigo-900/70 text-indigo-100 border-indigo-500 ring-2 ring-indigo-400';
+                    if (isSelected) cls = 'bg-green-900/70 text-green-100 border-green-500 ring-2 ring-green-400';
                     else if (isBanked) cls = 'bg-gray-700 text-gray-300 border-gray-600';
-                    else if (isUploadActive) cls = 'bg-emerald-900/60 text-emerald-200 border-emerald-700';
+                    else if (isUploadActive) cls = 'bg-green-900/60 text-green-200 border-green-700';
                     const icon = isBanked ? '🔒' : isUploadActive ? '●' : '○';
                     const rows = (slot.rowCount || RepQuarterBank.getQuarterRows(v2QuarterBank, qk).length || 0).toLocaleString();
                     const title = isSelected
