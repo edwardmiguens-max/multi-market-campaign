@@ -49,20 +49,33 @@
 
     function openRowDb(bankKind) {
         const idbName = bankConfig(bankKind).idbName;
-        if (_rowDbPromises[idbName]) return _rowDbPromises[idbName];
+        const cached = _rowDbPromises[idbName];
+        if (cached) {
+            return cached.catch(() => {
+                delete _rowDbPromises[idbName];
+                return openRowDb(bankKind);
+            });
+        }
         _rowDbPromises[idbName] = new Promise((resolve, reject) => {
             if (typeof indexedDB === 'undefined') {
                 reject(new Error('IndexedDB unavailable'));
                 return;
             }
             const req = indexedDB.open(idbName, 1);
-            req.onerror = () => reject(req.error);
+            req.onerror = () => {
+                delete _rowDbPromises[idbName];
+                reject(req.error);
+            };
             req.onupgradeneeded = () => {
                 if (!req.result.objectStoreNames.contains(IDB_STORE)) {
                     req.result.createObjectStore(IDB_STORE);
                 }
             };
-            req.onsuccess = () => resolve(req.result);
+            req.onsuccess = () => {
+                const db = req.result;
+                db.onversionchange = () => { db.close(); delete _rowDbPromises[idbName]; };
+                resolve(db);
+            };
         });
         return _rowDbPromises[idbName];
     }
@@ -76,7 +89,6 @@
             req.onsuccess = () => resolve(req.result ?? null);
             req.onerror = () => reject(req.error);
         });
-        db.close();
         return stored;
     }
 
@@ -97,7 +109,6 @@
                 tx.oncomplete = () => resolve();
                 tx.onerror = () => reject(tx.error);
             });
-            db.close();
             const verify = await readStoredPayload(bank, quarterKey);
             const verified = storedRowCount(verify);
             if (verified !== rows.length) {

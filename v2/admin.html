@@ -47,6 +47,8 @@
         #shopify-theme-sidebar input:focus, #shopify-theme-sidebar select:focus { outline: 2px solid var(--se-focus); outline-offset: 1px; border-color: var(--se-focus) !important; }
         #shopify-theme-sidebar #btn-publish { background: var(--se-accent) !important; border: none; border-radius: 0.5rem; font-weight: 600; font-size: 0.8125rem; box-shadow: none !important; }
         #shopify-theme-sidebar #btn-publish:hover { background: var(--se-accent-hover) !important; }
+        #shopify-theme-sidebar #btn-publish-new { border-radius: 0.5rem; font-weight: 600; font-size: 0.8125rem; }
+        #shopify-theme-sidebar #btn-new-report-same-artist { border-radius: 0.5rem; font-size: 0.75rem; }
         #shopify-theme-sidebar .text-blue-400, #shopify-theme-sidebar .text-cyan-400, #shopify-theme-sidebar .text-indigo-400, #shopify-theme-sidebar .text-yellow-400, #shopify-theme-sidebar .text-green-400, #shopify-theme-sidebar .text-purple-400, #shopify-theme-sidebar .text-sky-400 { color: var(--se-text-label) !important; font-weight: 600; font-size: 0.6875rem; letter-spacing: 0.04em; text-transform: uppercase; }
         #shopify-theme-sidebar .bg-gray-800, #shopify-theme-sidebar .bg-gray-800\/60, #shopify-theme-sidebar .bg-gray-900 { background: var(--se-surface-raised) !important; }
         #shopify-theme-sidebar .border-gray-700, #shopify-theme-sidebar .border-gray-600, #shopify-theme-sidebar .border-blue-500, #shopify-theme-sidebar .border-cyan-700, #shopify-theme-sidebar .border-indigo-700, #shopify-theme-sidebar .border-green-600\/50, #shopify-theme-sidebar .border-purple-600\/50 { border-color: var(--se-border) !important; }
@@ -159,9 +161,18 @@
                     </select>
                     <p class="text-[10px] text-gray-500 mt-1 leading-tight">UK &amp; JV UK Lead → Domestic · US &amp; JV US Lead → International on the label index.</p>
                 </div>
-                <button id="btn-publish" type="button" class="w-full text-white font-bold py-2 px-4 rounded text-sm transition-colors">
-                    Save
-                </button>
+                <div class="space-y-2">
+                    <button id="btn-publish" type="button" class="w-full text-white font-bold py-2 px-4 rounded text-sm transition-colors bg-blue-600 hover:bg-blue-700">
+                        Publish Report
+                    </button>
+                    <button id="btn-publish-new" type="button" class="hidden w-full text-white font-bold py-2 px-4 rounded text-sm transition-colors bg-indigo-600 hover:bg-indigo-700">
+                        Save as New Report
+                    </button>
+                    <button id="btn-new-report-same-artist" type="button" class="hidden w-full py-2 px-4 rounded text-xs font-semibold transition-colors border border-gray-600 text-gray-200 hover:bg-gray-800">
+                        New report (same artist data)
+                    </button>
+                    <p class="text-[10px] text-gray-500 leading-tight">Publish multiple reports per artist with different campaign names and date filters. The index shows <strong>full artist totals</strong>; each report shows only its selected date range.</p>
+                </div>
                 <a id="link-report-index" href="../index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 transition-colors">Open Report Index</a>
                 <a id="link-atlantic-index" href="../atlantic-index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-yellow-500/40 text-yellow-200 hover:bg-yellow-950/40 transition-colors">Open Atlantic Report Index</a>
                 <div id="publish-result" class="mt-2 text-xs hidden break-words text-center p-2 rounded bg-gray-900/80 border border-gray-700"></div>
@@ -757,14 +768,18 @@
                 if (!old) throw new Error('Campaign data is empty for this report.');
                 window.__bootLoadedReportId = data.id;
                 window.activeLoadedReportId = data.id;
+                loadedCampaignName = data.report_name || null;
 
                 var clearBtn = document.getElementById('btn-clear-load');
                 if (clearBtn) clearBtn.classList.remove('hidden');
+                if (typeof window.syncPublishButtons === 'function') window.syncPublishButtons();
+                else {
                 var pubBtn = document.getElementById('btn-publish');
                 if (pubBtn) {
                     pubBtn.textContent = 'Update Existing Report';
                     pubBtn.classList.remove('bg-blue-600');
                     pubBtn.classList.add('bg-green-600');
+                }
                 }
 
                 bootSetVal('input-campaign-name', data.report_name || '');
@@ -1046,7 +1061,49 @@
         let loadedGlobalMerchPayload = null;
         let globalLogoBase64 = null;
         let globalFaviconBase64 = null;
-        let activeLoadedReportId = window.__bootLoadedReportId || window.activeLoadedReportId || null; 
+        let activeLoadedReportId = window.__bootLoadedReportId || window.activeLoadedReportId || null;
+        let loadedCampaignName = null;
+
+        function syncPublishButtons() {
+            const pubBtn = document.getElementById('btn-publish');
+            const newBtn = document.getElementById('btn-publish-new');
+            const sameArtistBtn = document.getElementById('btn-new-report-same-artist');
+            const hasLoaded = !!activeLoadedReportId;
+            const hasArtist = !!document.getElementById('input-artist-name')?.value?.trim();
+            if (pubBtn) {
+                if (hasLoaded) {
+                    pubBtn.textContent = 'Update Existing Report';
+                    pubBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    pubBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                } else {
+                    pubBtn.textContent = 'Publish Report';
+                    pubBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    pubBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+            }
+            if (newBtn) newBtn.classList.toggle('hidden', !hasLoaded);
+            if (sameArtistBtn) sameArtistBtn.classList.toggle('hidden', !hasArtist);
+        }
+
+        function startNewReportSameArtist() {
+            const artistName = document.getElementById('input-artist-name')?.value?.trim();
+            if (!artistName) return alert('Enter or select an artist first.');
+            activeLoadedReportId = null;
+            loadedCampaignName = null;
+            window.activeLoadedReportId = null;
+            const dropdown = document.getElementById('select-campaign-directory');
+            if (dropdown) dropdown.value = '';
+            const nameInput = document.getElementById('input-campaign-name');
+            if (nameInput) nameInput.value = '';
+            if (document.getElementById('input-campaign-start')) document.getElementById('input-campaign-start').value = '';
+            if (document.getElementById('input-campaign-end')) document.getElementById('input-campaign-end').value = '';
+            document.getElementById('btn-clear-load')?.classList.add('hidden');
+            document.getElementById('publish-result')?.classList.add('hidden');
+            applyLastUpdatedDisplay(null);
+            syncPublishButtons();
+            if (windowCurrentCSVData?.length) runDataAggregation();
+            else calculateGlobalDashboard();
+        }
         const productImages = { p1: null, p2: null, p3: null, p4: null };
         let comparisonModel = { markets: {}, periodOrder: [] };
         let globalCountryStats = {};
@@ -1407,6 +1464,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 renderCsvUploadStatus(`${name} — upload sales data to begin`, 'wait');
             }
             if (options?.refreshDirectory) await refreshArtistDirectory();
+            syncPublishButtons();
         }
 
         async function initV2QuarterBank(options) {
@@ -3971,6 +4029,8 @@ VISUALIZE sessions TYPE horizontal_bar`
         }
         function resetLoadedCampaignToDefaults() {
             activeLoadedReportId = null;
+            loadedCampaignName = null;
+            window.activeLoadedReportId = null;
             loadedLeversPayload = null;
             loadedTopCountriesPayload = null;
             loadedEuTopCountriesPayload = null;
@@ -3993,12 +4053,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             document.getElementById('publish-result')?.classList.add('hidden');
             applyLastUpdatedDisplay(null);
 
-            const pubBtn = document.getElementById('btn-publish');
-            if(pubBtn) {
-                pubBtn.textContent = 'Publish Report';
-                pubBtn.classList.remove('bg-green-600');
-                pubBtn.classList.add('bg-blue-600');
-            }
+            syncPublishButtons();
             const versionBadgeEl = document.getElementById('runtime-version-badge');
             if(versionBadgeEl) versionBadgeEl.textContent = `Runtime v${RUNTIME_VERSION}`;
 
@@ -4430,10 +4485,10 @@ VISUALIZE sessions TYPE horizontal_bar`
             if (!old) throw new Error('Campaign data is empty for this report.');
             activeLoadedReportId = data.id;
             window.activeLoadedReportId = data.id;
+            loadedCampaignName = data.report_name || null;
 
             document.getElementById('btn-clear-load')?.classList.remove('hidden');
-            const pubBtn = document.getElementById('btn-publish');
-            if (pubBtn) { pubBtn.textContent = 'Update Existing Report'; pubBtn.classList.remove('bg-blue-600'); pubBtn.classList.add('bg-green-600'); }
+            syncPublishButtons();
 
             if (document.getElementById('input-campaign-name')) document.getElementById('input-campaign-name').value = data.report_name || '';
             if (document.getElementById('input-setup-by')) document.getElementById('input-setup-by').value = old.setupBy || '';
@@ -5647,17 +5702,32 @@ VISUALIZE sessions TYPE horizontal_bar`
                 return payload;
             }
 
-            document.getElementById('btn-publish')?.addEventListener('click', async (e) => {
-                e.preventDefault(); const nameInput = document.getElementById('input-campaign-name')?.value.trim(); if(!nameInput) return alert("Please specify campaign identity flag.");
+            async function publishReport(options = {}) {
+                const forceNew = !!options.forceNew;
+                const nameInput = document.getElementById('input-campaign-name')?.value.trim();
+                if (!nameInput) return alert('Please specify campaign identity flag.');
+                if (forceNew) {
+                    if (!document.getElementById('input-artist-name')?.value?.trim()) {
+                        return alert('Artist name is required. Select the artist whose sales bank this report uses.');
+                    }
+                    if (loadedCampaignName && nameInput === loadedCampaignName) {
+                        return alert('Change Save / Update Name before saving as a new report (e.g. add the campaign date range).');
+                    }
+                }
                 const liveRev = Object.values(storeData).reduce((sum, m) => sum + (Number(m.revenue) || 0), 0);
                 const liveOrders = Object.values(storeData).reduce((sum, m) => sum + (m.orders?.size || 0), 0);
-                if(windowCurrentCSVData?.length && liveOrders === 0) {
+                if (windowCurrentCSVData?.length && liveOrders === 0) {
                     return alert('No sales data is loaded in the preview (0 orders). Upload your Master Sales File again and check Data quality notes before publishing.');
                 }
-                if(windowCurrentCSVData?.length && liveRev > 0 && liveRev < 100) {
-                    if(!confirm(`Preview totals look very low (£${liveRev.toFixed(2)} revenue, ${liveOrders} orders). Publish anyway?`)) return;
+                if (windowCurrentCSVData?.length && liveRev > 0 && liveRev < 100) {
+                    if (!confirm(`Preview totals look very low (£${liveRev.toFixed(2)} revenue, ${liveOrders} orders). Publish anyway?`)) return;
                 }
-                const resDiv = document.getElementById('publish-result'); if(resDiv) { resDiv.innerHTML = "⏳ Compacting Payload & Dispatching..."; resDiv.classList.remove('hidden', 'text-green-400', 'text-red-400'); resDiv.classList.add('text-yellow-400'); }
+                const resDiv = document.getElementById('publish-result');
+                if (resDiv) {
+                    resDiv.innerHTML = forceNew ? '⏳ Creating new report…' : '⏳ Compacting Payload & Dispatching...';
+                    resDiv.classList.remove('hidden', 'text-green-400', 'text-red-400');
+                    resDiv.classList.add('text-yellow-400');
+                }
 
                 const packageMarketSegment = (prefix) => {
                     const d = storeData[prefix] || {}; const ordersCount = d.orders ? d.orders.size : 0; const sessions = (d.traffic && typeof d.traffic.sessions === 'number') ? d.traffic.sessions : (ordersCount * 35); const atcLines = (d.traffic && typeof d.traffic.atc === 'number') ? d.traffic.atc : (ordersCount * 4); const topProductsArr = [];
@@ -5708,15 +5778,15 @@ VISUALIZE sessions TYPE horizontal_bar`
                 };
 
                 try {
-                    let targetId = activeLoadedReportId;
+                    let targetId = forceNew ? null : activeLoadedReportId;
                     const publishPayload = await preparePublishPayload(payload);
                     publishPayload.reportSlug = await resolveUniqueReportSlug(nameInput, targetId);
                     const payloadStr = JSON.stringify({ report_name: nameInput, campaign_data: publishPayload });
-                    if(resDiv) resDiv.innerHTML = `⏳ Dispatching (${(payloadStr.length / 1024 / 1024).toFixed(1)} MB)...`;
+                    if (resDiv) resDiv.innerHTML = `⏳ Dispatching (${(payloadStr.length / 1024 / 1024).toFixed(1)} MB)...`;
                     let response;
                     const fetchHeaders = { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}`, 'Prefer': 'return=representation' };
 
-                    if(targetId) {
+                    if (targetId) {
                         response = await fetch(`${supabaseUrl}/rest/v1/reports?id=eq.${targetId}`, { method: 'PATCH', headers: fetchHeaders, body: payloadStr });
                     } else {
                         response = await fetch(`${supabaseUrl}/rest/v1/reports`, { method: 'POST', headers: fetchHeaders, body: payloadStr });
@@ -5725,8 +5795,13 @@ VISUALIZE sessions TYPE horizontal_bar`
                     if (!response.ok) { const errText = await response.text(); throw new Error(`HTTP ${response.status}: ${errText}`); }
 
                     const data = await response.json();
-                    if (!data || data.length === 0) throw new Error("Insert returned no ID.");
-                    targetId = data[0].id; activeLoadedReportId = targetId;
+                    if (!data || data.length === 0) throw new Error('Insert returned no ID.');
+                    targetId = data[0].id;
+                    activeLoadedReportId = targetId;
+                    window.activeLoadedReportId = targetId;
+                    loadedCampaignName = nameInput;
+                    document.getElementById('btn-clear-load')?.classList.remove('hidden');
+                    syncPublishButtons();
                     applyLastUpdatedDisplay(publishPayload.lastUpdatedAt || null);
                     if (v2SupabaseReady && v2QuarterBank?.artistId && typeof RepQuarterBankSupabase !== 'undefined') {
                         try {
@@ -5737,23 +5812,42 @@ VISUALIZE sessions TYPE horizontal_bar`
                     }
                     try {
                         const setupBySaved = document.getElementById('input-setup-by')?.value.trim();
-                        if(setupBySaved) localStorage.setItem('rep-admin-setup-by', setupBySaved);
+                        if (setupBySaved) localStorage.setItem('rep-admin-setup-by', setupBySaved);
                     } catch (_e) {}
-                    
-                    if(resDiv) {
+
+                    if (resDiv) {
                         resDiv.classList.remove('text-yellow-400', 'text-red-400');
                         resDiv.classList.add('text-green-400');
-                        resDiv.innerHTML = `✅ Successfully Saved!<br>${window.formatLiveReportLinkHtml(nameInput, publishPayload)}`;
+                        const savedLabel = forceNew ? 'New report created' : 'Successfully saved';
+                        resDiv.innerHTML = `✅ ${savedLabel}!<br>${window.formatLiveReportLinkHtml(nameInput, publishPayload)}`;
                     }
                     refreshCampaignDirectory();
                     refreshArtistDirectory().then(() => syncArtistDirectorySelect());
 
-                } catch(err) { 
-                    console.error("Native Fetch Exception:", err); 
-                    if(resDiv) { resDiv.classList.remove('text-yellow-400', 'text-green-400'); resDiv.classList.add('text-red-400'); const hint = String(err.message || '').includes('57014') ? '<br><span class="text-[10px] opacity-80">Tip: payload was auto-compacted. If this persists, reduce product image count or ask Supabase to raise statement_timeout.</span>' : '';
-                        resDiv.innerHTML = `❌ Write Rejected: <br><span class="text-[10px] opacity-90">${err.message || JSON.stringify(err)}</span>${hint}`; } 
+                } catch (err) {
+                    console.error('Native Fetch Exception:', err);
+                    if (resDiv) {
+                        resDiv.classList.remove('text-yellow-400', 'text-green-400');
+                        resDiv.classList.add('text-red-400');
+                        const hint = String(err.message || '').includes('57014') ? '<br><span class="text-[10px] opacity-80">Tip: payload was auto-compacted. If this persists, reduce product image count or ask Supabase to raise statement_timeout.</span>' : '';
+                        resDiv.innerHTML = `❌ Write Rejected: <br><span class="text-[10px] opacity-90">${err.message || JSON.stringify(err)}</span>${hint}`;
+                    }
                 }
+            }
+
+            document.getElementById('btn-publish')?.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await publishReport({ forceNew: false });
             });
+            document.getElementById('btn-publish-new')?.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await publishReport({ forceNew: true });
+            });
+            document.getElementById('btn-new-report-same-artist')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                startNewReportSameArtist();
+            });
+            window.syncPublishButtons = syncPublishButtons;
 
             if(typeof Chart !== 'undefined') {
                 registerPiePercentOverlayPlugin();
@@ -5775,6 +5869,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 } catch (chartErr) { console.error('Chart init failed:', chartErr); }
             }
             calculateGlobalDashboard();
+            syncPublishButtons();
             const keepSelectedId = activeLoadedReportId || document.getElementById('select-campaign-directory')?.value || window.__pendingCampaignLoadId || '';
             window.refreshCampaignDirectory().then(function () {
                 if(keepSelectedId && !hasLiveCsvUpload()) {
