@@ -747,13 +747,11 @@
         function renderArtistBlock(artist, reports) {
             const rows = reports.map(renderReportRow).join('');
             const rollup = getArtistRollupFromReports(reports, artist);
-            const hasV2 = reports.some(isV2Report);
-            const activeQuarter = reports.map(r => r.campaign_data?.activeQuarter).find(Boolean);
             const kpiHtml = rollup
                 ? `<div class="artist-kpis">
-                    <div><span class="metric-label">Artist orders (all data)</span><span class="metric-value">${formatOrders(parseGlobalOrders(rollup))}</span></div>
-                    <div><span class="metric-label">Artist revenue (all data)</span><span class="metric-value revenue">${escapeHtml(rollup.revenue || formatRevenue(parseGlobalRevenue(rollup)))}</span></div>
-                    ${rollup.chartUnits ? `<div><span class="metric-label">Chart units</span><span class="metric-value">${formatOrders(parseChartUnits(rollup))}</span></div>` : ''}
+                    <div><span class="metric-label">Store orders</span><span class="metric-value">${formatOrders(parseGlobalOrders(rollup))}</span></div>
+                    <div><span class="metric-label">Store revenue</span><span class="metric-value revenue">${escapeHtml(rollup.revenue || formatRevenue(parseGlobalRevenue(rollup)))}</span></div>
+                    ${rollup.chartUnits ? `<div><span class="metric-label">Music units</span><span class="metric-value">${formatOrders(parseChartUnits(rollup))}</span></div>` : ''}
                    </div>`
                 : '';
             return `<details class="artist-accordion">
@@ -764,8 +762,6 @@
                     </div>
                     <div class="artist-summary-end">
                         ${kpiHtml}
-                        ${hasV2 ? '<span class="v2-pill">V2</span>' : ''}
-                        ${activeQuarter ? `<span class="quarter-badge">${escapeHtml(activeQuarter)}</span>` : ''}
                         <span class="artist-count">${reports.length} report${reports.length === 1 ? '' : 's'}</span>
                     </div>
                 </summary>
