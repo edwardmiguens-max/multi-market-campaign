@@ -435,6 +435,7 @@
         const ACCORDION_CHEVRON = '<svg class="accordion-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 
         let allReports = [];
+        let artistRollupByName = {};
 
         function normalizeCampaignData(report) {
             const raw = report?.campaign_data;
@@ -586,6 +587,13 @@
             });
         }
 
+        function formatCampaignDates(dates) {
+            const d = dates || {};
+            if (!d.start && !d.end) return 'All uploaded data';
+            if (d.start && d.end) return `${d.start} → ${d.end}`;
+            return d.start ? `From ${d.start}` : `Until ${d.end}`;
+        }
+
         function renderReportRow(report) {
             const cd = report.campaign_data || {};
             const url = getLiveUrl(report);
@@ -595,11 +603,13 @@
             const revenue = parseGlobalRevenue(cd.global);
             const updated = formatLastUpdated(cd.lastUpdatedAt);
             const setupBy = String(cd.setupBy || '').trim();
+            const dateRange = formatCampaignDates(cd.campaignDates);
 
             return `<li class="report-row">
                 <div>
                     <div class="report-name">${escapeHtml(report.report_name || 'Untitled')}</div>
                     ${setupBy ? `<div class="report-meta">Set up by ${escapeHtml(setupBy)}</div>` : ''}
+                    <div class="report-meta">Campaign dates: ${escapeHtml(dateRange)}</div>
                 </div>
                 <div><span class="rep-tag ${bucket}">${escapeHtml(rep)}</span></div>
                 <div><span class="metric-label">Orders</span><span class="metric-value">${formatOrders(orders)}</span></div>
@@ -642,12 +652,91 @@
             return parseInt(String(rollup.chartUnits).replace(/[^0-9]/g, ''), 10) || 0;
         }
 
-        function getArtistRollupFromReports(reports) {
+        function artistNameKey(name) {
+            return String(name || '').trim().toLowerCase();
+        }
+
+        function rollupOrderCount(rollup) {
+            return parseGlobalOrders(rollup);
+        }
+
+        function getArtistRollupFromReports(reports, artistName) {
+            const key = artistNameKey(artistName);
+            if (key && artistRollupByName[key]) return artistRollupByName[key];
+
+            let best = null;
+            let bestOrders = 0;
+            let bestUpdated = 0;
             for (const r of reports) {
                 const rollup = r.campaign_data?.artistRollup;
-                if (rollup && (rollup.orders || rollup.revenue)) return rollup;
+                if (!rollup) continue;
+                const orders = rollupOrderCount(rollup);
+                const updated = Date.parse(r.campaign_data?.lastUpdatedAt || rollup.computedAt || 0) || 0;
+                // Prefer the fullest bank snapshot; tie-break to most recently published.
+                if (orders > bestOrders || (orders === bestOrders && updated > bestUpdated)) {
+                    best = rollup;
+                    bestOrders = orders;
+                    bestUpdated = updated;
+                }
             }
-            return null;
+            return best;
+        }
+
+        async function loadArtistRollupsViaRest() {
+            const headers = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+            const [rollupsRes, artistsRes] = await Promise.all([
+                fetch(SB_URL + '/rest/v1/artist_rollups?select=artist_id,rollup,updated_at', { headers }),
+                fetch(SB_URL + '/rest/v1/artists?select=id,artist_name', { headers })
+            ]);
+            if (!rollupsRes.ok || !artistsRes.ok) return;
+            const rollups = await rollupsRes.json();
+            const artists = await artistsRes.json();
+            const nameById = {};
+            (artists || []).forEach(a => { if (a?.id) nameById[a.id] = a.artist_name; });
+            (rollups || []).forEach(row => {
+                const name = nameById[row.artist_id];
+                const rollup = row.rollup;
+                if (!name || !rollup) return;
+                const key = artistNameKey(name);
+                const existing = artistRollupByName[key];
+                const existingOrders = existing ? rollupOrderCount(existing) : 0;
+                const nextOrders = rollupOrderCount(rollup);
+                const existingUpdated = Date.parse(existing?.computedAt || 0) || 0;
+                const rowUpdated = Date.parse(row.updated_at || rollup.computedAt || 0) || 0;
+                if (!existing || nextOrders > existingOrders || (nextOrders === existingOrders && rowUpdated > existingUpdated)) {
+                    artistRollupByName[key] = rollup;
+                }
+            });
+        }
+
+        async function loadArtistRollups(client) {
+            artistRollupByName = {};
+            let loaded = false;
+            if (client) {
+                try {
+                    const res = await client.from('artist_rollups').select('rollup, updated_at, artists(artist_name)');
+                    if (!res.error && res.data?.length) {
+                        res.data.forEach(row => {
+                            const name = row.artists?.artist_name;
+                            const rollup = row.rollup;
+                            if (!name || !rollup) return;
+                            const key = artistNameKey(name);
+                            const existing = artistRollupByName[key];
+                            const nextOrders = rollupOrderCount(rollup);
+                            const existingOrders = existing ? rollupOrderCount(existing) : 0;
+                            if (!existing || nextOrders >= existingOrders) {
+                                artistRollupByName[key] = rollup;
+                            }
+                        });
+                        loaded = Object.keys(artistRollupByName).length > 0;
+                    }
+                } catch (_err) { /* fall through to REST */ }
+            }
+            if (!loaded) {
+                try {
+                    await loadArtistRollupsViaRest();
+                } catch (_err) { /* artist_rollups optional */ }
+            }
         }
 
         function isV2Report(report) {
@@ -657,13 +746,13 @@
 
         function renderArtistBlock(artist, reports) {
             const rows = reports.map(renderReportRow).join('');
-            const rollup = getArtistRollupFromReports(reports);
+            const rollup = getArtistRollupFromReports(reports, artist);
             const hasV2 = reports.some(isV2Report);
             const activeQuarter = reports.map(r => r.campaign_data?.activeQuarter).find(Boolean);
             const kpiHtml = rollup
                 ? `<div class="artist-kpis">
-                    <div><span class="metric-label">Orders</span><span class="metric-value">${formatOrders(parseGlobalOrders(rollup))}</span></div>
-                    <div><span class="metric-label">Revenue</span><span class="metric-value revenue">${escapeHtml(rollup.revenue || formatRevenue(parseGlobalRevenue(rollup)))}</span></div>
+                    <div><span class="metric-label">Artist orders (all data)</span><span class="metric-value">${formatOrders(parseGlobalOrders(rollup))}</span></div>
+                    <div><span class="metric-label">Artist revenue (all data)</span><span class="metric-value revenue">${escapeHtml(rollup.revenue || formatRevenue(parseGlobalRevenue(rollup)))}</span></div>
                     ${rollup.chartUnits ? `<div><span class="metric-label">Chart units</span><span class="metric-value">${formatOrders(parseChartUnits(rollup))}</span></div>` : ''}
                    </div>`
                 : '';
@@ -745,10 +834,12 @@
                 let data = null;
                 if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
                     const client = window.supabase.createClient(SB_URL, SB_KEY);
+                    await loadArtistRollups(client);
                     const res = await client.from('reports').select(INDEX_SELECT).order('report_name', { ascending: true });
                     if (res.error) throw res.error;
                     data = res.data;
                 } else {
+                    await loadArtistRollups(null);
                     const response = await fetch(SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(INDEX_SELECT) + '&order=report_name.asc', {
                         headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
                     });
