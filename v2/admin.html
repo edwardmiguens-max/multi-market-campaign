@@ -1923,11 +1923,9 @@ VISUALIZE sessions TYPE horizontal_bar`
             const endEl = document.getElementById('input-campaign-end');
             const prevStart = startEl?.value || '';
             const prevEnd = endEl?.value || '';
-            const range = getCsvDataDateRange();
-            if (range) {
-                if (startEl) startEl.value = range.start;
-                if (endEl) endEl.value = range.end;
-            }
+            // Clear campaign date filter so rollup reflects the full uploaded bank, not the report window.
+            if (startEl) startEl.value = '';
+            if (endEl) endEl.value = '';
             runDataAggregation();
             const chartUnits = ['uk', 'eu', 'us', 'int'].reduce((sum, mk) => sum + getMarketChartUnits(mk), 0);
             const rollup = {
@@ -1935,7 +1933,9 @@ VISUALIZE sessions TYPE horizontal_bar`
                 orders: document.getElementById('kpi-orders')?.textContent || '0',
                 items: document.getElementById('kpi-items')?.textContent || '0',
                 aov: document.getElementById('kpi-aov')?.textContent || '£0.00',
-                chartUnits: chartUnits.toLocaleString()
+                chartUnits: chartUnits.toLocaleString(),
+                scope: 'full_bank',
+                computedAt: new Date().toISOString()
             };
             if (startEl) startEl.value = prevStart;
             if (endEl) endEl.value = prevEnd;
@@ -5752,6 +5752,10 @@ VISUALIZE sessions TYPE horizontal_bar`
 
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);
                 const bankSummary = v2QuarterBank ? RepQuarterBank.buildBankSummary(v2QuarterBank) : { bankedQuarters: [], activeQuarter: null, totalRows: 0 };
+                if (v2QuarterBank) {
+                    await ensureBankHydrated();
+                    await rebuildCsvFromBank();
+                }
                 const artistRollup = buildArtistRollupForPublish();
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
