@@ -2212,7 +2212,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             el.classList.remove('hidden');
         }
         function getEmptyStoreData() {
-            const emptyMarket = () => ({ loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, weeklyUnits: {}, dailyUnits: {}, weeklyMusicRev: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} });
+            const emptyMarket = () => ({ loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, weeklyUnits: {}, dailyUnits: {}, weeklyMusicRev: {}, dailyProducts: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} });
             return { uk: emptyMarket(), eu: emptyMarket(), us: emptyMarket(), int: emptyMarket() };
         }
         let storeData = getEmptyStoreData();
@@ -4757,7 +4757,7 @@ VISUALIZE sessions TYPE horizontal_bar`
 
             Object.keys(storeData).forEach(m => {
                 storeData[m].loaded = true; storeData[m].revenue = 0; storeData[m].items = 0; storeData[m].orders.clear();
-                storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].merchProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {}; storeData[m].weeklyUnits = {}; storeData[m].dailyUnits = {}; storeData[m].weeklyMusicRev = {};
+                storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].merchProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {}; storeData[m].weeklyUnits = {}; storeData[m].dailyUnits = {}; storeData[m].dailyProducts = {}; storeData[m].weeklyMusicRev = {};
                 storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
             });
 
@@ -4868,6 +4868,12 @@ VISUALIZE sessions TYPE horizontal_bar`
                 if(dayKey) {
                     if(!storeData[tMk].daily[dayKey]) storeData[tMk].daily[dayKey] = 0;
                     storeData[tMk].daily[dayKey] += rev;
+                    if(hasProductTitle) {
+                        if(!storeData[tMk].dailyProducts[dayKey]) storeData[tMk].dailyProducts[dayKey] = {};
+                        if(!storeData[tMk].dailyProducts[dayKey][name]) storeData[tMk].dailyProducts[dayKey][name] = { units: 0, revenue: 0 };
+                        storeData[tMk].dailyProducts[dayKey][name].units += derivedQty;
+                        storeData[tMk].dailyProducts[dayKey][name].revenue += rev;
+                    }
                 }
                 const countsForChart = isMusic && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts);
                 if(countsForChart && derivedQty) {
@@ -5747,7 +5753,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                     const topStandoutProducts = Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5);
                     const euTopCountries = prefix === 'eu' ? getEuTopCountriesForDisplay() : undefined;
                     const intTopCountries = prefix === 'int' ? getIntTopCountriesForDisplay() : undefined;
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: d.dailyProducts || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);
