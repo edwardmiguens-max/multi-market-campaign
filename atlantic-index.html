@@ -1155,22 +1155,17 @@
                 };
             }
             const daily = mkData?.daily || {};
-            const dailyUnits = mkData?.dailyUnits || {};
             let revenue = 0;
-            let units = 0;
             Object.entries(daily).forEach(([day, rev]) => {
                 if (day >= range.start && day <= range.end) revenue += Number(rev) || 0;
-            });
-            Object.entries(dailyUnits).forEach(([day, qty]) => {
-                if (day >= range.start && day <= range.end) units += Number(qty) || 0;
             });
             const totalRev = parseMarketRevenue(mkData);
             const totalItems = parseMarketItems(mkData);
             const totalOrders = parseMarketOrders(mkData);
-            const orders = totalRev > 0 ? Math.round(totalOrders * (revenue / totalRev)) : 0;
-            if (units === 0 && revenue > 0 && totalItems > 0) {
-                units = Math.round(totalItems * (revenue / totalRev));
-            }
+            const ratio = totalRev > 0 ? revenue / totalRev : 0;
+            // Scale orders + units from lifetime totals — dailyUnits only tracks chart-music units, not all items
+            const orders = Math.round(totalOrders * ratio);
+            const units = Math.round(totalItems * ratio);
             return { orders, units, revenue };
         }
 
@@ -1258,28 +1253,42 @@
 
         function buildLifetimeProductRef(mData) {
             const ref = new Map();
-            const add = (name, units, revenue, kind) => {
-                const key = String(name || '').trim();
-                if (!key) return;
-                const prev = ref.get(key) || { units: 0, revenue: 0, kind: 'all' };
-                ref.set(key, {
-                    units: prev.units + (Number(units) || 0),
-                    revenue: prev.revenue + (Number(revenue) || 0),
-                    kind: kind === 'all' ? prev.kind : kind
-                });
-            };
             (mData?.topProducts || []).forEach(entry => {
                 const [name, metrics] = Array.isArray(entry) ? entry : [entry?.name, entry];
-                add(name, metrics?.units, metrics?.revenue, 'all');
+                const key = String(name || '').trim();
+                if (!key) return;
+                ref.set(key, {
+                    units: Number(metrics?.units) || 0,
+                    revenue: Number(metrics?.revenue) || 0,
+                    kind: 'all'
+                });
             });
             (mData?.topStandoutProducts || mData?.topMusicFormats || []).forEach(entry => {
                 const [name, metrics] = Array.isArray(entry) ? entry : [entry?.name, entry];
-                add(name, metrics?.units, metrics?.revenue, 'music');
+                const key = String(name || '').trim();
+                if (!key) return;
+                const existing = ref.get(key);
+                if (existing) {
+                    existing.kind = 'music';
+                } else {
+                    ref.set(key, {
+                        units: Number(metrics?.units) || 0,
+                        revenue: Number(metrics?.revenue) || 0,
+                        kind: 'music'
+                    });
+                }
             });
             return ref;
         }
 
-        function collectProductsFromReport(report, filters) {
+        function productMatchesCategory(kind, productFilter) {
+            if (productFilter === 'all') return true;
+            if (productFilter === 'music') return kind === 'music' || kind === 'all';
+            if (productFilter === 'merch') return kind === 'merch' || kind === 'all';
+            return true;
+        }
+
+        function collectProductsFromReport(report, filters, periodRevenueCap) {
             const cd = report?.campaign_data || {};
             const markets = getMarketsForFilter(filters.market);
             const range = getPeriodRange(filters.period);
@@ -1288,8 +1297,7 @@
             const addProduct = (name, units, revenue, kind) => {
                 const key = String(name || '').trim();
                 if (!key) return;
-                if (filters.product === 'music' && kind === 'merch') return;
-                if (filters.product === 'merch' && kind === 'music') return;
+                if (!productMatchesCategory(kind, filters.product)) return;
                 const prev = products.get(key) || { units: 0, revenue: 0 };
                 products.set(key, {
                     units: prev.units + (Number(units) || 0),
@@ -1298,44 +1306,55 @@
             };
 
             if (range) {
+                const unitAccum = new Map();
+                const kindByName = new Map();
+                let totalPeriodUnits = 0;
+                const lifetimeRefsByMarket = [];
+
                 markets.forEach(mk => {
                     const mData = cd[mk];
                     if (!mData) return;
                     const lifetimeRef = buildLifetimeProductRef(mData);
-                    const periodMarket = sliceMarketByPeriod(mData, range);
-                    const unitAccum = new Map();
-                    let periodUnitsTotal = 0;
+                    lifetimeRefsByMarket.push(lifetimeRef);
 
                     Object.entries(mData.weeklyProductUnits || {}).forEach(([weekKey, prods]) => {
                         if (!weekOverlapsRange(weekKey, range)) return;
                         Object.entries(prods || {}).forEach(([name, units]) => {
                             const u = Number(units) || 0;
                             if (u <= 0) return;
+                            const kind = lifetimeRef.get(name)?.kind || 'all';
+                            if (!productMatchesCategory(kind, filters.product)) return;
                             unitAccum.set(name, (unitAccum.get(name) || 0) + u);
-                            periodUnitsTotal += u;
+                            kindByName.set(name, kind);
+                            totalPeriodUnits += u;
                         });
-                    });
-
-                    if (unitAccum.size === 0) {
-                        const ltRev = parseMarketRevenue(mData);
-                        const ratio = ltRev > 0 ? periodMarket.revenue / ltRev : 0;
-                        lifetimeRef.forEach((metrics, name) => {
-                            addProduct(name, metrics.units * ratio, metrics.revenue * ratio, metrics.kind);
-                        });
-                        return;
-                    }
-
-                    unitAccum.forEach((periodUnits, name) => {
-                        const lt = lifetimeRef.get(name);
-                        let revenue = 0;
-                        if (lt && lt.units > 0) {
-                            revenue = lt.revenue * (periodUnits / lt.units);
-                        } else if (periodUnitsTotal > 0 && periodMarket.revenue > 0) {
-                            revenue = periodMarket.revenue * (periodUnits / periodUnitsTotal);
-                        }
-                        addProduct(name, periodUnits, revenue, lt?.kind || 'all');
                     });
                 });
+
+                const cap = Number(periodRevenueCap) || 0;
+
+                if (unitAccum.size > 0 && totalPeriodUnits > 0) {
+                    unitAccum.forEach((periodUnits, name) => {
+                        const share = periodUnits / totalPeriodUnits;
+                        addProduct(name, periodUnits, cap * share, kindByName.get(name) || 'all');
+                    });
+                } else {
+                    let lifetimeRevTotal = 0;
+                    lifetimeRefsByMarket.forEach(lifetimeRef => {
+                        lifetimeRef.forEach((metrics, name) => {
+                            if (!productMatchesCategory(metrics.kind, filters.product)) return;
+                            lifetimeRevTotal += metrics.revenue;
+                        });
+                    });
+                    lifetimeRefsByMarket.forEach(lifetimeRef => {
+                        lifetimeRef.forEach((metrics, name) => {
+                            if (!productMatchesCategory(metrics.kind, filters.product)) return;
+                            const share = lifetimeRevTotal > 0 ? metrics.revenue / lifetimeRevTotal : 0;
+                            addProduct(name, metrics.units * share, cap * share, metrics.kind);
+                        });
+                    });
+                }
+
                 return products;
             }
 
@@ -1353,7 +1372,6 @@
             });
 
             const gm = cd.globalMerch || {};
-            // globalMerch is portfolio-wide — only use when no market filter is applied
             if (filters.market === 'all') {
                 (gm.topMerchProducts || []).forEach(entry => {
                     const [name, obj] = Array.isArray(entry) ? entry : [entry?.name, entry];
@@ -1364,12 +1382,13 @@
             return products;
         }
 
-        function findStarProduct(artistGroups, filters) {
+        function findStarProduct(artistGroups, filters, storeRevenueByArtist) {
             let best = null;
             Object.entries(artistGroups).forEach(([artist, reports]) => {
                 if (!artistPassesRepFilter(reports, filters.rep)) return;
                 const canonical = pickCanonicalReport(reports);
-                const products = collectProductsFromReport(canonical, filters);
+                const periodCap = storeRevenueByArtist[artist] ?? null;
+                const products = collectProductsFromReport(canonical, filters, periodCap);
                 products.forEach((metrics, name) => {
                     if (!best || metrics.revenue > best.revenue) {
                         best = { name, artist, revenue: metrics.revenue, units: metrics.units };
@@ -1398,13 +1417,16 @@
                 if (metrics) stores.push(metrics);
             });
 
+            const storeRevenueByArtist = {};
+            stores.forEach(s => { storeRevenueByArtist[s.artist] = s.revenue; });
+
             const totals = stores.reduce((acc, s) => ({
                 orders: acc.orders + s.orders,
                 units: acc.units + s.units,
                 revenue: acc.revenue + s.revenue
             }), { orders: 0, units: 0, revenue: 0 });
 
-            const star = findStarProduct(artistGroups, filters);
+            const star = findStarProduct(artistGroups, filters, storeRevenueByArtist);
             const topStores = stores.slice().sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
             return { totals, star, topStores, storeCount: stores.length };
