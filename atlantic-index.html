@@ -1311,10 +1311,10 @@
 
         function classifyProductKind(name) {
             const u = String(name || '').toUpperCase();
-            if (/T-?SHIRT|TEE\b|HOODIE|SWEATSHIRT|SWEAT\b|POSTER|PRINT\b|HAT\b|CAP\b|BAG\b|APPAREL|JOGGER|BEANIE|PIN\b|PATCH\b|SOCK|JACKET|BALACLAVA|SHORTS|ZIP-UP|ROBE|SCARF|GLOVE|JERSEY|CREWNECK|L/S|TOTE\b/.test(u)) {
+            if (/T-?SHIRT|TEE\b|HOODIE|SWEATSHIRT|SWEAT\b|POSTER|PRINT\b|HAT\b|CAP\b|BAG\b|APPAREL|JOGGER|BEANIE|PIN\b|PATCH\b|SOCK|JACKET|BALACLAVA|SHORTS|ZIP-UP|ROBE|SCARF|GLOVE|JERSEY|CREWNECK|L\/S|TOTE\b/.test(u)) {
                 return 'merch';
             }
-            if (/VINYL|CASSETTE|PICTURE DISC|\bCD\b|ALBUM|\bLP\b|BOX SET|BOXSET|\bSINGLE\b|\bEP\b|RECORD|BOOK LP|7"|7'|7''|PICTURE DISC/.test(u)) {
+            if (/VINYL|CASSETTE|PICTURE DISC|\bCD\b|ALBUM|\bLP\b|BOX SET|BOXSET|\bSINGLE\b|\bEP\b|RECORD|BOOK LP|PICTURE DISC/.test(u) || /7["']/.test(u)) {
                 return 'music';
             }
             return 'merch';
