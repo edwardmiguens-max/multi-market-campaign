@@ -657,11 +657,31 @@
         </div>
 
         <div id="content">
-            <div class="index-state">Loading Atlantic reports from database…</div>
+            <div class="index-state" id="load-status">Booting Atlantic index…</div>
         </div>
     </div>
 
     <div class="toast" id="toast">Copied to clipboard</div>
+
+    <script>
+        (function () {
+            function showBootStatus(message, isError) {
+                var el = document.getElementById('load-status') || document.getElementById('content');
+                if (!el) return;
+                el.className = 'index-state' + (isError ? ' error' : '');
+                el.textContent = message;
+            }
+            window.__atlShowBootStatus = showBootStatus;
+            showBootStatus('Booting Atlantic index…');
+            window.addEventListener('error', function (event) {
+                showBootStatus('JavaScript error: ' + (event.message || 'Unknown error'), true);
+            });
+            window.addEventListener('unhandledrejection', function (event) {
+                var reason = event.reason && (event.reason.message || String(event.reason)) || 'Unknown error';
+                showBootStatus('Unhandled error: ' + reason, true);
+            });
+        })();
+    </script>
 
     <script>
         const SB_URL = 'https://obrjpgucgcrclukkvook.supabase.co';
@@ -952,17 +972,60 @@
         }
 
         function setLoadStatus(message, isError) {
-            const content = document.getElementById('content');
-            if (!content) return;
-            const safe = escapeHtml(message).replace(/\n/g, '<br>');
-            content.innerHTML = `<div class="index-state${isError ? ' error' : ''}">${safe}</div>`;
+            const el = document.getElementById('load-status') || document.getElementById('content');
+            if (!el) return;
+            el.className = 'index-state' + (isError ? ' error' : '');
+            el.textContent = message;
+        }
+
+        function raceTimeout(promise, ms, label) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error((label || 'Request') + ' timed out after ' + ms + 'ms')), ms);
+                })
+            ]);
+        }
+
+        function xhrJsonGet(url, headers, timeoutMs) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.timeout = timeoutMs;
+                Object.entries(headers || {}).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            resolve(JSON.parse(xhr.responseText || '[]'));
+                        } catch (_err) {
+                            reject(new Error('Invalid JSON returned from database'));
+                        }
+                        return;
+                    }
+                    reject(new Error('HTTP ' + xhr.status + ': ' + String(xhr.responseText || '').slice(0, 200)));
+                };
+                xhr.onerror = function () { reject(new Error('Network error contacting database')); };
+                xhr.ontimeout = function () { reject(new Error('Database request timed out')); };
+                xhr.send();
+            });
         }
 
         function fetchWithTimeout(url, options, timeoutMs) {
+            if (typeof XMLHttpRequest !== 'undefined') {
+                const headers = {};
+                Object.entries((options && options.headers) || {}).forEach(([key, value]) => { headers[key] = value; });
+                return xhrJsonGet(url, headers, timeoutMs);
+            }
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), timeoutMs);
             const merged = { ...options, signal: controller.signal };
-            return fetch(url, merged).finally(() => clearTimeout(timer));
+            return fetch(url, merged).finally(() => clearTimeout(timer)).then(async (response) => {
+                if (!response.ok) {
+                    const errText = await response.text().catch(() => '');
+                    throw new Error('HTTP ' + response.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+                }
+                return response.json();
+            });
         }
 
         async function loadArtistRollupsViaRest() {
@@ -1492,10 +1555,19 @@
                 revenue: acc.revenue + s.revenue
             }), { orders: 0, units: 0, revenue: 0 });
 
-            const star = findStarProduct(artistGroups, filters);
+            const star = safeFindStarProduct(artistGroups, filters);
             const topStores = stores.slice().sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
             return { totals, star, topStores, storeCount: stores.length };
+        }
+
+        function safeFindStarProduct(artistGroups, filters) {
+            try {
+                return findStarProduct(artistGroups, filters);
+            } catch (err) {
+                console.error('Star product calculation failed:', err);
+                return null;
+            }
         }
 
         function renderTopStoresTable(topStores) {
@@ -1580,68 +1652,67 @@
             content.querySelectorAll('[data-copy]').forEach(btn => {
                 btn.addEventListener('click', () => copyText(decodeURIComponent(btn.getAttribute('data-copy')), btn));
             });
-            requestAnimationFrame(() => {
+            setTimeout(() => {
                 try {
                     renderOverview(allReports);
                 } catch (overviewErr) {
                     console.error('Overview render failed:', overviewErr);
                 }
-            });
+            }, 0);
         }
 
         async function fetchReportsFromDb() {
-            const response = await fetchWithTimeout(
-                SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(INDEX_SELECT) + '&order=report_name.asc',
-                { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY } },
-                45000
-            );
-            if (!response.ok) {
-                const errText = await response.text().catch(() => '');
-                throw new Error('HTTP ' + response.status + (errText ? ': ' + errText.slice(0, 200) : ''));
-            }
-            return response.json();
+            const headers = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+            const url = SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(INDEX_SELECT) + '&order=report_name.asc';
+            return raceTimeout(fetchWithTimeout(url, { headers }, 30000), 35000, 'Report fetch');
         }
 
         async function loadReports() {
-            setLoadStatus('Loading Atlantic reports from database…');
-            document.getElementById('count-label').textContent = 'Loading…';
+            setLoadStatus('Fetching Atlantic reports…');
+            const countLabel = document.getElementById('count-label');
+            if (countLabel) countLabel.textContent = 'Loading…';
             try {
-                setLoadStatus('Fetching Atlantic reports…');
-                const [data] = await Promise.all([
-                    fetchReportsFromDb(),
-                    loadArtistRollups(null).catch(() => {})
-                ]);
-                allReports = (data || []).map(indexRowToReport).filter(r => String(r.campaign_data?.recordLabel || '').trim().toLowerCase() === LABEL_FILTER);
+                loadArtistRollups(null).catch(() => {});
+                const data = await fetchReportsFromDb();
+                allReports = (Array.isArray(data) ? data : []).map(indexRowToReport).filter(r => {
+                    const label = String(r.campaign_data?.recordLabel || '').trim().toLowerCase();
+                    return label === LABEL_FILTER || label.includes('atlantic');
+                });
                 if (!allReports.length) {
-                    setLoadStatus('No Atlantic reports found. Set Record label to Atlantic in Admin and publish a campaign.');
-                    document.getElementById('count-label').textContent = '0 reports';
+                    setLoadStatus('No Atlantic reports found. Set Record label to Atlantic in Admin and publish a campaign.', true);
+                    if (countLabel) countLabel.textContent = '0 reports';
                     return;
                 }
-                setLoadStatus('Rendering report list…');
-                renderIndex(filterReports(document.getElementById('search').value));
+                setLoadStatus('Rendering ' + allReports.length + ' reports…');
+                renderIndex(filterReports(document.getElementById('search')?.value || ''));
             } catch (err) {
-                const msg = err.name === 'AbortError'
-                    ? 'Request timed out — try refreshing. If this persists, re-publish reports from Admin V2.'
-                    : (err.message || 'Network error');
-                setLoadStatus('Could not load reports.\n' + msg, true);
-                document.getElementById('count-label').textContent = 'Error';
+                setLoadStatus('Could not load reports: ' + (err.message || 'Network error'), true);
+                if (countLabel) countLabel.textContent = 'Error';
                 console.error('Atlantic index load failed:', err);
             }
         }
 
-        window.addEventListener('error', (event) => {
-            console.error('Atlantic index runtime error:', event.error || event.message);
-        });
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Atlantic index unhandled rejection:', event.reason);
-        });
+        function initAtlanticIndex() {
+            try {
+                const refreshBtn = document.getElementById('btn-refresh');
+                if (refreshBtn) refreshBtn.addEventListener('click', loadReports);
+                const searchEl = document.getElementById('search');
+                if (searchEl) searchEl.addEventListener('input', (e) => renderIndex(filterReports(e.target.value)));
+                ['filter-product', 'filter-market', 'filter-rep', 'filter-period'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.addEventListener('change', onOverviewFilterChange);
+                });
+                loadReports();
+            } catch (err) {
+                setLoadStatus('Failed to start index: ' + (err.message || err), true);
+            }
+        }
 
-        document.getElementById('btn-refresh').addEventListener('click', loadReports);
-        document.getElementById('search').addEventListener('input', (e) => renderIndex(filterReports(e.target.value)));
-        ['filter-product', 'filter-market', 'filter-rep', 'filter-period'].forEach(id => {
-            document.getElementById(id).addEventListener('change', onOverviewFilterChange);
-        });
-        loadReports();
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAtlanticIndex);
+        } else {
+            initAtlanticIndex();
+        }
     </script>
 </body>
 </html>
