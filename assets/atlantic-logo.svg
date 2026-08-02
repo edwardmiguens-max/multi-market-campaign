@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 100" role="img" aria-label="Atlantic Records">
+  <rect width="144" height="72" fill="#000"/>
+  <polygon points="0,0 72,0 72,36 36,72 0,72" fill="#f28e2b"/>
+  <polygon points="36,0 72,0 72,36 36,72" fill="#31a354"/>
+  <polygon points="72,0 108,0 108,36 72,36" fill="#000"/>
+  <rect x="108" y="0" width="36" height="36" fill="#e11d74"/>
+  <circle cx="126" cy="18" r="10" fill="none" stroke="#000" stroke-width="2.2"/>
+  <path d="M126 8.5v19M118.5 13h15M118.5 23h15" stroke="#000" stroke-width="1.6" stroke-linecap="round"/>
+  <rect y="72" width="144" height="28" fill="#ffef00"/>
+  <text x="72" y="92" text-anchor="middle" font-family="'Archivo Black', 'Arial Black', sans-serif" font-size="15" font-weight="900" fill="#000" letter-spacing="1.5">ATLANTIC</text>
+</svg>

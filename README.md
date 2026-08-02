@@ -8,6 +8,7 @@
 | **Admin V1** (original workflow) | `v1/admin.html` |
 | **List all published reports** | `index.html` |
 | **Atlantic-branded report index** | `atlantic-index.html` |
+| **Warner & Parlophone report index** | `warner-parlophone-index.html` |
 
 Live report URLs (`https://…/your-report-slug`) are **not** a file you open directly — GitHub Pages routes them through root `404.html`.
 
@@ -19,6 +20,7 @@ Live report URLs (`https://…/your-report-slug`) are **not** a file you open di
 Reporting Files/
 ├── index.html              ← report URL list (shared)
 ├── atlantic-index.html     ← Atlantic index (shared)
+├── warner-parlophone-index.html ← Warner & Parlophone index (shared)
 ├── 404.html                ← live report viewer (deploy copy — see below)
 ├── admin.html              ← shortcut → v1/admin.html (bookmarks only)
 ├── admin-v2.html           ← shortcut → v2/admin.html (bookmarks only)

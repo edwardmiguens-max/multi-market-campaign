@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warner Records &amp; Parlophone — WMX D2C Campaign Reports</title>
+    <link rel="icon" href="assets/warner-records-favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="assets/warner-records-apple-touch.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,500;0,600;0,700;0,800;1,500&family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --atl-white: #FFFFFF;
+            --atl-black: #121212;
+            --atl-cream: #F7F6F3;
+            --atl-muted: #6B6560;
+            --atl-border: rgba(18, 18, 18, 0.12);
+            --wmx-blue: #0066CC;
+            --wmx-blue-soft: rgba(0, 102, 204, 0.1);
+            --wmx-gold: #B8922E;
+            --wmx-gold-soft: rgba(184, 146, 46, 0.12);
+            --atl-red: var(--wmx-blue);
+            --atl-red-soft: var(--wmx-blue-soft);
+            --atl-font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --atl-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --atl-font-editorial: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--atl-white);
+            color: var(--atl-black);
+            font-family: var(--atl-font-body);
+            -webkit-font-smoothing: antialiased;
+        }
+        .atl-page { max-width: 72rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+        .atl-header {
+            display: flex;
+            align-items: center;
+            gap: clamp(1.5rem, 4vw, 2.75rem);
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--atl-border);
+            position: relative;
+        }
+        .atl-header::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--wmx-blue) 0%, var(--wmx-blue) 55%, var(--wmx-gold) 55%, var(--wmx-gold) 100%);
+        }
+        .atl-header-logos {
+            display: flex;
+            align-items: center;
+            gap: clamp(1rem, 3vw, 2rem);
+            flex-shrink: 0;
+        }
+        .atl-logo {
+            flex-shrink: 0;
+            height: clamp(2.5rem, 8vw, 3.75rem);
+            width: auto;
+            max-width: clamp(7rem, 22vw, 11rem);
+            display: block;
+            object-fit: contain;
+        }
+        .atl-logo.warner {
+            height: clamp(2.5rem, 7vw, 3.5rem);
+            max-width: clamp(5.5rem, 16vw, 8rem);
+        }
+        .atl-logo.parlophone { max-width: clamp(6rem, 18vw, 9rem); }
+        .atl-header-copy { min-width: 0; }
+        .atl-header-copy h1 {
+            margin: 0;
+            font-family: var(--atl-font-display);
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            line-height: 1;
+            text-transform: uppercase;
+            color: var(--atl-black);
+        }
+        .atl-header-copy p {
+            margin: 0.65rem 0 0;
+            font-family: var(--atl-font-editorial);
+            font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+            font-style: italic;
+            font-weight: 400;
+            color: var(--atl-muted);
+            line-height: 1.45;
+            max-width: 36rem;
+        }
+        .atl-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.1rem;
+            background: var(--atl-cream);
+            border-radius: 0.5rem;
+        }
+        .atl-search {
+            flex: 1;
+            min-width: 14rem;
+            background: var(--atl-white);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.375rem;
+            color: var(--atl-black);
+            padding: 0.7rem 0.9rem;
+            font: inherit;
+            font-size: 0.875rem;
+        }
+        .atl-search:focus {
+            outline: none;
+            border-color: var(--atl-red);
+            box-shadow: 0 0 0 2px var(--atl-red-soft);
+        }
+        .atl-search::placeholder { color: var(--atl-muted); }
+        .atl-count { font-size: 0.75rem; color: var(--atl-muted); font-weight: 600; white-space: nowrap; }
+        .atl-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .atl-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            padding: 0.625rem 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s, transform 0.15s;
+            border: none;
+        }
+        .atl-btn:hover { transform: translateY(-1px); }
+        .atl-btn-primary { background: var(--wmx-blue); color: var(--atl-white); }
+        .atl-btn-primary:hover { background: #0052a3; }
+        .atl-btn-secondary {
+            background: transparent;
+            color: var(--atl-black);
+            border: 1px solid var(--atl-border);
+        }
+        .atl-btn-secondary:hover { border-color: var(--atl-black); }
+        .atl-btn-sm {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 0.3rem;
+            border: 1px solid var(--atl-border);
+            background: var(--atl-white);
+            color: var(--atl-black);
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .atl-btn-sm:hover { border-color: var(--atl-red); color: var(--atl-red); }
+        .atl-btn-sm.copied { border-color: var(--atl-red); color: var(--atl-red); background: var(--atl-red-soft); }
+        .label-accordion {
+            margin-bottom: 1.25rem;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: var(--atl-white);
+        }
+        .label-accordion.warner { border-top: 3px solid var(--wmx-blue); }
+        .label-accordion.parlophone { border-top: 3px solid var(--wmx-gold); }
+        .label-accordion > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1.1rem 1.25rem;
+            user-select: none;
+            background: var(--atl-white);
+            border-bottom: 1px solid transparent;
+        }
+        .label-accordion > summary::-webkit-details-marker { display: none; }
+        .label-accordion[open] > summary { border-bottom-color: var(--atl-border); }
+        .label-summary-main {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 0;
+        }
+        .label-accordion-logo {
+            height: clamp(1.75rem, 5vw, 2.5rem);
+            width: auto;
+            max-width: 10rem;
+            object-fit: contain;
+        }
+        .label-accordion.warner .label-accordion-logo {
+            height: clamp(2rem, 5vw, 2.75rem);
+            max-width: 5.5rem;
+        }
+        .label-summary-title {
+            font-family: var(--atl-font-display);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+        }
+        .label-count {
+            font-family: var(--atl-font-body);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            background: var(--atl-cream);
+            color: var(--atl-black);
+            border: 1px solid var(--atl-border);
+            white-space: nowrap;
+        }
+        .label-body {
+            padding: 0.85rem 1rem 1rem;
+            background: var(--atl-cream);
+        }
+        .region-accordion {
+            margin-bottom: 1rem;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: var(--atl-cream);
+        }
+        .region-accordion.domestic { border-left: 4px solid var(--wmx-blue); }
+        .region-accordion.international { border-left: 4px solid var(--wmx-gold); }
+        .region-accordion.unassigned { border-left: 4px solid var(--atl-muted); }
+        .region-accordion > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.15rem;
+            font-family: var(--atl-font-display);
+            font-size: 0.875rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--atl-black);
+            user-select: none;
+            background: var(--atl-cream);
+        }
+        .region-accordion > summary::-webkit-details-marker { display: none; }
+        .region-summary-sub {
+            font-family: var(--atl-font-editorial);
+            font-size: 0.75rem;
+            font-weight: 400;
+            font-style: italic;
+            letter-spacing: 0;
+            text-transform: none;
+            color: var(--atl-muted);
+            margin-top: 0.2rem;
+        }
+        .region-count {
+            font-family: var(--atl-font-body);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            background: var(--atl-white);
+            color: var(--atl-black);
+            border: 1px solid var(--atl-border);
+            white-space: nowrap;
+        }
+        .region-body { padding: 0.75rem 1rem 1rem; border-top: 1px solid var(--atl-border); background: var(--atl-white); }
+        .accordion-chevron {
+            width: 1rem;
+            height: 1rem;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+            color: var(--atl-black);
+        }
+        .region-accordion > summary .summary-end {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+        details[open] > summary .accordion-chevron { transform: rotate(180deg); }
+        .artist-accordion {
+            margin-bottom: 0.65rem;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.4rem;
+            overflow: hidden;
+            background: var(--atl-white);
+        }
+        .artist-accordion:last-child { margin-bottom: 0; }
+        .artist-accordion > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem 0.9rem;
+            user-select: none;
+            border-bottom: 1px solid transparent;
+            background: var(--atl-cream);
+            color: var(--atl-black);
+            transition: background 0.15s ease;
+        }
+        .artist-accordion > summary::-webkit-details-marker { display: none; }
+        .artist-accordion > summary:hover { background: #ebe6dc; }
+        .artist-accordion[open] > summary { border-bottom-color: var(--atl-border); }
+        .artist-summary-main {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            min-width: 0;
+        }
+        .artist-accordion h2 {
+            margin: 0;
+            font-family: var(--atl-font-display);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            line-height: 1.25;
+            color: var(--atl-black);
+        }
+        .artist-count {
+            font-size: 0.625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--atl-black);
+            background: var(--atl-white);
+            border: 1px solid var(--atl-border);
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+            white-space: nowrap;
+        }
+        .artist-summary-end {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.35rem 0.5rem;
+        }
+        .artist-kpis {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem 0.65rem;
+            font-size: 0.625rem;
+            color: var(--atl-black);
+        }
+        .artist-kpis .metric-label {
+            display: block;
+            font-size: 0.5625rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.65;
+        }
+        .artist-kpis .metric-value {
+            font-weight: 700;
+            font-size: 0.6875rem;
+        }
+        .v2-pill {
+            font-size: 0.5625rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #047857;
+            background: #ecfdf5;
+            border: 1px solid #6ee7b7;
+            padding: 0.1rem 0.4rem;
+            border-radius: 9999px;
+        }
+        .quarter-badge {
+            font-size: 0.5625rem;
+            font-weight: 600;
+            color: var(--atl-black);
+            background: #f3f0e8;
+            border: 1px solid var(--atl-border);
+            padding: 0.1rem 0.4rem;
+            border-radius: 9999px;
+        }
+        .artist-body { padding: 0.65rem; background: var(--atl-white); }
+        .report-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            background: var(--atl-cream);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.4rem;
+            overflow: hidden;
+        }
+        .report-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) auto auto auto auto;
+            gap: 0.65rem;
+            align-items: center;
+            padding: 0.85rem;
+            border-top: 1px solid var(--atl-border);
+            font-size: 0.8125rem;
+            background: var(--atl-white);
+        }
+        .report-row:first-child { border-top: none; }
+        @media (max-width: 900px) {
+            .report-row { grid-template-columns: 1fr; gap: 0.35rem; }
+            .atl-header { flex-direction: column; align-items: flex-start; }
+        }
+        .report-name {
+            font-weight: 600;
+            line-height: 1.35;
+            word-break: break-word;
+            color: var(--atl-black);
+        }
+        .report-meta {
+            font-family: var(--atl-font-editorial);
+            font-size: 0.6875rem;
+            font-style: italic;
+            color: var(--atl-muted);
+            margin-top: 0.15rem;
+        }
+        .rep-tag {
+            display: inline-block;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 0.22rem 0.55rem;
+            border-radius: 9999px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: var(--atl-cream);
+            color: var(--atl-black);
+            border: 1px solid var(--atl-border);
+        }
+        .rep-tag.domestic { border-color: var(--wmx-blue); color: var(--wmx-blue); background: var(--wmx-blue-soft); }
+        .rep-tag.international { border-color: var(--wmx-gold); color: #8A6D1F; background: var(--wmx-gold-soft); }
+        .metric-label {
+            display: block;
+            font-size: 0.625rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--atl-muted);
+            font-weight: 600;
+            margin-bottom: 0.1rem;
+        }
+        .metric-value { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--atl-black); }
+        .metric-value.revenue { color: var(--wmx-blue); }
+        .row-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end; }
+        .bucket-empty {
+            padding: 1.25rem 0.85rem;
+            color: var(--atl-muted);
+            font-family: var(--atl-font-editorial);
+            font-size: 0.8125rem;
+            font-style: italic;
+        }
+        .index-state {
+            padding: 3rem 1rem;
+            text-align: center;
+            color: var(--atl-muted);
+            font-family: var(--atl-font-editorial);
+            font-size: 0.9375rem;
+            font-style: italic;
+            border: 1px dashed var(--atl-border);
+            border-radius: 0.5rem;
+            background: var(--atl-cream);
+        }
+        .index-state.error { color: var(--atl-red); font-style: normal; }
+        .toast {
+            position: fixed;
+            bottom: 1.25rem;
+            right: 1.25rem;
+            background: var(--atl-black);
+            color: var(--atl-white);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            padding: 0.65rem 1rem;
+            border-radius: 0.375rem;
+            opacity: 0;
+            transform: translateY(0.5rem);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        a.atl-btn-sm { display: inline-flex; align-items: center; }
+        .atl-overview {
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: var(--atl-white);
+            box-shadow: 0 1px 0 rgba(0, 102, 204, 0.06);
+        }
+        .atl-overview-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.15rem;
+            background: linear-gradient(180deg, #faf9f6 0%, var(--atl-cream) 100%);
+            border-bottom: 1px solid var(--atl-border);
+            border-left: 4px solid var(--wmx-blue);
+        }
+        .atl-overview-head h2 {
+            margin: 0;
+            font-family: var(--atl-font-display);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--atl-black);
+        }
+        .atl-overview-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-end;
+            padding: 0.85rem 1.15rem;
+            border-bottom: 1px solid var(--atl-border);
+            background: var(--atl-white);
+        }
+        .atl-filter-label {
+            margin-left: auto;
+        }
+        .atl-filter-label select {
+            border-color: rgba(0, 102, 204, 0.25);
+            background-color: var(--wmx-blue-soft);
+        }
+        .atl-filter-label select:focus {
+            border-color: var(--wmx-blue);
+            box-shadow: 0 0 0 2px var(--wmx-blue-soft);
+        }
+        .atl-filter {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 7.5rem;
+        }
+        .atl-filter label {
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+        }
+        .atl-filter select {
+            appearance: none;
+            background: var(--atl-cream);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.3rem;
+            color: var(--atl-black);
+            font: inherit;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.45rem 1.75rem 0.45rem 0.55rem;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%236B6560' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.45rem center;
+        }
+        .atl-filter select:focus {
+            outline: none;
+            border-color: var(--atl-red);
+            box-shadow: 0 0 0 2px var(--atl-red-soft);
+        }
+        .atl-overview-kpis {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0;
+            border-bottom: 1px solid var(--atl-border);
+        }
+        @media (max-width: 768px) {
+            .atl-overview-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .atl-filter-label {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+        .atl-kpi {
+            padding: 1rem 1.15rem;
+            border-right: 1px solid var(--atl-border);
+        }
+        .atl-kpi:last-child { border-right: none; }
+        @media (max-width: 768px) {
+            .atl-kpi:nth-child(2n) { border-right: none; }
+            .atl-kpi:nth-child(-n+2) { border-bottom: 1px solid var(--atl-border); }
+        }
+        .atl-kpi-label {
+            display: block;
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+            margin-bottom: 0.35rem;
+        }
+        .atl-kpi-value {
+            display: block;
+            font-family: var(--atl-font-display);
+            font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--atl-black);
+        }
+        .atl-kpi-value.revenue { color: var(--wmx-blue); }
+        .atl-kpi-value.product {
+            font-family: var(--atl-font-body);
+            font-size: clamp(0.8125rem, 2vw, 0.9375rem);
+            font-weight: 600;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .atl-top-stores {
+            padding: 1rem 1.15rem 1.15rem;
+        }
+        .atl-top-stores h3 {
+            margin: 0 0 0.75rem;
+            font-family: var(--atl-font-display);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--atl-black);
+        }
+        .atl-top-stores-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8125rem;
+        }
+        .atl-top-stores-table th {
+            text-align: left;
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+            padding: 0 0.5rem 0.5rem 0;
+            border-bottom: 1px solid var(--atl-border);
+        }
+        .atl-top-stores-table th:not(:first-child),
+        .atl-top-stores-table td:not(:first-child) { text-align: right; }
+        .atl-top-stores-table td {
+            padding: 0.55rem 0.5rem 0.55rem 0;
+            border-bottom: 1px solid rgba(18, 18, 18, 0.06);
+            vertical-align: middle;
+        }
+        .atl-top-stores-table tr:last-child td { border-bottom: none; }
+        .atl-top-stores-table .rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            background: var(--atl-cream);
+            font-size: 0.625rem;
+            font-weight: 700;
+            margin-right: 0.45rem;
+            color: var(--atl-muted);
+        }
+        .atl-top-stores-table .artist-name { font-weight: 600; }
+        .atl-top-stores-empty {
+            font-size: 0.8125rem;
+            color: var(--atl-muted);
+            font-style: italic;
+        }
+        .atl-overview-note {
+            font-size: 0.6875rem;
+            color: var(--atl-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="atl-page">
+        <header class="atl-header">
+            <div class="atl-header-logos">
+                <img class="atl-logo warner" src="assets/warner-records-logo.png" alt="Warner Records" width="120" height="66" decoding="async">
+                <img class="atl-logo parlophone" src="assets/parlophone-logo.png" alt="Parlophone Records" width="120" height="80" decoding="async">
+            </div>
+            <div class="atl-header-copy">
+                <h1>WMX D2C Campaign Reports</h1>
+                <p>Warner Records &amp; Parlophone campaign performance — organised by label, region, and artist.</p>
+            </div>
+        </header>
+
+        <section class="atl-overview" id="atl-overview" aria-label="Warner and Parlophone portfolio overview">
+            <div class="atl-overview-head">
+                <h2>Overall Sales Snapshot</h2>
+                <span class="atl-overview-note" id="overview-period-label">All artists · Lifetime</span>
+            </div>
+            <div class="atl-overview-filters">
+                <div class="atl-filter">
+                    <label for="filter-product">Product category</label>
+                    <select id="filter-product" aria-label="Filter by product category">
+                        <option value="all">All</option>
+                        <option value="music">Music</option>
+                        <option value="merch">Merch</option>
+                    </select>
+                </div>
+                <div class="atl-filter">
+                    <label for="filter-market">Market</label>
+                    <select id="filter-market" aria-label="Filter by market">
+                        <option value="all">All</option>
+                        <option value="uk">UK</option>
+                        <option value="eu">EU</option>
+                        <option value="us">US</option>
+                        <option value="row">ROW</option>
+                    </select>
+                </div>
+                <div class="atl-filter">
+                    <label for="filter-rep">Rep owner</label>
+                    <select id="filter-rep" aria-label="Filter by rep owner">
+                        <option value="all">All</option>
+                        <option value="domestic">Domestic</option>
+                        <option value="international">International</option>
+                    </select>
+                </div>
+                <div class="atl-filter">
+                    <label for="filter-period">Period</label>
+                    <select id="filter-period" aria-label="Filter by period">
+                        <option value="lifetime">Lifetime</option>
+                        <option value="calendar_ytd">Calendar YTD</option>
+                        <option value="financial_ytd">Financial YTD</option>
+                        <option value="mtd">MTD</option>
+                        <option value="wtd">WTD</option>
+                        <option value="prev_week">Previous week</option>
+                        <option value="prev_month">Previous month</option>
+                    </select>
+                </div>
+                <div class="atl-filter atl-filter-label">
+                    <label for="filter-label">Label</label>
+                    <select id="filter-label" aria-label="Filter by record label">
+                        <option value="all">All</option>
+                        <option value="warner">Warner Records</option>
+                        <option value="parlophone">Parlophone Records</option>
+                    </select>
+                </div>
+            </div>
+            <div class="atl-overview-kpis">
+                <div class="atl-kpi">
+                    <span class="atl-kpi-label">Orders</span>
+                    <span class="atl-kpi-value" id="kpi-overview-orders">—</span>
+                </div>
+                <div class="atl-kpi">
+                    <span class="atl-kpi-label">Units</span>
+                    <span class="atl-kpi-value" id="kpi-overview-units">—</span>
+                </div>
+                <div class="atl-kpi">
+                    <span class="atl-kpi-label">Net revenue</span>
+                    <span class="atl-kpi-value revenue" id="kpi-overview-revenue">—</span>
+                </div>
+                <div class="atl-kpi">
+                    <span class="atl-kpi-label">Star Product - Revenue</span>
+                    <span class="atl-kpi-value product" id="kpi-overview-star">—</span>
+                </div>
+            </div>
+            <div class="atl-top-stores">
+                <h3>Top 5 stores</h3>
+                <div id="top-stores-body">
+                    <div class="atl-top-stores-empty">Loading store rankings…</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="atl-toolbar">
+            <input type="search" id="search" class="atl-search" placeholder="Search artist, campaign, or rep…" autocomplete="off">
+            <span class="atl-count" id="count-label">Loading…</span>
+            <div class="atl-actions">
+                <button type="button" class="atl-btn atl-btn-secondary" id="btn-refresh">Refresh</button>
+            </div>
+        </div>
+
+        <div id="content">
+            <div class="index-state" id="load-status">Booting Warner &amp; Parlophone index…</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard</div>
+
+    <script>
+        (function () {
+            function showBootStatus(message, isError) {
+                var el = document.getElementById('load-status') || document.getElementById('content');
+                if (!el) return;
+                el.className = 'index-state' + (isError ? ' error' : '');
+                el.textContent = message;
+            }
+            window.__atlShowBootStatus = showBootStatus;
+            showBootStatus('Booting Warner & Parlophone index…');
+            window.addEventListener('error', function (event) {
+                showBootStatus('JavaScript error: ' + (event.message || 'Unknown error'), true);
+            });
+            window.addEventListener('unhandledrejection', function (event) {
+                var reason = event.reason && (event.reason.message || String(event.reason)) || 'Unknown error';
+                showBootStatus('Unhandled error: ' + reason, true);
+            });
+        })();
+    </script>
+
+    <script>
+        const SB_URL = 'https://obrjpgucgcrclukkvook.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9icmpwZ3VjZ2NyY2x1a2t2b29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzM1OTksImV4cCI6MjA5NzQwOTU5OX0.tN2DmXRTjcvR1azRcvILTxNZEViXkIutVlqYBhbPOq8';
+        const LABEL_KEYS = {
+            warner: 'Warner Records',
+            parlophone: 'Parlophone Records'
+        };
+        const DOMESTIC_REPS = ['UK', 'JV - UK Lead'];
+        const INTERNATIONAL_REPS = ['US', 'JV - US Lead'];
+        const ACCORDION_CHEVRON = '<svg class="accordion-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+
+        let allReports = [];
+        let artistRollupByName = {};
+
+        const overviewFilters = {
+            label: 'all',
+            product: 'all',
+            market: 'all',
+            rep: 'all',
+            period: 'lifetime'
+        };
+
+        const LABEL_FILTER_LABELS = {
+            all: 'All labels',
+            warner: 'Warner Records',
+            parlophone: 'Parlophone Records'
+        };
+
+        const PERIOD_LABELS = {
+            lifetime: 'Lifetime',
+            calendar_ytd: 'Calendar YTD',
+            financial_ytd: 'Financial YTD',
+            mtd: 'MTD',
+            wtd: 'WTD',
+            prev_week: 'Previous week',
+            prev_month: 'Previous month'
+        };
+
+        const MARKET_KEYS = { uk: 'uk', eu: 'eu', us: 'us', row: 'int' };
+
+        function normalizeCampaignData(report) {
+            const raw = report?.campaign_data;
+            if (!raw) return {};
+            if (typeof raw === 'string') {
+                try { return JSON.parse(raw); } catch (_err) { return {}; }
+            }
+            return raw;
+        }
+
+        function withCampaignData(report) {
+            return { ...report, campaign_data: normalizeCampaignData(report) };
+        }
+
+        // Lightweight index payload — avoids downloading dailyProducts-heavy market blobs.
+        const INDEX_SELECT = [
+            'id',
+            'report_name',
+            'recordLabel:campaign_data->recordLabel',
+            'artistName:campaign_data->artistName',
+            'rep:campaign_data->rep',
+            'setupBy:campaign_data->setupBy',
+            'title:campaign_data->title',
+            'reportSlug:campaign_data->reportSlug',
+            'lastUpdatedAt:campaign_data->lastUpdatedAt',
+            'global:campaign_data->global',
+            'artistRollup:campaign_data->artistRollup',
+            'runtimeVersion:campaign_data->runtimeVersion',
+            'campaignDates:campaign_data->campaignDates',
+            'globalMerch:campaign_data->globalMerch',
+            'indexOverview:campaign_data->indexOverview'
+        ].join(', ');
+
+        function marketsFromIndexOverview(indexOverview) {
+            const o = indexOverview && typeof indexOverview === 'object' ? indexOverview : {};
+            return {
+                uk: o.uk,
+                eu: o.eu,
+                us: o.us,
+                int: o.int
+            };
+        }
+
+        function indexRowToReport(row) {
+            const markets = marketsFromIndexOverview(row.indexOverview);
+            const cd = normalizeCampaignData({
+                campaign_data: {
+                    recordLabel: row.recordLabel,
+                    artistName: row.artistName,
+                    rep: row.rep,
+                    setupBy: row.setupBy,
+                    title: row.title,
+                    reportSlug: row.reportSlug,
+                    lastUpdatedAt: row.lastUpdatedAt,
+                    global: row.global,
+                    artistRollup: row.artistRollup,
+                    runtimeVersion: row.runtimeVersion,
+                    campaignDates: row.campaignDates,
+                    globalMerch: row.globalMerch,
+                    indexOverview: row.indexOverview,
+                    uk: markets.uk,
+                    eu: markets.eu,
+                    us: markets.us,
+                    int: markets.int
+                }
+            });
+            return { id: row.id, report_name: row.report_name, campaign_data: cd };
+        }
+
+        function slugifyReportName(name) {
+            return String(name || 'campaign-report').trim().toLowerCase()
+                .replace(/[^\w\s-]+/g, '').replace(/\s+/g, '-')
+                .replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'campaign-report';
+        }
+
+        function getReportBasePath() {
+            const u = new URL(window.location.href);
+            const parts = u.pathname.split('/').filter(Boolean);
+            if (parts.length && parts[parts.length - 1].endsWith('.html')) parts.pop();
+            return u.origin + (parts.length ? '/' + parts.join('/') : '');
+        }
+
+
+
+
+        function getLiveUrl(report) {
+            const slug = report.campaign_data?.reportSlug || slugifyReportName(report.report_name);
+            return getReportBasePath() + '/' + encodeURIComponent(slug);
+        }
+
+        function normalizeRecordLabel(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function getLabelBucket(recordLabel) {
+            const label = normalizeRecordLabel(recordLabel);
+            if (label.includes('warner')) return 'warner';
+            if (label.includes('parlophone')) return 'parlophone';
+            return '';
+        }
+
+        function isWarnerOrParlophoneReport(report) {
+            return Boolean(getLabelBucket(report?.campaign_data?.recordLabel));
+        }
+
+        function filterReportsByOverviewLabel(reports) {
+            const labelFilter = overviewFilters.label;
+            if (labelFilter === 'all') return reports;
+            return reports.filter(r => getLabelBucket(r.campaign_data?.recordLabel) === labelFilter);
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getRepBucket(rep) {
+            const r = String(rep || '').trim();
+            if (DOMESTIC_REPS.includes(r)) return 'domestic';
+            if (INTERNATIONAL_REPS.includes(r)) return 'international';
+            return 'unassigned';
+        }
+
+        function parseGlobalOrders(global) {
+            if (!global?.orders) return 0;
+            return parseInt(String(global.orders).replace(/[^0-9]/g, ''), 10) || 0;
+        }
+
+        function parseGlobalRevenue(global) {
+            if (!global?.revenue) return 0;
+            return parseFloat(String(global.revenue).replace(/[^0-9.-]/g, '')) || 0;
+        }
+
+        function formatRevenue(value) {
+            if (!value) return '£0.00';
+            return '£' + Number(value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatOrders(value) {
+            return Number(value || 0).toLocaleString();
+        }
+
+        function formatLastUpdated(iso) {
+            if (!iso) return '—';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return '—';
+            return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg || 'Copied to clipboard';
+            el.classList.add('show');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => el.classList.remove('show'), 1800);
+        }
+
+        async function copyText(text, btn) {
+            try {
+                await navigator.clipboard.writeText(text);
+                if (btn) {
+                    const prev = btn.textContent;
+                    btn.textContent = 'Copied';
+                    btn.classList.add('copied');
+                    setTimeout(() => { btn.textContent = prev; btn.classList.remove('copied'); }, 1500);
+                }
+                showToast('URL copied');
+            } catch (_err) {
+                window.prompt('Copy this URL:', text);
+            }
+        }
+
+        function filterReports(query) {
+            const q = String(query || '').trim().toLowerCase();
+            if (!q) return allReports;
+            return allReports.filter(r => {
+                const cd = r.campaign_data || {};
+                const haystack = [
+                    r.report_name,
+                    cd.artistName,
+                    cd.rep,
+                    cd.setupBy,
+                    cd.title
+                ].join(' ').toLowerCase();
+                return haystack.includes(q);
+            });
+        }
+
+        function formatCampaignDates(dates) {
+            const d = dates || {};
+            if (!d.start && !d.end) return 'All uploaded data';
+            if (d.start && d.end) return `${d.start} → ${d.end}`;
+            return d.start ? `From ${d.start}` : `Until ${d.end}`;
+        }
+
+        function renderReportRow(report) {
+            const cd = report.campaign_data || {};
+            const url = getLiveUrl(report);
+            const rep = String(cd.rep || '').trim() || 'Unassigned';
+            const bucket = getRepBucket(cd.rep);
+            const orders = parseGlobalOrders(cd.global);
+            const revenue = parseGlobalRevenue(cd.global);
+            const updated = formatLastUpdated(cd.lastUpdatedAt);
+            const setupBy = String(cd.setupBy || '').trim();
+            const dateRange = formatCampaignDates(cd.campaignDates);
+
+            return `<li class="report-row">
+                <div>
+                    <div class="report-name">${escapeHtml(report.report_name || 'Untitled')}</div>
+                    ${setupBy ? `<div class="report-meta">Set up by ${escapeHtml(setupBy)}</div>` : ''}
+                    <div class="report-meta">Campaign dates: ${escapeHtml(dateRange)}</div>
+                </div>
+                <div><span class="rep-tag ${bucket}">${escapeHtml(rep)}</span></div>
+                <div><span class="metric-label">Orders</span><span class="metric-value">${formatOrders(orders)}</span></div>
+                <div><span class="metric-label">Revenue</span><span class="metric-value revenue">${formatRevenue(revenue)}</span></div>
+                <div>
+                    <span class="metric-label">Last updated</span>
+                    <span class="metric-value">${escapeHtml(updated)}</span>
+                    <div class="row-actions" style="margin-top:0.45rem">
+                        <button type="button" class="atl-btn-sm" data-copy="${encodeURIComponent(url)}">Copy</button>
+                        <a class="atl-btn-sm" href="${url}" target="_blank" rel="noopener">Open</a>
+                    </div>
+                </div>
+            </li>`;
+        }
+
+        function groupByLabelThenRegionThenArtist(reports) {
+            const emptyRegions = () => ({ domestic: {}, international: {}, unassigned: {} });
+            const labels = { warner: emptyRegions(), parlophone: emptyRegions() };
+            const sortByName = (a, b) => String(a.report_name || '').localeCompare(String(b.report_name || ''), undefined, { sensitivity: 'base' });
+
+            reports.forEach(r => {
+                const labelKey = getLabelBucket(r.campaign_data?.recordLabel);
+                if (!labelKey) return;
+                const bucket = getRepBucket(r.campaign_data?.rep);
+                const artist = String(r.campaign_data?.artistName || '').trim() || 'Unknown Artist';
+                if (!labels[labelKey][bucket][artist]) labels[labelKey][bucket][artist] = [];
+                labels[labelKey][bucket][artist].push(r);
+            });
+
+            Object.keys(labels).forEach(labelKey => {
+                Object.keys(labels[labelKey]).forEach(bucket => {
+                    Object.values(labels[labelKey][bucket]).forEach(list => list.sort(sortByName));
+                });
+            });
+
+            return labels;
+        }
+
+        function countLabelReports(labelData) {
+            return ['domestic', 'international', 'unassigned'].reduce((sum, regionKey) => {
+                return sum + countRegionReports(labelData[regionKey] || {});
+            }, 0);
+        }
+
+        function groupByRegionThenArtist(reports) {
+            const regions = { domestic: {}, international: {}, unassigned: {} };
+            const sortByName = (a, b) => String(a.report_name || '').localeCompare(String(b.report_name || ''), undefined, { sensitivity: 'base' });
+
+            reports.forEach(r => {
+                const bucket = getRepBucket(r.campaign_data?.rep);
+                const artist = String(r.campaign_data?.artistName || '').trim() || 'Unknown Artist';
+                if (!regions[bucket][artist]) regions[bucket][artist] = [];
+                regions[bucket][artist].push(r);
+            });
+
+            Object.keys(regions).forEach(bucket => {
+                Object.values(regions[bucket]).forEach(list => list.sort(sortByName));
+            });
+
+            return regions;
+        }
+
+        function countRegionReports(artistMap) {
+            return Object.values(artistMap).reduce((sum, list) => sum + list.length, 0);
+        }
+
+        function parseChartUnits(rollup) {
+            if (!rollup?.chartUnits) return 0;
+            return parseInt(String(rollup.chartUnits).replace(/[^0-9]/g, ''), 10) || 0;
+        }
+
+        function artistNameKey(name) {
+            return String(name || '').trim().toLowerCase();
+        }
+
+        function rollupOrderCount(rollup) {
+            return parseGlobalOrders(rollup);
+        }
+
+        function getArtistRollupFromReports(reports, artistName) {
+            const key = artistNameKey(artistName);
+            if (key && artistRollupByName[key]) return artistRollupByName[key];
+
+            let best = null;
+            let bestOrders = 0;
+            let bestUpdated = 0;
+            for (const r of reports) {
+                const rollup = r.campaign_data?.artistRollup;
+                if (!rollup) continue;
+                const orders = rollupOrderCount(rollup);
+                const updated = Date.parse(r.campaign_data?.lastUpdatedAt || rollup.computedAt || 0) || 0;
+                // Prefer the fullest bank snapshot; tie-break to most recently published.
+                if (orders > bestOrders || (orders === bestOrders && updated > bestUpdated)) {
+                    best = rollup;
+                    bestOrders = orders;
+                    bestUpdated = updated;
+                }
+            }
+            return best;
+        }
+
+        function setLoadStatus(message, isError) {
+            const el = document.getElementById('load-status') || document.getElementById('content');
+            if (!el) return;
+            el.className = 'index-state' + (isError ? ' error' : '');
+            el.textContent = message;
+        }
+
+        function raceTimeout(promise, ms, label) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error((label || 'Request') + ' timed out after ' + ms + 'ms')), ms);
+                })
+            ]);
+        }
+
+        function xhrJsonGet(url, headers, timeoutMs) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.timeout = timeoutMs;
+                Object.entries(headers || {}).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+                xhr.onload = function () {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            resolve(JSON.parse(xhr.responseText || '[]'));
+                        } catch (_err) {
+                            reject(new Error('Invalid JSON returned from database'));
+                        }
+                        return;
+                    }
+                    reject(new Error('HTTP ' + xhr.status + ': ' + String(xhr.responseText || '').slice(0, 200)));
+                };
+                xhr.onerror = function () { reject(new Error('Network error contacting database')); };
+                xhr.ontimeout = function () { reject(new Error('Database request timed out')); };
+                xhr.send();
+            });
+        }
+
+        function fetchWithTimeout(url, options, timeoutMs) {
+            if (typeof XMLHttpRequest !== 'undefined') {
+                const headers = {};
+                Object.entries((options && options.headers) || {}).forEach(([key, value]) => { headers[key] = value; });
+                return xhrJsonGet(url, headers, timeoutMs);
+            }
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            const merged = { ...options, signal: controller.signal };
+            return fetch(url, merged).finally(() => clearTimeout(timer)).then(async (response) => {
+                if (!response.ok) {
+                    const errText = await response.text().catch(() => '');
+                    throw new Error('HTTP ' + response.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+                }
+                return response.json();
+            });
+        }
+
+        async function loadArtistRollupsViaRest() {
+            const headers = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+            const [rollupsRes, artistsRes] = await Promise.all([
+                fetchWithTimeout(SB_URL + '/rest/v1/artist_rollups?select=artist_id,rollup,updated_at', { headers }, 15000),
+                fetchWithTimeout(SB_URL + '/rest/v1/artists?select=id,artist_name', { headers }, 15000)
+            ]);
+            if (!rollupsRes.ok || !artistsRes.ok) return;
+            const rollups = await rollupsRes.json();
+            const artists = await artistsRes.json();
+            const nameById = {};
+            (artists || []).forEach(a => { if (a?.id) nameById[a.id] = a.artist_name; });
+            (rollups || []).forEach(row => {
+                const name = nameById[row.artist_id];
+                const rollup = row.rollup;
+                if (!name || !rollup) return;
+                const key = artistNameKey(name);
+                const existing = artistRollupByName[key];
+                const existingOrders = existing ? rollupOrderCount(existing) : 0;
+                const nextOrders = rollupOrderCount(rollup);
+                const existingUpdated = Date.parse(existing?.computedAt || 0) || 0;
+                const rowUpdated = Date.parse(row.updated_at || rollup.computedAt || 0) || 0;
+                if (!existing || nextOrders > existingOrders || (nextOrders === existingOrders && rowUpdated > existingUpdated)) {
+                    artistRollupByName[key] = rollup;
+                }
+            });
+        }
+
+        async function loadArtistRollups(_client) {
+            artistRollupByName = {};
+            try {
+                await loadArtistRollupsViaRest();
+            } catch (_err) { /* artist_rollups optional */ }
+        }
+
+        function isV2Report(report) {
+            const v = String(report.campaign_data?.runtimeVersion || '').toLowerCase();
+            return v.includes('v2');
+        }
+
+        function renderArtistBlock(artist, reports) {
+            const rows = reports.map(renderReportRow).join('');
+            const rollup = getArtistRollupFromReports(reports, artist);
+            const kpiHtml = rollup
+                ? `<div class="artist-kpis">
+                    <div><span class="metric-label">Store orders</span><span class="metric-value">${formatOrders(parseGlobalOrders(rollup))}</span></div>
+                    <div><span class="metric-label">Store revenue</span><span class="metric-value revenue">${escapeHtml(rollup.revenue || formatRevenue(parseGlobalRevenue(rollup)))}</span></div>
+                    ${rollup.chartUnits ? `<div><span class="metric-label">Music units</span><span class="metric-value">${formatOrders(parseChartUnits(rollup))}</span></div>` : ''}
+                   </div>`
+                : '';
+            return `<details class="artist-accordion">
+                <summary>
+                    <div class="artist-summary-main">
+                        ${ACCORDION_CHEVRON}
+                        <h2>${escapeHtml(artist)}</h2>
+                    </div>
+                    <div class="artist-summary-end">
+                        ${kpiHtml}
+                        <span class="artist-count">${reports.length} report${reports.length === 1 ? '' : 's'}</span>
+                    </div>
+                </summary>
+                <div class="artist-body">
+                    <ul class="report-list">${rows}</ul>
+                </div>
+            </details>`;
+        }
+
+        function renderLabelAccordion(labelKey, title, logoSrc, labelData) {
+            const total = countLabelReports(labelData);
+            const regionsHtml = [
+                renderRegionAccordion('domestic', 'Domestic', 'UK · JV UK Lead reps', labelData.domestic),
+                renderRegionAccordion('international', 'International', 'US · JV US Lead reps', labelData.international)
+            ];
+            if (countRegionReports(labelData.unassigned) > 0) {
+                regionsHtml.push(renderRegionAccordion('unassigned', 'Unassigned rep', 'Reports missing a rep selection', labelData.unassigned));
+            }
+
+            return `<details class="label-accordion ${labelKey}" open>
+                <summary>
+                    <div class="label-summary-main">
+                        ${ACCORDION_CHEVRON}
+                        <img class="label-accordion-logo" src="${logoSrc}" alt="${escapeHtml(title)}" decoding="async">
+                        <span class="label-summary-title">${escapeHtml(title)}</span>
+                    </div>
+                    <div class="summary-end">
+                        <span class="label-count">${total} report${total === 1 ? '' : 's'}</span>
+                    </div>
+                </summary>
+                <div class="label-body">${regionsHtml.join('')}</div>
+            </details>`;
+        }
+
+        function renderRegionAccordion(regionKey, title, subtitle, artistMap) {
+            const total = countRegionReports(artistMap);
+            const artistEntries = Object.entries(artistMap).sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: 'base' }));
+            const body = artistEntries.length
+                ? artistEntries.map(([artist, reps]) => renderArtistBlock(artist, reps)).join('')
+                : '<div class="bucket-empty">No reports in this region.</div>';
+
+            return `<details class="region-accordion ${regionKey}" open>
+                <summary>
+                    <div class="artist-summary-main">
+                        ${ACCORDION_CHEVRON}
+                        <div>
+                            <div>${escapeHtml(title)}</div>
+                            <div class="region-summary-sub">${escapeHtml(subtitle)}</div>
+                        </div>
+                    </div>
+                    <div class="summary-end">
+                        <span class="region-count">${total} report${total === 1 ? '' : 's'}</span>
+                    </div>
+                </summary>
+                <div class="region-body">${body}</div>
+            </details>`;
+        }
+
+        function parseNumericField(value) {
+            if (typeof value === 'number' && !isNaN(value)) return value;
+            return parseFloat(String(value || '0').replace(/[^0-9.-]/g, '')) || 0;
+        }
+
+        function parseIntegerField(value) {
+            if (typeof value === 'number' && !isNaN(value)) return Math.round(value);
+            return parseInt(String(value || '0').replace(/[^0-9]/g, ''), 10) || 0;
+        }
+
+        function parseMarketOrders(mkData) {
+            return parseIntegerField(mkData?.orders);
+        }
+
+        function parseMarketRevenue(mkData) {
+            return parseNumericField(mkData?.revenue);
+        }
+
+        function parseMarketItems(mkData) {
+            return parseIntegerField(mkData?.items);
+        }
+
+        function getMarketsForFilter(marketFilter) {
+            if (marketFilter === 'all') return ['uk', 'eu', 'us', 'int'];
+            return [MARKET_KEYS[marketFilter] || marketFilter];
+        }
+
+        function isoDayKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function getPeriodRange(period) {
+            const now = new Date();
+            const today = isoDayKey(now);
+            switch (period) {
+                case 'calendar_ytd':
+                    return { start: `${now.getFullYear()}-01-01`, end: today };
+                case 'financial_ytd': {
+                    // Financial year: October → September
+                    const fyStartYear = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+                    return { start: `${fyStartYear}-10-01`, end: today };
+                }
+                case 'mtd':
+                    return { start: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`, end: today };
+                case 'wtd': {
+                    const d = new Date(now);
+                    const day = d.getDay();
+                    const diff = day === 0 ? 6 : day - 1;
+                    d.setDate(d.getDate() - diff);
+                    return { start: isoDayKey(d), end: today };
+                }
+                case 'prev_week': {
+                    const d = new Date(now);
+                    const day = d.getDay();
+                    const diff = day === 0 ? 6 : day - 1;
+                    d.setDate(d.getDate() - diff - 7);
+                    const start = isoDayKey(d);
+                    const endDate = new Date(d);
+                    endDate.setDate(endDate.getDate() + 6);
+                    return { start, end: isoDayKey(endDate) };
+                }
+                case 'prev_month': {
+                    const monthIndex = now.getMonth();
+                    const year = monthIndex === 0 ? now.getFullYear() - 1 : now.getFullYear();
+                    const month = monthIndex === 0 ? 12 : monthIndex;
+                    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+                    const lastDay = new Date(year, month, 0);
+                    return { start, end: isoDayKey(lastDay) };
+                }
+                default:
+                    return null;
+            }
+        }
+
+        function pickCanonicalReport(reports) {
+            let best = reports[0] || null;
+            let bestOrders = 0;
+            let bestUpdated = 0;
+            for (const r of reports) {
+                const rollup = r.campaign_data?.artistRollup;
+                const orders = rollup ? rollupOrderCount(rollup) : parseGlobalOrders(r.campaign_data?.global);
+                const updated = Date.parse(r.campaign_data?.lastUpdatedAt || rollup?.computedAt || 0) || 0;
+                if (orders > bestOrders || (orders === bestOrders && updated > bestUpdated)) {
+                    best = r;
+                    bestOrders = orders;
+                    bestUpdated = updated;
+                }
+            }
+            return best;
+        }
+
+        function getArtistRepBucket(reports) {
+            const canonical = pickCanonicalReport(reports);
+            return getRepBucket(canonical?.campaign_data?.rep);
+        }
+
+        function artistPassesRepFilter(reports, repFilter) {
+            if (repFilter === 'all') return true;
+            return getArtistRepBucket(reports) === repFilter;
+        }
+
+        function sliceMarketByPeriod(mkData, range) {
+            if (!range) {
+                return {
+                    orders: parseMarketOrders(mkData),
+                    units: parseMarketItems(mkData),
+                    revenue: parseMarketRevenue(mkData)
+                };
+            }
+            const daily = mkData?.daily || {};
+            let revenue = 0;
+            Object.entries(daily).forEach(([day, rev]) => {
+                if (day >= range.start && day <= range.end) revenue += Number(rev) || 0;
+            });
+            const totalRev = parseMarketRevenue(mkData);
+            const totalItems = parseMarketItems(mkData);
+            const totalOrders = parseMarketOrders(mkData);
+            const ratio = totalRev > 0 ? revenue / totalRev : 0;
+            // Scale orders + units from lifetime totals — dailyUnits only tracks chart-music units, not all items
+            const orders = Math.round(totalOrders * ratio);
+            const units = Math.round(totalItems * ratio);
+            return { orders, units, revenue };
+        }
+
+        function sumMarketItemsAcross(cd, markets) {
+            return markets.reduce((sum, mk) => sum + parseMarketItems(cd?.[mk]), 0);
+        }
+
+        function resolveArtistUnits(rollup, cd, markets) {
+            let units = parseIntegerField(rollup?.items);
+            if (!units) {
+                units = sumMarketItemsAcross(cd, markets);
+            }
+            return units;
+        }
+
+        function getProductSplit(cd) {
+            const gm = cd?.globalMerch || {};
+            const musicRev = Number(gm.musicRev) || 0;
+            const merchRev = Number(gm.merchRev) || 0;
+            const total = musicRev + merchRev || 1;
+            return { musicRatio: musicRev / total, merchRatio: merchRev / total };
+        }
+
+        function applyProductFilter(metrics, productFilter, split) {
+            if (productFilter === 'all') return metrics;
+            const ratio = productFilter === 'music' ? split.musicRatio : split.merchRatio;
+            return {
+                orders: Math.round(metrics.orders * ratio),
+                units: Math.round(metrics.units * ratio),
+                revenue: metrics.revenue * ratio
+            };
+        }
+
+        function computeArtistStoreMetrics(artistName, reports, filters) {
+            if (!artistPassesRepFilter(reports, filters.rep)) return null;
+
+            const rollup = getArtistRollupFromReports(reports, artistName);
+            const canonical = pickCanonicalReport(reports);
+            const cd = canonical?.campaign_data || {};
+            const markets = getMarketsForFilter(filters.market);
+            const range = getPeriodRange(filters.period);
+            const useRollup = filters.period === 'lifetime' && filters.market === 'all';
+
+            let metrics;
+            if (useRollup && rollup) {
+                metrics = {
+                    orders: parseGlobalOrders(rollup),
+                    units: resolveArtistUnits(rollup, cd, ['uk', 'eu', 'us', 'int']),
+                    revenue: parseGlobalRevenue(rollup)
+                };
+            } else {
+                metrics = markets.reduce((acc, mk) => {
+                    const sliced = sliceMarketByPeriod(cd[mk], range);
+                    return {
+                        orders: acc.orders + sliced.orders,
+                        units: acc.units + sliced.units,
+                        revenue: acc.revenue + sliced.revenue
+                    };
+                }, { orders: 0, units: 0, revenue: 0 });
+            }
+
+            const split = getProductSplit(cd);
+            metrics = applyProductFilter(metrics, filters.product, split);
+            if (!metrics.orders && !metrics.units && !metrics.revenue) return null;
+            return { artist: artistName, ...metrics };
+        }
+
+        function parseWeekKeyStart(weekKey) {
+            const m = String(weekKey || '').match(/w\/c\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/i);
+            if (!m) return null;
+            const d = new Date(`${m[2]} ${m[1]}, ${m[3]}T12:00:00`);
+            if (isNaN(d.getTime())) return null;
+            return isoDayKey(d);
+        }
+
+        function weekOverlapsRange(weekKey, range) {
+            if (!range) return true;
+            const start = parseWeekKeyStart(weekKey);
+            if (!start) return false;
+            const endDate = new Date(start + 'T12:00:00');
+            endDate.setDate(endDate.getDate() + 6);
+            const weekEnd = isoDayKey(endDate);
+            return weekEnd >= range.start && start <= range.end;
+        }
+
+        function countDaysInclusive(startKey, endKey) {
+            const start = new Date(startKey + 'T12:00:00');
+            const end = new Date(endKey + 'T12:00:00');
+            if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0;
+            return Math.round((end - start) / 86400000) + 1;
+        }
+
+        function weekOverlapFraction(weekKey, range) {
+            if (!range) return 1;
+            const weekStart = parseWeekKeyStart(weekKey);
+            if (!weekStart) return 0;
+            const endDate = new Date(weekStart + 'T12:00:00');
+            endDate.setDate(endDate.getDate() + 6);
+            const weekEnd = isoDayKey(endDate);
+            const overlapStart = weekStart > range.start ? weekStart : range.start;
+            const overlapEnd = weekEnd < range.end ? weekEnd : range.end;
+            if (overlapStart > overlapEnd) return 0;
+            return countDaysInclusive(overlapStart, overlapEnd) / 7;
+        }
+
+        function classifyProductKind(name) {
+            const u = String(name || '').toUpperCase();
+            if (/T-?SHIRT|TEE\b|HOODIE|SWEATSHIRT|SWEAT\b|POSTER|PRINT\b|HAT\b|CAP\b|BAG\b|APPAREL|JOGGER|BEANIE|PIN\b|PATCH\b|SOCK|JACKET|BALACLAVA|SHORTS|ZIP-UP|ROBE|SCARF|GLOVE|JERSEY|CREWNECK|L\/S|TOTE\b/.test(u)) {
+                return 'merch';
+            }
+            if (/VINYL|CASSETTE|PICTURE DISC|\bCD\b|ALBUM|\bLP\b|BOX SET|BOXSET|\bSINGLE\b|\bEP\b|RECORD|BOOK LP|PICTURE DISC/.test(u) || /7["']/.test(u)) {
+                return 'music';
+            }
+            return 'merch';
+        }
+
+        function buildProductKindLookup(mData) {
+            const lookup = new Map();
+            const setKind = (name, kind) => {
+                const key = String(name || '').trim();
+                if (!key) return;
+                lookup.set(key, kind);
+            };
+            (mData?.topStandoutProducts || mData?.topMusicFormats || []).forEach(entry => {
+                const [name] = Array.isArray(entry) ? entry : [entry?.name, entry];
+                setKind(name, 'music');
+            });
+            (mData?.topMerchProducts || []).forEach(entry => {
+                const [name] = Array.isArray(entry) ? entry : [entry?.name, entry];
+                setKind(name, 'merch');
+            });
+            (mData?.topProducts || []).forEach(entry => {
+                const [name] = Array.isArray(entry) ? entry : [entry?.name, entry];
+                const key = String(name || '').trim();
+                if (key && !lookup.has(key)) setKind(key, classifyProductKind(key));
+            });
+            return lookup;
+        }
+
+        function resolveProductKind(name, mData, lookup) {
+            const key = String(name || '').trim();
+            if (!key) return 'merch';
+            if (classifyProductKind(key) === 'music') return 'music';
+            const map = lookup || buildProductKindLookup(mData);
+            return map.get(key) || classifyProductKind(key);
+        }
+
+        function productMatchesCategory(kind, productFilter) {
+            if (productFilter === 'all') return true;
+            if (productFilter === 'music') return kind === 'music';
+            if (productFilter === 'merch') return kind === 'merch';
+            return true;
+        }
+
+        function getCategoryPeriodRevenue(mData, range, productFilter) {
+            const sliced = sliceMarketByPeriod(mData, range);
+            if (productFilter === 'all') return sliced.revenue;
+            const musicRev = Number(mData?.merch?.musicRev) || 0;
+            const merchRev = Number(mData?.merch?.merchRev) || 0;
+            const total = musicRev + merchRev;
+            if (total <= 0) {
+                const splitRev = sliced.revenue;
+                return productFilter === 'music' ? splitRev * 0.5 : splitRev * 0.5;
+            }
+            const ratio = productFilter === 'music' ? musicRev / total : merchRev / total;
+            return sliced.revenue * ratio;
+        }
+
+        function addProductEntry(products, name, units, revenue, kind, productFilter) {
+            const key = String(name || '').trim();
+            if (!key) return;
+            if (!productMatchesCategory(kind, productFilter)) return;
+            const u = Number(units) || 0;
+            const r = Number(revenue) || 0;
+            if (u <= 0 && r <= 0) return;
+            const prev = products.get(key) || { units: 0, revenue: 0 };
+            products.set(key, { units: prev.units + u, revenue: prev.revenue + r });
+        }
+
+        function forEachLifetimeCatalogProduct(mData, productFilter, fn) {
+            const seen = new Set();
+            const emit = (name, metrics, kind) => {
+                const key = String(name || '').trim();
+                if (!key || seen.has(key)) return;
+                if (!productMatchesCategory(kind, productFilter)) return;
+                seen.add(key);
+                fn(key, Number(metrics?.units) || 0, Number(metrics?.revenue) || 0, kind);
+            };
+
+            if (productFilter === 'music' || productFilter === 'all') {
+                (mData?.topStandoutProducts || mData?.topMusicFormats || []).forEach(entry => {
+                    const [name, metrics] = Array.isArray(entry) ? entry : [entry?.name, entry];
+                    emit(name, metrics, 'music');
+                });
+            }
+
+            if (productFilter === 'merch' || productFilter === 'all') {
+                (mData?.topMerchProducts || []).forEach(entry => {
+                    const [name, metrics] = Array.isArray(entry) ? entry : [entry?.name, entry];
+                    if (classifyProductKind(name) !== 'merch') return;
+                    emit(name, metrics, 'merch');
+                });
+                if (!mData?.topMerchProducts?.length) {
+                    (mData?.topProducts || []).forEach(entry => {
+                        const [name, metrics] = Array.isArray(entry) ? entry : [entry?.name, entry];
+                        const kind = classifyProductKind(name);
+                        if (kind === 'merch') emit(name, metrics, 'merch');
+                    });
+                }
+            }
+
+            if (productFilter === 'all') {
+                (mData?.topProducts || []).forEach(entry => {
+                    const [name, metrics] = Array.isArray(entry) ? entry : [entry?.name, entry];
+                    emit(name, metrics, resolveProductKind(name, mData));
+                });
+            }
+        }
+
+        function collectProductsFromReport(report, filters) {
+            const cd = report?.campaign_data || {};
+            const markets = getMarketsForFilter(filters.market);
+            const range = getPeriodRange(filters.period);
+            const products = new Map();
+            const productFilter = filters.product || 'all';
+
+            if (range) {
+                markets.forEach(mk => {
+                    const mData = cd[mk];
+                    if (!mData) return;
+                    const kindLookup = buildProductKindLookup(mData);
+                    Object.entries(mData.dailyProducts || {}).forEach(([day, prods]) => {
+                        if (day < range.start || day > range.end) return;
+                        Object.entries(prods || {}).forEach(([name, metrics]) => {
+                            const kind = metrics?.kind || resolveProductKind(name, mData, kindLookup);
+                            addProductEntry(products, name, metrics?.units, metrics?.revenue, kind, productFilter);
+                        });
+                    });
+                });
+
+                if (products.size > 0) return products;
+
+                const periodProducts = new Map();
+
+                markets.forEach(mk => {
+                    const mData = cd[mk];
+                    if (!mData) return;
+                    const kindLookup = buildProductKindLookup(mData);
+
+                    Object.entries(mData.weeklyProductUnits || {}).forEach(([weekKey, prods]) => {
+                        if (!weekOverlapsRange(weekKey, range)) return;
+                        const fraction = weekOverlapFraction(weekKey, range);
+                        if (fraction <= 0) return;
+                        Object.entries(prods || {}).forEach(([name, raw]) => {
+                            const units = (typeof raw === 'number' ? (Number(raw) || 0) : (Number(raw?.units) || 0)) * fraction;
+                            const revenue = (typeof raw === 'object' && raw !== null ? (Number(raw?.revenue) || 0) : 0) * fraction;
+                            const kind = typeof raw === 'object' && raw?.kind
+                                ? raw.kind
+                                : resolveProductKind(name, mData, kindLookup);
+                            if (!productMatchesCategory(kind, productFilter)) return;
+                            if (units <= 0 && revenue <= 0) return;
+                            const prev = periodProducts.get(name) || { units: 0, revenue: 0, kind };
+                            periodProducts.set(name, {
+                                units: prev.units + units,
+                                revenue: prev.revenue + revenue,
+                                kind
+                            });
+                        });
+                    });
+                });
+
+                const hasWeeklyRevenue = Array.from(periodProducts.values()).some(m => m.revenue > 0);
+
+                if (hasWeeklyRevenue) {
+                    periodProducts.forEach((metrics, name) => {
+                        addProductEntry(products, name, metrics.units, metrics.revenue, metrics.kind, productFilter);
+                    });
+                    return products;
+                }
+
+                let categoryPeriodRev = 0;
+                let totalPeriodUnits = 0;
+                periodProducts.forEach(m => { totalPeriodUnits += m.units; });
+                markets.forEach(mk => {
+                    const mData = cd[mk];
+                    if (!mData) return;
+                    categoryPeriodRev += getCategoryPeriodRevenue(mData, range, productFilter);
+                });
+
+                if (periodProducts.size > 0 && totalPeriodUnits > 0 && categoryPeriodRev > 0) {
+                    periodProducts.forEach((metrics, name) => {
+                        const share = metrics.units / totalPeriodUnits;
+                        addProductEntry(products, name, metrics.units, categoryPeriodRev * share, metrics.kind, productFilter);
+                    });
+                }
+
+                return products;
+            }
+
+            markets.forEach(mk => {
+                const mData = cd[mk];
+                if (!mData) return;
+                forEachLifetimeCatalogProduct(mData, productFilter, (name, units, revenue, kind) => {
+                    addProductEntry(products, name, units, revenue, kind, productFilter);
+                });
+            });
+
+            return products;
+        }
+
+        function findStarProduct(artistGroups, filters) {
+            let best = null;
+            const range = getPeriodRange(filters.period);
+            Object.entries(artistGroups).forEach(([artist, reports]) => {
+                if (!artistPassesRepFilter(reports, filters.rep)) return;
+                const canonical = pickCanonicalReport(reports);
+                const products = collectProductsFromReport(canonical, filters);
+                products.forEach((metrics, name) => {
+                    if (metrics.revenue <= 0) return;
+                    if (range && metrics.units <= 0 && metrics.revenue <= 0) return;
+                    if (!best || metrics.revenue > best.revenue) {
+                        best = { name, artist, revenue: metrics.revenue, units: metrics.units };
+                    }
+                });
+            });
+            return best;
+        }
+
+        function buildArtistGroups(reports) {
+            const groups = {};
+            reports.forEach(r => {
+                const artist = String(r.campaign_data?.artistName || '').trim() || 'Unknown Artist';
+                if (!groups[artist]) groups[artist] = [];
+                groups[artist].push(r);
+            });
+            return groups;
+        }
+
+        function computeOverview(reports, filters) {
+            const artistGroups = buildArtistGroups(reports);
+            const stores = [];
+
+            Object.entries(artistGroups).forEach(([artist, artistReports]) => {
+                const metrics = computeArtistStoreMetrics(artist, artistReports, filters);
+                if (metrics) stores.push(metrics);
+            });
+
+            const totals = stores.reduce((acc, s) => ({
+                orders: acc.orders + s.orders,
+                units: acc.units + s.units,
+                revenue: acc.revenue + s.revenue
+            }), { orders: 0, units: 0, revenue: 0 });
+
+            const star = safeFindStarProduct(artistGroups, filters);
+            const topStores = stores.slice().sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+
+            return { totals, star, topStores, storeCount: stores.length };
+        }
+
+        function safeFindStarProduct(artistGroups, filters) {
+            try {
+                return findStarProduct(artistGroups, filters);
+            } catch (err) {
+                console.error('Star product calculation failed:', err);
+                return null;
+            }
+        }
+
+        function renderTopStoresTable(topStores) {
+            if (!topStores.length) {
+                return '<div class="atl-top-stores-empty">No store data for the selected filters.</div>';
+            }
+            const rows = topStores.map((store, i) => `<tr>
+                <td><span class="rank">${i + 1}</span><span class="artist-name">${escapeHtml(store.artist)}</span></td>
+                <td>${formatOrders(store.orders)}</td>
+                <td>${formatOrders(store.units)}</td>
+                <td>${formatRevenue(store.revenue)}</td>
+            </tr>`).join('');
+            return `<table class="atl-top-stores-table">
+                <thead><tr>
+                    <th>Artist</th>
+                    <th>Orders</th>
+                    <th>Units</th>
+                    <th>Total net revenue</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+        }
+
+        function renderOverview(reports) {
+            const filters = overviewFilters;
+            const scopedReports = filterReportsByOverviewLabel(reports);
+            const { totals, star, topStores, storeCount } = computeOverview(scopedReports, filters);
+
+            document.getElementById('kpi-overview-orders').textContent = formatOrders(totals.orders);
+            document.getElementById('kpi-overview-units').textContent = formatOrders(totals.units);
+            document.getElementById('kpi-overview-revenue').textContent = formatRevenue(totals.revenue);
+            document.getElementById('kpi-overview-star').textContent = star
+                ? `${star.artist} — ${star.name} (${formatRevenue(star.revenue)})`
+                : '—';
+
+            const parts = [];
+            if (filters.label !== 'all') parts.push(LABEL_FILTER_LABELS[filters.label] || filters.label);
+            if (filters.rep !== 'all') parts.push(filters.rep === 'domestic' ? 'Domestic reps' : 'International reps');
+            if (filters.market !== 'all') parts.push(filters.market === 'row' ? 'ROW' : filters.market.toUpperCase());
+            if (filters.product !== 'all') parts.push(filters.product === 'music' ? 'Music' : 'Merch');
+            parts.push(PERIOD_LABELS[filters.period] || 'Lifetime');
+            document.getElementById('overview-period-label').textContent =
+                `${storeCount} store${storeCount === 1 ? '' : 's'} · ${parts.join(' · ')}`;
+
+            document.getElementById('top-stores-body').innerHTML = renderTopStoresTable(topStores);
+        }
+
+        function readOverviewFiltersFromDom() {
+            overviewFilters.label = document.getElementById('filter-label').value;
+            overviewFilters.product = document.getElementById('filter-product').value;
+            overviewFilters.market = document.getElementById('filter-market').value;
+            overviewFilters.rep = document.getElementById('filter-rep').value;
+            overviewFilters.period = document.getElementById('filter-period').value;
+        }
+
+        function onOverviewFilterChange() {
+            readOverviewFiltersFromDom();
+            renderOverview(allReports);
+        }
+
+        function renderIndex(reports) {
+            const content = document.getElementById('content');
+            const countLabel = document.getElementById('count-label');
+            const portfolioTotal = allReports.length;
+            countLabel.textContent = reports.length === portfolioTotal
+                ? `${reports.length} report${reports.length === 1 ? '' : 's'}`
+                : `${reports.length} of ${portfolioTotal} reports`;
+
+            if (!reports.length) {
+                content.innerHTML = '<div class="index-state">No Warner or Parlophone reports found. Set <strong>Record label</strong> to Warner Records or Parlophone in Admin and publish a campaign.</div>';
+                renderOverview(allReports);
+                return;
+            }
+
+            const labels = groupByLabelThenRegionThenArtist(reports);
+            const html = [];
+            if (countLabelReports(labels.warner) > 0) {
+                html.push(renderLabelAccordion('warner', LABEL_KEYS.warner, 'assets/warner-records-logo.png', labels.warner));
+            }
+            if (countLabelReports(labels.parlophone) > 0) {
+                html.push(renderLabelAccordion('parlophone', LABEL_KEYS.parlophone, 'assets/parlophone-logo.png', labels.parlophone));
+            }
+            if (!html.length) {
+                content.innerHTML = '<div class="index-state">No Warner or Parlophone reports matched your search.</div>';
+                renderOverview(allReports);
+                return;
+            }
+
+            content.innerHTML = html.join('');
+            content.querySelectorAll('[data-copy]').forEach(btn => {
+                btn.addEventListener('click', () => copyText(decodeURIComponent(btn.getAttribute('data-copy')), btn));
+            });
+            setTimeout(() => {
+                try {
+                    renderOverview(allReports);
+                } catch (overviewErr) {
+                    console.error('Overview render failed:', overviewErr);
+                }
+            }, 0);
+        }
+
+        async function fetchReportsFromDb() {
+            const headers = { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY };
+            const url = SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(INDEX_SELECT) + '&order=report_name.asc';
+            return raceTimeout(fetchWithTimeout(url, { headers }, 30000), 35000, 'Report fetch');
+        }
+
+        async function loadReports() {
+            setLoadStatus('Fetching Warner & Parlophone reports…');
+            const countLabel = document.getElementById('count-label');
+            if (countLabel) countLabel.textContent = 'Loading…';
+            try {
+                loadArtistRollups(null).catch(() => {});
+                const data = await fetchReportsFromDb();
+                allReports = (Array.isArray(data) ? data : []).map(indexRowToReport).filter(isWarnerOrParlophoneReport);
+                if (!allReports.length) {
+                    setLoadStatus('No Warner or Parlophone reports found. Set Record label in Admin and publish a campaign.', true);
+                    if (countLabel) countLabel.textContent = '0 reports';
+                    return;
+                }
+                setLoadStatus('Rendering ' + allReports.length + ' reports…');
+                renderIndex(filterReports(document.getElementById('search')?.value || ''));
+            } catch (err) {
+                setLoadStatus('Could not load reports: ' + (err.message || 'Network error'), true);
+                if (countLabel) countLabel.textContent = 'Error';
+                console.error('Warner/Parlophone index load failed:', err);
+            }
+        }
+
+        function initWarnerParlophoneIndex() {
+            try {
+                const refreshBtn = document.getElementById('btn-refresh');
+                if (refreshBtn) refreshBtn.addEventListener('click', loadReports);
+                const searchEl = document.getElementById('search');
+                if (searchEl) searchEl.addEventListener('input', (e) => renderIndex(filterReports(e.target.value)));
+                ['filter-label', 'filter-product', 'filter-market', 'filter-rep', 'filter-period'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.addEventListener('change', onOverviewFilterChange);
+                });
+                loadReports();
+            } catch (err) {
+                setLoadStatus('Failed to start index: ' + (err.message || err), true);
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initWarnerParlophoneIndex);
+        } else {
+            initWarnerParlophoneIndex();
+        }
+    </script>
+</body>
+</html>
