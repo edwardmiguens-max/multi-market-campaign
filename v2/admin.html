@@ -5781,6 +5781,25 @@ VISUALIZE sessions TYPE horizontal_bar`
                     return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, topMerchProducts: topMerchProductsArr, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: d.dailyProducts || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
+                const slimDailyProductsForIndex = (dailyProducts) => {
+                    const out = {};
+                    Object.entries(dailyProducts || {}).forEach(([day, prods]) => {
+                        const dayOut = {};
+                        Object.entries(prods || {}).forEach(([name, m]) => {
+                            const units = Number(m?.units) || 0;
+                            const revenue = Number(m?.revenue) || 0;
+                            if (units <= 0 && revenue <= 0) return;
+                            dayOut[name] = {
+                                units,
+                                revenue,
+                                kind: m?.kind === 'music' ? 'music' : 'merch'
+                            };
+                        });
+                        if (Object.keys(dayOut).length) out[day] = dayOut;
+                    });
+                    return out;
+                };
+
                 const buildIndexOverview = () => {
                     const out = {};
                     ['uk', 'eu', 'us', 'int'].forEach(prefix => {
@@ -5795,7 +5814,8 @@ VISUALIZE sessions TYPE horizontal_bar`
                             topStandoutProducts: seg.topStandoutProducts || [],
                             topMusicFormats: seg.topMusicFormats || [],
                             topMerchProducts: seg.topMerchProducts || [],
-                            weeklyProductUnits: seg.weeklyProductUnits || {}
+                            weeklyProductUnits: seg.weeklyProductUnits || {},
+                            dailyProducts: slimDailyProductsForIndex(seg.dailyProducts)
                         };
                     });
                     return out;

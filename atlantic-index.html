@@ -619,6 +619,8 @@
                         <option value="financial_ytd">Financial YTD</option>
                         <option value="mtd">MTD</option>
                         <option value="wtd">WTD</option>
+                        <option value="prev_week">Previous week</option>
+                        <option value="prev_month">Previous month</option>
                     </select>
                 </div>
             </div>
@@ -706,7 +708,9 @@
             calendar_ytd: 'Calendar YTD',
             financial_ytd: 'Financial YTD',
             mtd: 'MTD',
-            wtd: 'WTD'
+            wtd: 'WTD',
+            prev_week: 'Previous week',
+            prev_month: 'Previous month'
         };
 
         const MARKET_KEYS = { uk: 'uk', eu: 'eu', us: 'us', row: 'int' };
@@ -1172,6 +1176,24 @@
                     d.setDate(d.getDate() - diff);
                     return { start: isoDayKey(d), end: today };
                 }
+                case 'prev_week': {
+                    const d = new Date(now);
+                    const day = d.getDay();
+                    const diff = day === 0 ? 6 : day - 1;
+                    d.setDate(d.getDate() - diff - 7);
+                    const start = isoDayKey(d);
+                    const endDate = new Date(d);
+                    endDate.setDate(endDate.getDate() + 6);
+                    return { start, end: isoDayKey(endDate) };
+                }
+                case 'prev_month': {
+                    const monthIndex = now.getMonth();
+                    const year = monthIndex === 0 ? now.getFullYear() - 1 : now.getFullYear();
+                    const month = monthIndex === 0 ? 12 : monthIndex;
+                    const start = `${year}-${String(month).padStart(2, '0')}-01`;
+                    const lastDay = new Date(year, month, 0);
+                    return { start, end: isoDayKey(lastDay) };
+                }
                 default:
                     return null;
             }
@@ -1307,6 +1329,26 @@
             endDate.setDate(endDate.getDate() + 6);
             const weekEnd = isoDayKey(endDate);
             return weekEnd >= range.start && start <= range.end;
+        }
+
+        function countDaysInclusive(startKey, endKey) {
+            const start = new Date(startKey + 'T12:00:00');
+            const end = new Date(endKey + 'T12:00:00');
+            if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0;
+            return Math.round((end - start) / 86400000) + 1;
+        }
+
+        function weekOverlapFraction(weekKey, range) {
+            if (!range) return 1;
+            const weekStart = parseWeekKeyStart(weekKey);
+            if (!weekStart) return 0;
+            const endDate = new Date(weekStart + 'T12:00:00');
+            endDate.setDate(endDate.getDate() + 6);
+            const weekEnd = isoDayKey(endDate);
+            const overlapStart = weekStart > range.start ? weekStart : range.start;
+            const overlapEnd = weekEnd < range.end ? weekEnd : range.end;
+            if (overlapStart > overlapEnd) return 0;
+            return countDaysInclusive(overlapStart, overlapEnd) / 7;
         }
 
         function classifyProductKind(name) {
@@ -1455,9 +1497,11 @@
 
                     Object.entries(mData.weeklyProductUnits || {}).forEach(([weekKey, prods]) => {
                         if (!weekOverlapsRange(weekKey, range)) return;
+                        const fraction = weekOverlapFraction(weekKey, range);
+                        if (fraction <= 0) return;
                         Object.entries(prods || {}).forEach(([name, raw]) => {
-                            const units = typeof raw === 'number' ? (Number(raw) || 0) : (Number(raw?.units) || 0);
-                            const revenue = typeof raw === 'object' && raw !== null ? (Number(raw?.revenue) || 0) : 0;
+                            const units = (typeof raw === 'number' ? (Number(raw) || 0) : (Number(raw?.units) || 0)) * fraction;
+                            const revenue = (typeof raw === 'object' && raw !== null ? (Number(raw?.revenue) || 0) : 0) * fraction;
                             const kind = typeof raw === 'object' && raw?.kind
                                 ? raw.kind
                                 : resolveProductKind(name, mData, kindLookup);
@@ -1521,7 +1565,7 @@
                 const products = collectProductsFromReport(canonical, filters);
                 products.forEach((metrics, name) => {
                     if (metrics.revenue <= 0) return;
-                    if (range && metrics.units <= 0) return;
+                    if (range && metrics.units <= 0 && metrics.revenue <= 0) return;
                     if (!best || metrics.revenue > best.revenue) {
                         best = { name, artist, revenue: metrics.revenue, units: metrics.units };
                     }
