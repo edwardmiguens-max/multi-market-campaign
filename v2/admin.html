@@ -3011,7 +3011,14 @@ VISUALIZE sessions TYPE horizontal_bar`
                 const prods = {};
                 Object.entries(bucket.products || {}).forEach(([name, metrics]) => {
                     const units = Math.round(Number(metrics?.units) || 0);
-                    if(units > 0) prods[name] = units;
+                    const revenue = Number(metrics?.revenue) || 0;
+                    if(units > 0 || revenue > 0) {
+                        prods[name] = {
+                            units,
+                            revenue,
+                            kind: metrics?.kind === 'music' ? 'music' : 'merch'
+                        };
+                    }
                 });
                 if(Object.keys(prods).length) out[weekKey] = prods;
             });
@@ -3292,13 +3299,13 @@ VISUALIZE sessions TYPE horizontal_bar`
             if (/t-?shirt|tee\b|hoodie|sweat|poster|print|hat\b|cap\b|bag\b|merch|apparel|joggers|beanie|pin\b|patch\b|sock|jacket|balaclava/.test(pt)) {
                 return { isMusic: false, isMerch: true };
             }
-            if (/vinyl|cd|cassette|album|single|\bep\b|music|\blp\b|record|picture disc/.test(pt)) {
+            if (/vinyl|cd|cassette|album|single|\bep\b|music|\blp\b|record|picture disc|box set|boxset/.test(pt)) {
                 return { isMusic: true, isMerch: false };
             }
             if (/BADGE|TOTE|TEE|SHIRT|HOODIE|JOGGER|POSTER|PATCH|BALACLAVA|BEANIE|CAP\b|HAT\b/.test(upperName)) {
                 return { isMusic: false, isMerch: true };
             }
-            if (upperName.includes('VINYL') || upperName.includes('CASSETTE') || upperName.includes('PICTURE DISC') || /\bCD\b/.test(upperName) || /\bEP\b/.test(upperName) || upperName.includes('ALBUM')) {
+            if (upperName.includes('VINYL') || upperName.includes('CASSETTE') || upperName.includes('PICTURE DISC') || /\bCD\b/.test(upperName) || /\bEP\b/.test(upperName) || upperName.includes('ALBUM') || upperName.includes('BOX SET') || upperName.includes('BOXSET')) {
                 return { isMusic: true, isMerch: false };
             }
             return { isMusic: false, isMerch: true };
@@ -4870,9 +4877,10 @@ VISUALIZE sessions TYPE horizontal_bar`
                     storeData[tMk].daily[dayKey] += rev;
                     if(hasProductTitle) {
                         if(!storeData[tMk].dailyProducts[dayKey]) storeData[tMk].dailyProducts[dayKey] = {};
-                        if(!storeData[tMk].dailyProducts[dayKey][name]) storeData[tMk].dailyProducts[dayKey][name] = { units: 0, revenue: 0 };
+                        if(!storeData[tMk].dailyProducts[dayKey][name]) storeData[tMk].dailyProducts[dayKey][name] = { units: 0, revenue: 0, kind: isMusic ? 'music' : 'merch' };
                         storeData[tMk].dailyProducts[dayKey][name].units += derivedQty;
                         storeData[tMk].dailyProducts[dayKey][name].revenue += rev;
+                        storeData[tMk].dailyProducts[dayKey][name].kind = isMusic ? 'music' : 'merch';
                     }
                 }
                 const countsForChart = isMusic && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts);
@@ -4893,10 +4901,11 @@ VISUALIZE sessions TYPE horizontal_bar`
                 cmpBucket.revenue += rev;
                 cmpBucket.units += derivedQty;
                 if(id) cmpBucket.orders.add(id);
-                if(countsForChart && derivedQty) {
-                    if(!cmpBucket.products[name]) cmpBucket.products[name] = { units: 0, revenue: 0 };
+                if(hasProductTitle && derivedQty) {
+                    if(!cmpBucket.products[name]) cmpBucket.products[name] = { units: 0, revenue: 0, kind: isMusic ? 'music' : 'merch' };
                     cmpBucket.products[name].units += derivedQty;
                     cmpBucket.products[name].revenue += rev;
+                    cmpBucket.products[name].kind = isMusic ? 'music' : 'merch';
                 }
 
                 if(isMusic) {
@@ -5751,9 +5760,10 @@ VISUALIZE sessions TYPE horizontal_bar`
                     const chartMode = getCampaignChartMode();
                     const standoutSectionTitle = getStandoutSectionTitle(chartMode);
                     const topStandoutProducts = Object.entries(d.musicProducts).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5);
+                    const topMerchProductsArr = Object.entries(d.merchProducts || {}).sort((a,b)=>(b[1]?.revenue || 0)-(a[1]?.revenue || 0)).slice(0,5).map(([pName, metrics]) => [pName, { units: metrics?.units || 0, revenue: metrics?.revenue || 0 }]);
                     const euTopCountries = prefix === 'eu' ? getEuTopCountriesForDisplay() : undefined;
                     const intTopCountries = prefix === 'int' ? getIntTopCountriesForDisplay() : undefined;
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: d.dailyProducts || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, topMerchProducts: topMerchProductsArr, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: d.dailyProducts || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);
