@@ -705,7 +705,24 @@
             return { ...report, campaign_data: normalizeCampaignData(report) };
         }
 
-        // Index only needs metadata — not full campaign payloads (store CSVs, etc.)
+        // Pull only index-needed market fields — not dailyProducts / full market blobs (too large after republish).
+        const MARKET_SEGMENTS = ['uk', 'eu', 'us', 'int'];
+
+        function marketIndexSelectFields(prefix) {
+            const path = `campaign_data->${prefix}`;
+            return [
+                `${prefix}Revenue:${path}->revenue`,
+                `${prefix}Items:${path}->items`,
+                `${prefix}Orders:${path}->orders`,
+                `${prefix}Daily:${path}->daily`,
+                `${prefix}Merch:${path}->merch`,
+                `${prefix}TopProducts:${path}->topProducts`,
+                `${prefix}TopStandout:${path}->topStandoutProducts`,
+                `${prefix}TopMerch:${path}->topMerchProducts`,
+                `${prefix}WeeklyPU:${path}->weeklyProductUnits`
+            ];
+        }
+
         const INDEX_SELECT = [
             'id',
             'report_name',
@@ -722,12 +739,29 @@
             'campaignDates:campaign_data->campaignDates',
             'bankedQuarters:campaign_data->bankedQuarters',
             'activeQuarter:campaign_data->activeQuarter',
-            'uk:campaign_data->uk',
-            'eu:campaign_data->eu',
-            'us:campaign_data->us',
-            'int:campaign_data->int',
+            ...MARKET_SEGMENTS.flatMap(marketIndexSelectFields),
             'globalMerch:campaign_data->globalMerch'
         ].join(', ');
+
+        function assembleMarketSegment(row, prefix) {
+            const revenue = row[`${prefix}Revenue`];
+            const daily = row[`${prefix}Daily`];
+            const topProducts = row[`${prefix}TopProducts`];
+            const topStandout = row[`${prefix}TopStandout`];
+            if (revenue == null && !daily && !topProducts && !topStandout) return undefined;
+            return {
+                revenue: revenue ?? '£0.00',
+                items: row[`${prefix}Items`] ?? '0',
+                orders: row[`${prefix}Orders`] ?? '0',
+                daily: daily || {},
+                merch: row[`${prefix}Merch`] || {},
+                topProducts: topProducts || [],
+                topStandoutProducts: topStandout || [],
+                topMusicFormats: topStandout || [],
+                topMerchProducts: row[`${prefix}TopMerch`] || [],
+                weeklyProductUnits: row[`${prefix}WeeklyPU`] || {}
+            };
+        }
 
         function indexRowToReport(row) {
             const cd = normalizeCampaignData({
@@ -745,10 +779,10 @@
                     campaignDates: row.campaignDates,
                     bankedQuarters: row.bankedQuarters,
                     activeQuarter: row.activeQuarter,
-                    uk: row.uk,
-                    eu: row.eu,
-                    us: row.us,
-                    int: row.int,
+                    uk: assembleMarketSegment(row, 'uk'),
+                    eu: assembleMarketSegment(row, 'eu'),
+                    us: assembleMarketSegment(row, 'us'),
+                    int: assembleMarketSegment(row, 'int'),
                     globalMerch: row.globalMerch
                 }
             });
@@ -1285,12 +1319,12 @@
             return lookup;
         }
 
-        function resolveProductKind(name, mData) {
+        function resolveProductKind(name, mData, lookup) {
             const key = String(name || '').trim();
             if (!key) return 'merch';
             if (classifyProductKind(key) === 'music') return 'music';
-            const lookup = buildProductKindLookup(mData);
-            return lookup.get(key) || classifyProductKind(key);
+            const map = lookup || buildProductKindLookup(mData);
+            return map.get(key) || classifyProductKind(key);
         }
 
         function productMatchesCategory(kind, productFilter) {
@@ -1376,10 +1410,11 @@
                 markets.forEach(mk => {
                     const mData = cd[mk];
                     if (!mData) return;
+                    const kindLookup = buildProductKindLookup(mData);
                     Object.entries(mData.dailyProducts || {}).forEach(([day, prods]) => {
                         if (day < range.start || day > range.end) return;
                         Object.entries(prods || {}).forEach(([name, metrics]) => {
-                            const kind = metrics?.kind || resolveProductKind(name, mData);
+                            const kind = metrics?.kind || resolveProductKind(name, mData, kindLookup);
                             addProductEntry(products, name, metrics?.units, metrics?.revenue, kind, productFilter);
                         });
                     });
@@ -1392,6 +1427,7 @@
                 markets.forEach(mk => {
                     const mData = cd[mk];
                     if (!mData) return;
+                    const kindLookup = buildProductKindLookup(mData);
 
                     Object.entries(mData.weeklyProductUnits || {}).forEach(([weekKey, prods]) => {
                         if (!weekOverlapsRange(weekKey, range)) return;
@@ -1400,7 +1436,7 @@
                             const revenue = typeof raw === 'object' && raw !== null ? (Number(raw?.revenue) || 0) : 0;
                             const kind = typeof raw === 'object' && raw?.kind
                                 ? raw.kind
-                                : resolveProductKind(name, mData);
+                                : resolveProductKind(name, mData, kindLookup);
                             if (!productMatchesCategory(kind, productFilter)) return;
                             if (units <= 0 && revenue <= 0) return;
                             const prev = periodProducts.get(name) || { units: 0, revenue: 0, kind };
@@ -1589,6 +1625,8 @@
         async function loadReports() {
             const content = document.getElementById('content');
             content.innerHTML = '<div class="index-state">Loading Atlantic reports from database…</div>';
+            const controller = new AbortController();
+            const loadTimeout = setTimeout(() => controller.abort(), 120000);
             try {
                 let data = null;
                 if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
@@ -1600,15 +1638,21 @@
                 } else {
                     await loadArtistRollups(null);
                     const response = await fetch(SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(INDEX_SELECT) + '&order=report_name.asc', {
-                        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+                        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
+                        signal: controller.signal
                     });
                     if (!response.ok) throw new Error('HTTP ' + response.status);
                     data = await response.json();
                 }
+                clearTimeout(loadTimeout);
                 allReports = (data || []).map(indexRowToReport).filter(r => String(r.campaign_data?.recordLabel || '').trim().toLowerCase() === LABEL_FILTER);
                 renderIndex(filterReports(document.getElementById('search').value));
             } catch (err) {
-                content.innerHTML = `<div class="index-state error">Could not load reports.<br><span style="font-size:0.75rem">${escapeHtml(err.message || 'Network error')}</span></div>`;
+                clearTimeout(loadTimeout);
+                const msg = err.name === 'AbortError'
+                    ? 'Request timed out — the database response was too large. Try refreshing in a moment.'
+                    : (err.message || 'Network error');
+                content.innerHTML = `<div class="index-state error">Could not load reports.<br><span style="font-size:0.75rem">${escapeHtml(msg)}</span></div>`;
                 document.getElementById('count-label').textContent = 'Error';
             }
         }
