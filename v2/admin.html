@@ -797,10 +797,10 @@
                 }
 
                 var dates = old.campaignDates || (old.comparison && old.comparison.selectedFilters && old.comparison.selectedFilters.campaignDates) || {};
-                if (!window.__hasCsvData) {
-                    bootSetVal('input-campaign-start', dates.start || '');
-                    bootSetVal('input-campaign-end', dates.end || '');
+                bootSetVal('input-campaign-start', dates.start || '');
+                bootSetVal('input-campaign-end', dates.end || '');
 
+                if (!window.__hasCsvData) {
                     if (old.comparison && old.comparison.selectedFilters) {
                         var sf = old.comparison.selectedFilters;
                         ['uk', 'eu', 'us', 'int'].forEach(function (mk) {
@@ -2261,6 +2261,22 @@ VISUALIZE sessions TYPE horizontal_bar`
             start: document.getElementById('input-campaign-start')?.value || '',
             end: document.getElementById('input-campaign-end')?.value || ''
         });
+        function getSavedCampaignDates(old) {
+            if (!old || typeof old !== 'object') return { start: '', end: '' };
+            const dates = old.campaignDates || old.comparison?.selectedFilters?.campaignDates || {};
+            return {
+                start: dates.start || '',
+                end: dates.end || ''
+            };
+        }
+        function applySavedCampaignDates(old) {
+            const { start, end } = getSavedCampaignDates(old);
+            const startEl = document.getElementById('input-campaign-start');
+            const endEl = document.getElementById('input-campaign-end');
+            if (startEl) startEl.value = start;
+            if (endEl) endEl.value = end;
+            if (typeof renderMonthCoverage === 'function') renderMonthCoverage();
+        }
         function applyCampaignDatesFromFilename(dateMatches, forceUpdate = false) {
             if(!dateMatches || dateMatches.length < 2) return;
             const startEl = document.getElementById('input-campaign-start');
@@ -4517,6 +4533,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             if (document.getElementById('input-title')) document.getElementById('input-title').value = old.title || 'GLOBAL ROLLUP REPORT';
             if (document.getElementById('display-title')) document.getElementById('display-title').textContent = old.title || 'GLOBAL ROLLUP REPORT';
             applyLastUpdatedDisplay(old.lastUpdatedAt || null);
+            applySavedCampaignDates(old);
 
             if (Array.isArray(old.campaignChartProducts)) setCampaignChartProducts(old.campaignChartProducts);
             else setCampaignChartProducts([]);
@@ -4541,9 +4558,6 @@ VISUALIZE sessions TYPE horizontal_bar`
                     if (document.getElementById('input-period-to')) document.getElementById('input-period-to').value = sf.to || '';
                     if (usMarketEl && sf.storeHasUsMarket !== undefined) usMarketEl.checked = sf.storeHasUsMarket !== false;
                 }
-                const loadedCampaignDates = old.campaignDates || old.comparison?.selectedFilters?.campaignDates || {};
-                if (document.getElementById('input-campaign-start')) document.getElementById('input-campaign-start').value = loadedCampaignDates.start || '';
-                if (document.getElementById('input-campaign-end')) document.getElementById('input-campaign-end').value = loadedCampaignDates.end || '';
                 lastPublishedSalesMonths = Array.isArray(old.salesMonthsCovered) ? old.salesMonthsCovered.slice() : [];
                 renderMonthCoverage();
             }
@@ -4617,6 +4631,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             setSalesforcePriorUnits(old.salesforcePriorUnits || null, false);
 
             rebuildCsvFromBank().then(() => {
+            applySavedCampaignDates(old);
             if (hasLiveCsvUpload()) {
                 runDataAggregation();
             } else {
