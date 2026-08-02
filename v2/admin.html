@@ -5766,6 +5766,26 @@ VISUALIZE sessions TYPE horizontal_bar`
                     return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, topMerchProducts: topMerchProductsArr, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: d.dailyProducts || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
+                const buildIndexOverview = () => {
+                    const out = {};
+                    ['uk', 'eu', 'us', 'int'].forEach(prefix => {
+                        const seg = packageMarketSegment(prefix);
+                        if (!seg) return;
+                        out[prefix] = {
+                            revenue: seg.revenue,
+                            items: seg.items,
+                            orders: seg.orders,
+                            daily: seg.daily || {},
+                            merch: seg.merch || {},
+                            topStandoutProducts: seg.topStandoutProducts || [],
+                            topMusicFormats: seg.topMusicFormats || [],
+                            topMerchProducts: seg.topMerchProducts || [],
+                            weeklyProductUnits: seg.weeklyProductUnits || {}
+                        };
+                    });
+                    return out;
+                };
+
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);
                 const bankSummary = v2QuarterBank ? RepQuarterBank.buildBankSummary(v2QuarterBank) : { bankedQuarters: [], activeQuarter: null, totalRows: 0 };
                 if (v2QuarterBank) {
@@ -5794,7 +5814,8 @@ VISUALIZE sessions TYPE horizontal_bar`
                     salesMonthsCovered: getUploadedMonthKeys(),
                     bankedQuarters: bankSummary.bankedQuarters,
                     activeQuarter: bankSummary.activeQuarter,
-                    artistRollup
+                    artistRollup,
+                    indexOverview: buildIndexOverview()
                 };
 
                 try {

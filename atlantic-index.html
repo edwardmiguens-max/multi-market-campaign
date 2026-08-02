@@ -705,24 +705,7 @@
             return { ...report, campaign_data: normalizeCampaignData(report) };
         }
 
-        // Pull only index-needed market fields — not dailyProducts / full market blobs (too large after republish).
-        const MARKET_SEGMENTS = ['uk', 'eu', 'us', 'int'];
-
-        function marketIndexSelectFields(prefix) {
-            const path = `campaign_data->${prefix}`;
-            return [
-                `${prefix}Revenue:${path}->revenue`,
-                `${prefix}Items:${path}->items`,
-                `${prefix}Orders:${path}->orders`,
-                `${prefix}Daily:${path}->daily`,
-                `${prefix}Merch:${path}->merch`,
-                `${prefix}TopProducts:${path}->topProducts`,
-                `${prefix}TopStandout:${path}->topStandoutProducts`,
-                `${prefix}TopMerch:${path}->topMerchProducts`,
-                `${prefix}WeeklyPU:${path}->weeklyProductUnits`
-            ];
-        }
-
+        // Lightweight index payload — avoids downloading dailyProducts-heavy market blobs.
         const INDEX_SELECT = [
             'id',
             'report_name',
@@ -737,33 +720,22 @@
             'artistRollup:campaign_data->artistRollup',
             'runtimeVersion:campaign_data->runtimeVersion',
             'campaignDates:campaign_data->campaignDates',
-            'bankedQuarters:campaign_data->bankedQuarters',
-            'activeQuarter:campaign_data->activeQuarter',
-            ...MARKET_SEGMENTS.flatMap(marketIndexSelectFields),
-            'globalMerch:campaign_data->globalMerch'
+            'globalMerch:campaign_data->globalMerch',
+            'indexOverview:campaign_data->indexOverview'
         ].join(', ');
 
-        function assembleMarketSegment(row, prefix) {
-            const revenue = row[`${prefix}Revenue`];
-            const daily = row[`${prefix}Daily`];
-            const topProducts = row[`${prefix}TopProducts`];
-            const topStandout = row[`${prefix}TopStandout`];
-            if (revenue == null && !daily && !topProducts && !topStandout) return undefined;
+        function marketsFromIndexOverview(indexOverview) {
+            const o = indexOverview && typeof indexOverview === 'object' ? indexOverview : {};
             return {
-                revenue: revenue ?? '£0.00',
-                items: row[`${prefix}Items`] ?? '0',
-                orders: row[`${prefix}Orders`] ?? '0',
-                daily: daily || {},
-                merch: row[`${prefix}Merch`] || {},
-                topProducts: topProducts || [],
-                topStandoutProducts: topStandout || [],
-                topMusicFormats: topStandout || [],
-                topMerchProducts: row[`${prefix}TopMerch`] || [],
-                weeklyProductUnits: row[`${prefix}WeeklyPU`] || {}
+                uk: o.uk,
+                eu: o.eu,
+                us: o.us,
+                int: o.int
             };
         }
 
         function indexRowToReport(row) {
+            const markets = marketsFromIndexOverview(row.indexOverview);
             const cd = normalizeCampaignData({
                 campaign_data: {
                     recordLabel: row.recordLabel,
@@ -777,13 +749,12 @@
                     artistRollup: row.artistRollup,
                     runtimeVersion: row.runtimeVersion,
                     campaignDates: row.campaignDates,
-                    bankedQuarters: row.bankedQuarters,
-                    activeQuarter: row.activeQuarter,
-                    uk: assembleMarketSegment(row, 'uk'),
-                    eu: assembleMarketSegment(row, 'eu'),
-                    us: assembleMarketSegment(row, 'us'),
-                    int: assembleMarketSegment(row, 'int'),
-                    globalMerch: row.globalMerch
+                    globalMerch: row.globalMerch,
+                    indexOverview: row.indexOverview,
+                    uk: markets.uk,
+                    eu: markets.eu,
+                    us: markets.us,
+                    int: markets.int
                 }
             });
             return { id: row.id, report_name: row.report_name, campaign_data: cd };
@@ -1619,38 +1590,44 @@
             content.querySelectorAll('[data-copy]').forEach(btn => {
                 btn.addEventListener('click', () => copyText(decodeURIComponent(btn.getAttribute('data-copy')), btn));
             });
-            renderOverview(allReports);
+            try {
+                renderOverview(allReports);
+            } catch (overviewErr) {
+                console.error('Overview render failed:', overviewErr);
+            }
+        }
+
+        async function fetchReportsFromDb(signal) {
+            const response = await fetch(
+                SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(INDEX_SELECT) + '&order=report_name.asc',
+                {
+                    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY },
+                    signal
+                }
+            );
+            if (!response.ok) {
+                const errText = await response.text().catch(() => '');
+                throw new Error('HTTP ' + response.status + (errText ? ': ' + errText.slice(0, 200) : ''));
+            }
+            return response.json();
         }
 
         async function loadReports() {
             const content = document.getElementById('content');
             content.innerHTML = '<div class="index-state">Loading Atlantic reports from database…</div>';
             const controller = new AbortController();
-            const loadTimeout = setTimeout(() => controller.abort(), 120000);
+            const loadTimeout = setTimeout(() => controller.abort(), 90000);
+            const rollupsTask = loadArtistRollups(null).catch(() => {});
             try {
-                let data = null;
-                if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.createClient === 'function') {
-                    const client = window.supabase.createClient(SB_URL, SB_KEY);
-                    await loadArtistRollups(client);
-                    const res = await client.from('reports').select(INDEX_SELECT).order('report_name', { ascending: true });
-                    if (res.error) throw res.error;
-                    data = res.data;
-                } else {
-                    await loadArtistRollups(null);
-                    const response = await fetch(SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(INDEX_SELECT) + '&order=report_name.asc', {
-                        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY },
-                        signal: controller.signal
-                    });
-                    if (!response.ok) throw new Error('HTTP ' + response.status);
-                    data = await response.json();
-                }
+                const data = await fetchReportsFromDb(controller.signal);
                 clearTimeout(loadTimeout);
+                await rollupsTask;
                 allReports = (data || []).map(indexRowToReport).filter(r => String(r.campaign_data?.recordLabel || '').trim().toLowerCase() === LABEL_FILTER);
                 renderIndex(filterReports(document.getElementById('search').value));
             } catch (err) {
                 clearTimeout(loadTimeout);
                 const msg = err.name === 'AbortError'
-                    ? 'Request timed out — the database response was too large. Try refreshing in a moment.'
+                    ? 'Request timed out — try refreshing. If this persists, re-publish reports from Admin V2.'
                     : (err.message || 'Network error');
                 content.innerHTML = `<div class="index-state error">Could not load reports.<br><span style="font-size:0.75rem">${escapeHtml(msg)}</span></div>`;
                 document.getElementById('count-label').textContent = 'Error';
