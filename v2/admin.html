@@ -137,7 +137,7 @@
                         <option value="__new__">＋ New artist…</option>
                     </select>
                     <input type="text" id="input-artist-name" placeholder="e.g. Erin LeCount" maxlength="120" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500">
-                    <p class="text-[10px] text-gray-500 mt-1 leading-tight">Upload sales once per artist, then publish multiple reports with different titles, dates, and filters.</p>
+                    <p id="artist-sales-help" class="text-[10px] text-gray-500 mt-1 leading-tight">Upload sales once per artist, then publish multiple reports with different titles, dates, and filters.</p>
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Record label</label>
@@ -161,6 +161,24 @@
                     </select>
                     <p class="text-[10px] text-gray-500 mt-1 leading-tight">UK &amp; JV UK Lead → Domestic · US &amp; JV US Lead → International on the label index.</p>
                 </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-400">Sales source</label>
+                    <select id="input-sales-channel" class="w-full bg-gray-900 text-xs border border-gray-700 rounded p-1.5 text-white focus:outline-none focus:border-blue-500 cursor-pointer">
+                        <option value="">Artist D2C store</option>
+                        <option value="eurostore">Eurostore</option>
+                        <option value="rhino-store">Rhino store</option>
+                    </select>
+                    <p id="sales-channel-help" class="text-[10px] text-gray-500 mt-1 leading-tight">Eurostore / Rhino reports show a store badge on the label index. Same artist can have D2C and megastore reports separately.</p>
+                </div>
+                <div id="show-traffic-wrap" class="rounded border border-gray-700/80 bg-gray-900/40 p-2">
+                    <label class="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" id="input-show-traffic" class="rounded mt-0.5 shrink-0">
+                        <span>
+                            <span class="block text-[10px] font-bold uppercase tracking-wider text-blue-400">Estimate traffic from orders</span>
+                            <span id="show-traffic-help" class="text-[10px] text-gray-500 mt-0.5 leading-tight block">Show sessions, ATC, and device split in the report. Uses order-based estimates when no traffic CSV is uploaded.</span>
+                        </span>
+                    </label>
+                </div>
                 <div class="space-y-2">
                     <button id="btn-publish" type="button" class="w-full text-white font-bold py-2 px-4 rounded text-sm transition-colors bg-blue-600 hover:bg-blue-700">
                         Publish Report
@@ -174,7 +192,6 @@
                     <p class="text-[10px] text-gray-500 leading-tight">Publish multiple reports per artist with different campaign names and date filters. The index shows <strong>full artist totals</strong>; each report shows only its selected date range.</p>
                 </div>
                 <a id="link-report-index" href="../index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-gray-600 text-gray-200 hover:bg-gray-800 transition-colors">Open Report Index</a>
-                <a id="link-warner-parlophone-index" href="../warner-parlophone-index.html" target="_blank" rel="noopener" class="w-full block text-center text-xs font-semibold py-2 px-4 rounded border border-gray-500/40 text-gray-200 hover:bg-gray-800 transition-colors">Open Warner &amp; Parlophone Index</a>
                 <div id="publish-result" class="mt-2 text-xs hidden break-words text-center p-2 rounded bg-gray-900/80 border border-gray-700"></div>
             </div>
 
@@ -786,7 +803,14 @@
                 bootSetVal('input-setup-by', old.setupBy || '');
                 bootSetVal('input-artist-name', old.artistName || '');
                 bootSetVal('input-record-label', old.recordLabel || '');
+                bootSetVal('input-sales-channel', old.salesChannel || '');
                 bootSetVal('input-rep', old.rep || '');
+                const showTrafficEl = document.getElementById('input-show-traffic');
+                if (showTrafficEl && (old.salesChannel === 'eurostore' || old.salesChannel === 'rhino-store') && old.showTrafficSections !== undefined) {
+                    showTrafficEl.checked = old.showTrafficSections === true;
+                    delete showTrafficEl.dataset.lockedD2c;
+                }
+                if (typeof updateMegastoreUploadHints === 'function') updateMegastoreUploadHints();
                 bootSetVal('input-title', old.title || 'GLOBAL ROLLUP REPORT');
                 bootSetTxt('display-title', old.title || 'GLOBAL ROLLUP REPORT');
 
@@ -1151,8 +1175,31 @@
                 }
             });
         }
+        function buildGarmentSizeChartData(sizes) {
+            const s = sizes || {};
+            const spec = [
+                { key: 'XXS', optional: true },
+                { key: 'XS', optional: true },
+                { key: 'S', optional: false },
+                { key: 'M', optional: false },
+                { key: 'L', optional: false },
+                { key: 'XL', optional: false },
+                { key: 'XXL', optional: false },
+                { key: '3XL+', optional: true }
+            ];
+            const labels = [];
+            const data = [];
+            spec.forEach(({ key, optional }) => {
+                const val = Number(s[key]) || 0;
+                if (!optional || val > 0) {
+                    labels.push(key);
+                    data.push(val);
+                }
+            });
+            return { labels, data };
+        }
         function aggregateGlobalMerch() {
-            const sizes = { XS:0, S:0, M:0, L:0, XL:0, XXL:0, '3XL+':0 };
+            const sizes = { XXS:0, XS:0, S:0, M:0, L:0, XL:0, XXL:0, '3XL+':0 };
             let musicRev = 0, merchRev = 0;
             const merchProducts = {};
             Object.values(storeData).forEach(d => {
@@ -1184,7 +1231,7 @@
             if(windowCurrentCSVData && windowCurrentCSVData.length > 0) return aggregateGlobalMerch();
             if(aggregatedLineRows.length > 0) return aggregateGlobalMerch();
             if(loadedGlobalMerchPayload) return loadedGlobalMerchPayload;
-            return { musicRev: 0, merchRev: 0, sizes: { XS:0, S:0, M:0, L:0, XL:0, XXL:0, '3XL+':0 }, topMerchProducts: [] };
+            return { musicRev: 0, merchRev: 0, sizes: { XXS:0, XS:0, S:0, M:0, L:0, XL:0, XXL:0, '3XL+':0 }, topMerchProducts: [] };
         }
         function buildGlobalMerchPayload() {
             const m = getGlobalMerchForDisplay();
@@ -1210,9 +1257,9 @@
             }
             if(globalMerchSizeChart) { globalMerchSizeChart.destroy(); globalMerchSizeChart = null; }
             const szEl = document.getElementById('globalMerchSizeBar');
-            const s = merch.sizes || {};
-            if(szEl) {
-                globalMerchSizeChart = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
+            const sizeChart = buildGarmentSizeChartData(merch.sizes);
+            if(szEl && sizeChart.labels.length) {
+                globalMerchSizeChart = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: sizeChart.labels, datasets: [{ data: sizeChart.data, backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
             }
         }
         function compressFaviconToBase64(file, callback) {
@@ -1339,8 +1386,22 @@ VISUALIZE sessions TYPE horizontal_bar`
             return v2SupabaseReady;
         }
 
+        function getBankStorageName() {
+            const artistName = document.getElementById('input-artist-name')?.value?.trim();
+            if (artistName) return artistName;
+            if (isArtistD2cSalesChannel()) {
+                return document.getElementById('input-campaign-name')?.value?.trim() || '';
+            }
+            return '';
+        }
+        function requiresArtistNameForDataUpload() {
+            return isMegastoreSalesChannel(getSelectedSalesChannel());
+        }
+        function getMegastoreVendorName() {
+            return document.getElementById('input-artist-name')?.value?.trim() || '';
+        }
         function getArtistBankKey() {
-            const name = document.getElementById('input-artist-name')?.value?.trim();
+            const name = getBankStorageName();
             return name ? RepQuarterBank.slugifyArtistKey(name) : null;
         }
 
@@ -1469,27 +1530,27 @@ VISUALIZE sessions TYPE horizontal_bar`
 
         async function initV2QuarterBank(options) {
             const key = getArtistBankKey();
-            const artistName = document.getElementById('input-artist-name')?.value?.trim();
-            if (!key || !artistName || typeof RepQuarterBank === 'undefined') {
+            const bankName = getBankStorageName();
+            if (!key || !bankName || typeof RepQuarterBank === 'undefined') {
                 v2QuarterBank = null;
                 renderQuarterBankUI();
                 return null;
             }
             const loadToken = ++v2BankLoadToken;
-            const prevSessionRows = (v2QuarterBank?.artistKey === artistName && v2QuarterBank._sessionRows)
+            const prevSessionRows = (v2QuarterBank?.artistKey === bankName && v2QuarterBank._sessionRows)
                 ? { ...v2QuarterBank._sessionRows } : null;
             setV2QuarterNote('Loading bank…');
             const supabaseOk = await probeV2SupabaseTables();
             try {
                 if (supabaseOk && typeof RepQuarterBankSupabase !== 'undefined') {
-                    v2QuarterBank = await RepQuarterBankSupabase.loadBankFromSupabase(artistName, getRecordLabelForBank());
+                    v2QuarterBank = await RepQuarterBankSupabase.loadBankFromSupabase(bankName, getRecordLabelForBank());
                     if (loadToken !== v2BankLoadToken) return v2QuarterBank;
                 } else {
-                    v2QuarterBank = RepQuarterBank.loadBank(artistName);
+                    v2QuarterBank = RepQuarterBank.loadBank(bankName);
                 }
             } catch (err) {
                 console.warn('Supabase bank load failed, using local cache:', err);
-                v2QuarterBank = RepQuarterBank.loadBank(artistName);
+                v2QuarterBank = RepQuarterBank.loadBank(bankName);
                 setV2QuarterNote(`Cloud load failed — local cache only (${err.message || err})`);
             }
             if (options?.hydrateRows !== false) {
@@ -1554,7 +1615,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const note = document.getElementById('v2-quarter-note');
             if (!chips) return;
             if (!v2QuarterBank || !getArtistBankKey()) {
-                chips.innerHTML = '<span class="text-[10px] text-gray-500">Enter artist name to enable quarter bank.</span>';
+                chips.innerHTML = `<span class="text-[10px] text-gray-500">${requiresArtistNameForDataUpload() ? 'Enter artist name (Product vendor) to enable quarter bank.' : 'Enter Save / Update Name or artist name to enable quarter bank.'}</span>`;
                 if (note) note.textContent = '';
                 return;
             }
@@ -1619,7 +1680,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const note = document.getElementById('v2-traffic-quarter-note');
             if (!chips) return;
             if (!v2TrafficQuarterBank || !getArtistBankKey()) {
-                chips.innerHTML = '<span class="text-[10px] text-gray-500">Enter artist name to enable traffic quarter bank.</span>';
+                chips.innerHTML = `<span class="text-[10px] text-gray-500">${requiresArtistNameForDataUpload() ? 'Enter artist name to enable traffic quarter bank.' : 'Enter Save / Update Name or artist name to enable traffic quarter bank.'}</span>`;
                 if (note) note.textContent = '';
                 return;
             }
@@ -1657,13 +1718,13 @@ VISUALIZE sessions TYPE horizontal_bar`
 
         async function initV2TrafficQuarterBank(options) {
             const key = getArtistBankKey();
-            const artistName = document.getElementById('input-artist-name')?.value?.trim();
-            if (!key || !artistName || typeof RepQuarterBank === 'undefined') {
+            const bankName = getBankStorageName();
+            if (!key || !bankName || typeof RepQuarterBank === 'undefined') {
                 v2TrafficQuarterBank = null;
                 renderTrafficQuarterBankUI();
                 return null;
             }
-            v2TrafficQuarterBank = RepQuarterBank.loadBank(artistName, 'traffic');
+            v2TrafficQuarterBank = RepQuarterBank.loadBank(bankName, 'traffic');
             if (options?.hydrateRows !== false) {
                 await RepQuarterBank.hydrateBankRowsLocal(v2TrafficQuarterBank);
             }
@@ -1759,11 +1820,19 @@ VISUALIZE sessions TYPE horizontal_bar`
             const files = sortMasterUploadFiles(fileList);
             if (!files.length) return;
 
-            const artistName = document.getElementById('input-artist-name')?.value?.trim();
-            if (!artistName) {
-                ingestionWarnings = ['Enter Artist name before uploading traffic (V2 quarter bank is per artist).'];
+            const bankName = getBankStorageName();
+            if (requiresArtistNameForDataUpload() && !getMegastoreVendorName()) {
+                ingestionWarnings = ['Enter Artist name before uploading traffic — must match Product vendor for Eurostore/Rhino.'];
                 renderWarnings();
-                renderCsvUploadStatus('Artist name required for traffic upload.', 'err');
+                renderCsvUploadStatus('Artist name required for megastore traffic upload.', 'err');
+                return;
+            }
+            if (!bankName) {
+                ingestionWarnings = [requiresArtistNameForDataUpload()
+                    ? 'Enter Artist name before uploading traffic.'
+                    : 'Enter Save / Update Name before uploading traffic (artist name optional for Artist D2C store).'];
+                renderWarnings();
+                renderCsvUploadStatus('Report name required for traffic upload.', 'err');
                 return;
             }
             if (typeof RepQuarterBank === 'undefined') {
@@ -1773,9 +1842,9 @@ VISUALIZE sessions TYPE horizontal_bar`
                 return;
             }
 
-            if (!v2TrafficQuarterBank || v2TrafficQuarterBank.artistKey !== artistName) {
+            if (!v2TrafficQuarterBank || v2TrafficQuarterBank.artistKey !== bankName) {
                 await initV2TrafficQuarterBank({ hydrateRows: true });
-                if (!v2TrafficQuarterBank) v2TrafficQuarterBank = RepQuarterBank.loadBank(artistName, 'traffic');
+                if (!v2TrafficQuarterBank) v2TrafficQuarterBank = RepQuarterBank.loadBank(bankName, 'traffic');
             } else {
                 await ensureTrafficBankHydrated();
             }
@@ -1873,10 +1942,16 @@ VISUALIZE sessions TYPE horizontal_bar`
                 renderQuarterBankUI();
                 return false;
             }
-            windowCurrentCSVData = combined;
+            const filtered = applyMegastoreVendorFilter(combined);
+            windowCurrentCSVData = filtered;
             windowCurrentCSVMk = 'master';
             markCsvUploadReady();
             renderQuarterBankUI();
+            if (isMegastoreSalesChannel(getSelectedSalesChannel()) && filtered.length !== combined.length) {
+                const artistName = document.getElementById('input-artist-name')?.value?.trim() || 'artist';
+                ingestionWarnings.push(`Megastore filter: ${combined.length.toLocaleString()} rows in bank → ${filtered.length.toLocaleString()} for Product vendor "${artistName}". Clear bank & re-upload with Sales source = Eurostore to store filtered rows only.`);
+                renderWarnings();
+            }
             return true;
         }
 
@@ -1962,13 +2037,141 @@ VISUALIZE sessions TYPE horizontal_bar`
                 return out;
             });
         }
+        function normalizeArtistVendorKey(name) {
+            return String(name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+        function getRowProductVendor(row) {
+            if(!row || typeof row !== 'object') return '';
+            let vendor = '';
+            Object.keys(row).forEach(k => {
+                if(!k) return;
+                const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
+                if(cleanK === 'productvendor' || cleanK === 'vendor') vendor = String(row[k] || '').trim();
+            });
+            return vendor;
+        }
+        function getSelectedSalesChannel() {
+            return document.getElementById('input-sales-channel')?.value?.trim() || '';
+        }
+        function isMegastoreSalesChannel(channel) {
+            return channel === 'eurostore' || channel === 'rhino-store';
+        }
+        function filterRowsByProductVendor(rows, artistName) {
+            const target = normalizeArtistVendorKey(artistName);
+            if(!target || !Array.isArray(rows)) return rows || [];
+            return rows.filter(row => normalizeArtistVendorKey(getRowProductVendor(row)) === target);
+        }
+        function applyMegastoreVendorFilter(rows) {
+            if(!Array.isArray(rows) || !rows.length) return rows || [];
+            if(!isMegastoreSalesChannel(getSelectedSalesChannel())) return rows;
+            const artistName = getMegastoreVendorName();
+            if(!artistName) return rows;
+            return filterRowsByProductVendor(rows, artistName);
+        }
+        function getActiveSalesCsvRows() {
+            return applyMegastoreVendorFilter(windowCurrentCSVData || []);
+        }
+        function hasUploadedTrafficData() {
+            if (!v2TrafficQuarterBank || typeof RepQuarterBank === 'undefined') return false;
+            return RepQuarterBank.listQuarterKeys(v2TrafficQuarterBank).some(qk =>
+                (v2TrafficQuarterBank.quarters?.[qk]?.rowCount || RepQuarterBank.getQuarterRows(v2TrafficQuarterBank, qk).length) > 0);
+        }
+        function isArtistD2cSalesChannel() {
+            return !isMegastoreSalesChannel(getSelectedSalesChannel());
+        }
+        function getShowTrafficSections() {
+            if (isArtistD2cSalesChannel()) return true;
+            return document.getElementById('input-show-traffic')?.checked === true;
+        }
+        function syncShowTrafficToggleUi() {
+            const wrap = document.getElementById('show-traffic-wrap');
+            const cb = document.getElementById('input-show-traffic');
+            const help = document.getElementById('show-traffic-help');
+            const d2c = isArtistD2cSalesChannel();
+            if (!wrap || !cb) return;
+            cb.disabled = d2c;
+            wrap.classList.toggle('opacity-50', d2c);
+            wrap.classList.toggle('pointer-events-none', d2c);
+            if (d2c) {
+                cb.checked = true;
+                cb.dataset.lockedD2c = 'true';
+            } else if (cb.dataset.lockedD2c === 'true') {
+                cb.checked = false;
+                delete cb.dataset.lockedD2c;
+            }
+            if (help) {
+                help.textContent = d2c
+                    ? 'Always on for artist D2C store reports — uses traffic CSV when uploaded, otherwise order-based estimates.'
+                    : 'Optional for Eurostore / Rhino reports. Show estimated traffic when no traffic CSV is uploaded.';
+            }
+        }
+        function shouldEstimateTrafficFromOrders() {
+            return getShowTrafficSections() && !hasUploadedTrafficData();
+        }
+        function buildMarketTrafficDisplay(d) {
+            const ordersCount = d.orders?.size || 0;
+            if (!getShowTrafficSections()) {
+                return {
+                    trafficAvailable: false,
+                    sessions: null,
+                    atcRate: '—',
+                    conversionRate: '—',
+                    upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00',
+                    mobilePerc: null,
+                    desktopPct: null
+                };
+            }
+            const hasTrafficUpload = hasUploadedTrafficData();
+            const realSessions = Number(d.traffic?.sessions) || 0;
+            const realAtc = Number(d.traffic?.atc) || 0;
+
+            const sessions = realSessions || (shouldEstimateTrafficFromOrders() ? (ordersCount * 35) : 0);
+            const atcLines = realAtc || (shouldEstimateTrafficFromOrders() ? (ordersCount * 4) : 0);
+            const mobilePerc = (realSessions > 0 || hasTrafficUpload)
+                ? (d.traffic?.mobile ?? 85)
+                : (shouldEstimateTrafficFromOrders() ? (d.traffic?.mobile || 85) : null);
+            const desktopPct = mobilePerc !== null ? (d.traffic?.desktop ?? (100 - mobilePerc)) : null;
+
+            return {
+                trafficAvailable: true,
+                sessions,
+                atcRate: sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%',
+                conversionRate: sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%',
+                upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00',
+                mobilePerc: mobilePerc ?? 85,
+                desktopPct: desktopPct ?? 15
+            };
+        }
+        function updateMegastoreUploadHints() {
+            syncShowTrafficToggleUi();
+            const channel = getSelectedSalesChannel();
+            const artistHelp = document.getElementById('artist-sales-help');
+            const channelHelp = document.getElementById('sales-channel-help');
+            if(isMegastoreSalesChannel(channel)) {
+                const storeLabel = channel === 'rhino-store' ? 'Rhino store' : 'Eurostore';
+                if(artistHelp) {
+                    artistHelp.innerHTML = `Must match <strong>Product vendor</strong> in the ${storeLabel} master CSV exactly (e.g. Madonna, Shinedown). Upload the same master file for each artist — rows are filtered by vendor on ingest.`;
+                }
+                if(channelHelp) {
+                    channelHelp.textContent = `${storeLabel} reports show a store badge on the label index. Sales-only by default — use the traffic toggle below if you want estimated sessions. Set Sales source before uploading.`;
+                }
+            } else {
+                if(artistHelp) {
+                    artistHelp.textContent = 'Artist name optional for upload on Artist D2C store — use Save / Update Name to key the quarter bank. Set artist name before publish for the index.';
+                }
+                if(channelHelp) {
+                    channelHelp.textContent = 'Eurostore / Rhino reports show a store badge on the label index. Same artist can have D2C and megastore reports separately.';
+                }
+            }
+        }
         function syncCampaignDatesToCsvRange() {
             return false;
         }
-        function countRawCsvSalesRows() {
-            if(!windowCurrentCSVData || windowCurrentCSVData.length === 0) return 0;
+        function countRawCsvSalesRows(rows) {
+            const source = rows || windowCurrentCSVData;
+            if(!source || source.length === 0) return 0;
             let count = 0;
-            windowCurrentCSVData.forEach(row => {
+            source.forEach(row => {
                 let name = '', rev = 0, netItemsSold = null, rawQty = 1;
                 Object.keys(row).forEach(k => {
                     if(!k) return;
@@ -2212,7 +2415,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             el.classList.remove('hidden');
         }
         function getEmptyStoreData() {
-            const emptyMarket = () => ({ loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, weeklyUnits: {}, dailyUnits: {}, weeklyMusicRev: {}, dailyProducts: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} });
+            const emptyMarket = () => ({ loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, weeklyUnits: {}, dailyUnits: {}, weeklyMusicRev: {}, dailyProducts: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} });
             return { uk: emptyMarket(), eu: emptyMarket(), us: emptyMarket(), int: emptyMarket() };
         }
         let storeData = getEmptyStoreData();
@@ -4071,7 +4274,14 @@ VISUALIZE sessions TYPE horizontal_bar`
             lastLoadedArtistKey = null;
             refreshArtistDirectory();
             if(document.getElementById('input-record-label')) document.getElementById('input-record-label').value = '';
+            if(document.getElementById('input-sales-channel')) document.getElementById('input-sales-channel').value = '';
             if(document.getElementById('input-rep')) document.getElementById('input-rep').value = '';
+            const showTrafficReset = document.getElementById('input-show-traffic');
+            if (showTrafficReset) {
+                showTrafficReset.checked = false;
+                delete showTrafficReset.dataset.lockedD2c;
+            }
+            if (typeof syncShowTrafficToggleUi === 'function') syncShowTrafficToggleUi();
             document.getElementById('btn-clear-load')?.classList.add('hidden');
             document.getElementById('publish-result')?.classList.add('hidden');
             applyLastUpdatedDisplay(null);
@@ -4308,11 +4518,12 @@ VISUALIZE sessions TYPE horizontal_bar`
 
             ['device', 'mm', 'size', 'cat'].forEach(t => { if(chartInstances[`${prefix}_${t}`]) chartInstances[`${prefix}_${t}`].destroy(); });
 
-            const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+            const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+            const showTraffic = d.trafficAvailable !== false;
 
             pane.innerHTML = `
                 <div class="grid grid-cols-2 gap-6">
-                <div class="space-y-4 flex flex-col justify-between">
+                <div class="space-y-4 flex flex-col ${showTraffic ? 'justify-between' : ''}">
                     <div class="dashboard-card border-l-4" style="border-color: var(--accent-primary)">
                         <div class="flex justify-between items-start">
                             <div><p class="preview-header-label font-bold uppercase">Territory Revenue</p><p class="preview-body-data text-2xl font-bold">${d.revenue}</p><p class="preview-small-text mt-1 text-gray-500">${d.items} units sold across ${d.orders} orders (AOV: ${d.aov})</p></div>
@@ -4320,6 +4531,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                         </div>
                     </div>
                     <div class="dashboard-card flex-1"><h3 class="preview-header-label mb-2 font-bold uppercase">${d.standoutSectionTitle || 'Standout Campaign Music Formats'}</h3><table class="w-full text-sm"><tbody id="${prefix}-table-preview" class="preview-small-text"></tbody></table></div>
+                    ${showTraffic ? `
                     <div class="dashboard-card bg-gray-900/5 border border-gray-200">
                         <p class="preview-header-label mb-2 font-bold uppercase text-indigo-900">Web Traffic & Device Split</p>
                         <div class="grid grid-cols-4 gap-2 mb-4 text-center">
@@ -4329,7 +4541,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                             <div class="bg-white p-2 rounded shadow-sm"><span class="text-[10px] text-gray-400 block uppercase font-bold">UPT</span><span class="font-bold text-xs text-indigo-600">${d.upt}</span></div>
                         </div>
                         <div class="h-32 relative flex justify-center"><canvas id="${prefix}-pie-canvas-preview"></canvas></div>
-                    </div>
+                    </div>` : ''}
                 </div>
 
                 <div class="space-y-4 flex flex-col justify-between">
@@ -4363,15 +4575,17 @@ VISUALIZE sessions TYPE horizontal_bar`
                 const tert = getSidebarFormStyles().tertiary; const quat = getSidebarFormStyles().quaternary;
 
                 const devEl = document.getElementById(`${prefix}-pie-canvas-preview`);
-                if(devEl) chartInstances[`${prefix}_device`] = new Chart(devEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Mobile','Desktop'], datasets: [{ data: [d.mobilePerc, d.desktopPct], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
+                if(devEl && showTraffic && d.mobilePerc !== null && d.desktopPct !== null) chartInstances[`${prefix}_device`] = new Chart(devEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Mobile','Desktop'], datasets: [{ data: [d.mobilePerc, d.desktopPct], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
 
                 const mmEl = document.getElementById(`${prefix}-mm-pie-preview`);
                 if(mmEl) chartInstances[`${prefix}_mm`] = new Chart(mmEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev','Merch Rev'], datasets: [{ data: [merch.musicRev || 1, merch.merchRev || 1], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
 
                 const szEl = document.getElementById(`${prefix}-size-bar-preview`);
                 if(szEl) {
-                    const s = merch.sizes || {};
-                    chartInstances[`${prefix}_size`] = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } });
+                    const sizeChart = buildGarmentSizeChartData(merch.sizes);
+                    if (sizeChart.labels.length) {
+                        chartInstances[`${prefix}_size`] = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: sizeChart.labels, datasets: [{ data: sizeChart.data, backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } });
+                    }
                 }
 
                 const catEl = document.getElementById(`${prefix}-cat-bar-preview`);
@@ -4400,8 +4614,7 @@ VISUALIZE sessions TYPE horizontal_bar`
 
             Object.entries(storeData).forEach(([k, d]) => {
                 if(d.loaded) {
-                    const sessions = d.traffic.sessions || (d.orders.size * 35);
-                    const atcLines = d.traffic.atc || (d.orders.size * 4);
+                    const traffic = buildMarketTrafficDisplay(d);
                     const ordersCount = d.orders.size;
                     const chartMode = getCampaignChartMode();
                     const standoutSectionTitle = getStandoutSectionTitle(chartMode);
@@ -4410,7 +4623,8 @@ VISUALIZE sessions TYPE horizontal_bar`
                         revenue: `£${d.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}`,
                         items: d.items.toLocaleString(), orders: ordersCount.toLocaleString(),
                         aov: `£${(ordersCount > 0 ? d.revenue/ordersCount : 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`,
-                        sessions: sessions, atcRate: sessions > 0 ? ((atcLines / sessions) * 100).toFixed(1) + '%' : '0.0%', conversionRate: sessions > 0 ? ((ordersCount / sessions) * 100).toFixed(1) + '%' : '0.0%', upt: ordersCount > 0 ? (d.items / ordersCount).toFixed(2) : '0.00', mobilePerc: d.traffic.mobile, desktopPct: d.traffic.desktop, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), campaignChartMode: chartMode, euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined, intTopCountries: k === 'int' ? getIntTopCountriesForDisplay() : undefined
+                        trafficAvailable: traffic.trafficAvailable,
+                        sessions: traffic.sessions, atcRate: traffic.atcRate, conversionRate: traffic.conversionRate, upt: traffic.upt, mobilePerc: traffic.mobilePerc, desktopPct: traffic.desktopPct, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), campaignChartMode: chartMode, euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined, intTopCountries: k === 'int' ? getIntTopCountriesForDisplay() : undefined
                     };
                     renderSegmentPreview(k, segmentPayload);
                     gRev += d.revenue; gItems += d.items; gOrders += ordersCount;
@@ -4524,7 +4738,14 @@ VISUALIZE sessions TYPE horizontal_bar`
             refreshArtistDirectory().then(() => syncArtistDirectorySelect());
             restoreV2BankFromPayload(old);
             if (document.getElementById('input-record-label')) document.getElementById('input-record-label').value = old.recordLabel || '';
+            if (document.getElementById('input-sales-channel')) document.getElementById('input-sales-channel').value = old.salesChannel || '';
             if (document.getElementById('input-rep')) document.getElementById('input-rep').value = old.rep || '';
+            const showTrafficEl = document.getElementById('input-show-traffic');
+            if (showTrafficEl && (old.salesChannel === 'eurostore' || old.salesChannel === 'rhino-store') && old.showTrafficSections !== undefined) {
+                showTrafficEl.checked = old.showTrafficSections === true;
+                delete showTrafficEl.dataset.lockedD2c;
+            }
+            if (typeof updateMegastoreUploadHints === 'function') updateMegastoreUploadHints();
             const versionBadgeEl = document.getElementById('runtime-version-badge');
             if (versionBadgeEl) {
                 const loadedVersion = old.runtimeVersion || old.comparison?.runtimeVersion || 'legacy';
@@ -4747,7 +4968,8 @@ VISUALIZE sessions TYPE horizontal_bar`
 
         // --- DYNAMIC DATA AGGREGATION PIPELINE ---
         function runDataAggregation(options = {}) {
-            if(!windowCurrentCSVData || windowCurrentCSVData.length === 0) return;
+            const csvRows = getActiveSalesCsvRows();
+            if(!csvRows || csvRows.length === 0) return;
             if(typeof Papa === 'undefined') {
                 ingestionWarnings = ['CSV parser (Papa Parse) did not load. Disable ad blockers or hard-refresh, then upload again.'];
                 renderWarnings();
@@ -4758,7 +4980,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const uploadGeneration = window.__csvDataGeneration || 0;
             const preservedWarnings = [...ingestionWarnings];
             ingestionWarnings = preservedWarnings;
-            const rawSalesLineCount = countRawCsvSalesRows();
+            const rawSalesLineCount = countRawCsvSalesRows(csvRows);
             comparisonModel = { markets: {}, periodOrder: [] };
             globalCountryStats = {};
             marketCountryMusicStats = { uk: {}, eu: {}, us: {}, int: {} };
@@ -4780,11 +5002,11 @@ VISUALIZE sessions TYPE horizontal_bar`
             Object.keys(storeData).forEach(m => {
                 storeData[m].loaded = true; storeData[m].revenue = 0; storeData[m].items = 0; storeData[m].orders.clear();
                 storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].merchProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {}; storeData[m].weeklyUnits = {}; storeData[m].dailyUnits = {}; storeData[m].dailyProducts = {}; storeData[m].weeklyMusicRev = {};
-                storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+                storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
             });
 
             let minOrder = Infinity, maxOrder = -Infinity;
-            windowCurrentCSVData.forEach(row => {
+            csvRows.forEach(row => {
                 let id = '';
                 Object.keys(row).forEach(k => {
                     if(!k) return;
@@ -4804,7 +5026,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const periodKeys = new Set();
             const acceptedRowsByMarket = { uk: 0, eu: 0, us: 0, int: 0 };
             const acceptedRevenueByMarket = { uk: 0, eu: 0, us: 0, int: 0 };
-            windowCurrentCSVData.forEach((row, rowIdx) => {
+            csvRows.forEach((row, rowIdx) => {
                 let name = '', variant = '', pType = '', id = '', rev = 0, rawQty = 1, netItemsSold = null, marketVal = '', dayVal = null, hourVal = null, shippingCountry = '', compareAtPrice = null, lineDiscount = null;
                 Object.keys(row).forEach(k => {
                     if (!k) return;
@@ -4958,6 +5180,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                         if (variant.includes('3XL') || variant.includes('XXXL')) sToken = '3XL+';
                         else if (variant.includes('2XL') || variant.includes('XXL')) sToken = 'XXL';
                         else if (variant.includes('XL') || variant.includes('EXTRA LARGE')) sToken = 'XL';
+                        else if (variant.includes('XXS') || variant.includes('2XS')) sToken = 'XXS';
                         else if (variant.includes('XS') || variant.includes('EXTRA SMALL')) sToken = 'XS';
                         else if (variant === 'L' || vTokens.includes('L') || variant.includes('LARGE')) sToken = 'L';
                         else if (variant === 'M' || vTokens.includes('M') || variant.includes('MEDIUM')) sToken = 'M';
@@ -5144,11 +5367,19 @@ VISUALIZE sessions TYPE horizontal_bar`
             const files = sortMasterUploadFiles(fileList);
             if (!files.length) return;
 
-            const artistName = document.getElementById('input-artist-name')?.value?.trim();
-            if (!artistName) {
-                ingestionWarnings = ['Enter Artist name before uploading (V2 quarter bank is per artist).'];
+            const bankName = getBankStorageName();
+            if (requiresArtistNameForDataUpload() && !getMegastoreVendorName()) {
+                ingestionWarnings = ['Enter Artist name before uploading — must match Product vendor in the Eurostore/Rhino CSV.'];
                 renderWarnings();
-                renderCsvUploadStatus('Artist name required for V2 upload.', 'err');
+                renderCsvUploadStatus('Artist name (Product vendor) required for megastore upload.', 'err');
+                return;
+            }
+            if (!bankName) {
+                ingestionWarnings = [requiresArtistNameForDataUpload()
+                    ? 'Enter Artist name before uploading.'
+                    : 'Enter Save / Update Name before uploading (artist name optional for Artist D2C store).'];
+                renderWarnings();
+                renderCsvUploadStatus('Report name required for upload.', 'err');
                 return;
             }
             if (typeof RepQuarterBank === 'undefined') {
@@ -5159,13 +5390,14 @@ VISUALIZE sessions TYPE horizontal_bar`
             }
 
             await probeV2SupabaseTables();
-            if (!v2QuarterBank || v2QuarterBank.artistKey !== artistName) {
+            if (!v2QuarterBank || v2QuarterBank.artistKey !== bankName) {
                 await initV2QuarterBank({ hydrateRows: true });
-                if (!v2QuarterBank) v2QuarterBank = RepQuarterBank.loadBank(artistName);
+                if (!v2QuarterBank) v2QuarterBank = RepQuarterBank.loadBank(bankName);
             } else {
                 await ensureBankHydrated();
             }
 
+            const vendorName = getMegastoreVendorName();
             const batchNotes = [];
             let lastMeta = null;
             let combinedRows = [];
@@ -5189,8 +5421,26 @@ VISUALIZE sessions TYPE horizontal_bar`
                     batchNotes.push(`${file.name}: parse failed — ${parseErr?.message || parseErr}`);
                     continue;
                 }
-                const newRows = normalizeCsvRows(parsed.data);
+                let newRows = normalizeCsvRows(parsed.data);
                 lastMeta = parsed.meta;
+                const salesChannel = getSelectedSalesChannel();
+                if (isMegastoreSalesChannel(salesChannel)) {
+                    const beforeFilter = newRows.length;
+                    newRows = filterRowsByProductVendor(newRows, vendorName);
+                    batchNotes.push(`${file.name}: ${beforeFilter.toLocaleString()} rows → ${newRows.length.toLocaleString()} for "${vendorName}" (Product vendor)`);
+                    if (beforeFilter > 0 && !newRows.length) {
+                        batchNotes.push(`  ↳ No rows matched Product vendor "${vendorName}" — check artist name spelling against the CSV.`);
+                    }
+                } else {
+                    const vendorKeys = new Set();
+                    newRows.forEach(row => {
+                        const v = getRowProductVendor(row);
+                        if (v) vendorKeys.add(normalizeArtistVendorKey(v));
+                    });
+                    if (vendorKeys.size > 1) {
+                        batchNotes.push(`  ↳ ${vendorKeys.size} Product vendors in file — set Sales source to Eurostore and enter Artist name to filter by vendor.`);
+                    }
+                }
                 if (!newRows.length) {
                     batchNotes.push(`${file.name}: 0 data rows, skipped.`);
                     continue;
@@ -5364,6 +5614,21 @@ VISUALIZE sessions TYPE horizontal_bar`
             const setupByEl = document.getElementById('input-setup-by');
             if(setupByEl && !setupByEl.value) { try { setupByEl.value = localStorage.getItem('rep-admin-setup-by') || ''; } catch (_e) {} }
             applyFontSelection(document.getElementById('input-font')?.value || 'Inter');
+            if (typeof updateMegastoreUploadHints === 'function') updateMegastoreUploadHints();
+            document.getElementById('input-sales-channel')?.addEventListener('change', async () => {
+                updateMegastoreUploadHints();
+                if (v2QuarterBank) {
+                    await rebuildCsvFromBank();
+                } else if (windowCurrentCSVData?.length) {
+                    windowCurrentCSVData = applyMegastoreVendorFilter(windowCurrentCSVData);
+                }
+                if (getActiveSalesCsvRows().length) runDataAggregation();
+                else calculateGlobalDashboard();
+            });
+            document.getElementById('input-show-traffic')?.addEventListener('change', () => {
+                if (windowCurrentCSVData?.length) runDataAggregation();
+                else calculateGlobalDashboard();
+            });
             const fontSelectEl = document.getElementById('input-font'); if(fontSelectEl) fontSelectEl.addEventListener('change', (e) => { applyFontSelection(e.target.value); calculateGlobalDashboard(); });
             document.getElementById('input-font-size-header')?.addEventListener('input', (e) => { if(document.getElementById('font-size-display-header')) document.getElementById('font-size-display-header').textContent = e.target.value; calculateGlobalDashboard(); });
             document.getElementById('input-font-size-accordion')?.addEventListener('input', (e) => { if(document.getElementById('font-size-display-accordion')) document.getElementById('font-size-display-accordion').textContent = e.target.value; calculateGlobalDashboard(); });
@@ -5760,7 +6025,11 @@ VISUALIZE sessions TYPE horizontal_bar`
                 }
 
                 const packageMarketSegment = (prefix) => {
-                    const d = storeData[prefix] || {}; const ordersCount = d.orders ? d.orders.size : 0; const sessions = (d.traffic && typeof d.traffic.sessions === 'number') ? d.traffic.sessions : (ordersCount * 35); const atcLines = (d.traffic && typeof d.traffic.atc === 'number') ? d.traffic.atc : (ordersCount * 4); const topProductsArr = [];
+                    const d = storeData[prefix] || {}; const ordersCount = d.orders ? d.orders.size : 0;
+                    const includeTraffic = getShowTrafficSections();
+                    const sessions = includeTraffic ? ((d.traffic && typeof d.traffic.sessions === 'number' && d.traffic.sessions > 0) ? d.traffic.sessions : (hasUploadedTrafficData() ? 0 : (ordersCount * 35))) : 0;
+                    const atcLines = includeTraffic ? ((d.traffic && typeof d.traffic.atc === 'number' && d.traffic.atc > 0) ? d.traffic.atc : (hasUploadedTrafficData() ? 0 : (ordersCount * 4))) : 0;
+                    const topProductsArr = [];
                     if (d.products) { Object.entries(d.products).sort((a,b)=>(b[1]?.revenue || 0)-(a[1]?.revenue || 0)).slice(0,5).forEach(([pName, metrics]) => { topProductsArr.push([pName, { units: metrics?.units || 0, revenue: metrics?.revenue || 0 }]); }); }
                     
                     let safeMerch = { musicRev: 0, merchRev: 0, sizes: {XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories: {} };
@@ -5831,7 +6100,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
                     sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only', model: 'v2-quarter-bank' },
-                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', artistName: document.getElementById('input-artist-name')?.value.trim() || '', recordLabel: document.getElementById('input-record-label')?.value || '', rep: document.getElementById('input-rep')?.value || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartMode: getCampaignChartMode(), campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, faviconBase64: globalFaviconBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
+                    title: document.getElementById('input-title')?.value || 'GLOBAL ROLLUP REPORT', setupBy: document.getElementById('input-setup-by')?.value.trim() || '', artistName: document.getElementById('input-artist-name')?.value.trim() || '', recordLabel: document.getElementById('input-record-label')?.value || '', salesChannel: document.getElementById('input-sales-channel')?.value || '', showTrafficSections: getShowTrafficSections(), rep: document.getElementById('input-rep')?.value || '', fontFamily: document.getElementById('input-font')?.value || 'Inter', fontSizeScaleHeader: document.getElementById('input-font-size-header')?.value || '16', fontSizeScaleAccordion: document.getElementById('input-font-size-accordion')?.value || '16', fontSizeScaleBody: document.getElementById('input-font-size-body')?.value || '16', logoScale: document.getElementById('input-logo-scale')?.value || '100', logoColorOverlay: document.getElementById('input-logo-color-overlay')?.checked !== false, campaignChartMode: getCampaignChartMode(), campaignChartProducts: getCampaignChartProducts(), storeHasUsMarket: document.getElementById('input-store-has-us-market')?.checked !== false, logoBase64: globalLogoBase64 || null, faviconBase64: globalFaviconBase64 || null, productImages: productImages || { p1: null, p2: null, p3: null, p4: null },
                     sectionNames: { global: document.getElementById('input-name-global')?.value || '1. Global Dashboard Summary', uk: document.getElementById('input-name-uk')?.value || '2. United Kingdom Market Insights', eu: document.getElementById('input-name-eu')?.value || '3. European Union Market Insights', us: document.getElementById('input-name-us')?.value || '4. United States Market Insights', int: document.getElementById('input-name-int')?.value || '5. Rest of World / International Insights', countries: document.getElementById('input-name-countries')?.value || '6. Top Countries' },
                     campaignDates: getCampaignDates(),
                     timelineGranularity: timelineForPublish.granularity,

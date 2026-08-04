@@ -687,6 +687,29 @@
                 }
             });
         }
+        function buildGarmentSizeChartData(sizes) {
+            const s = sizes || {};
+            const spec = [
+                { key: 'XXS', optional: true },
+                { key: 'XS', optional: true },
+                { key: 'S', optional: false },
+                { key: 'M', optional: false },
+                { key: 'L', optional: false },
+                { key: 'XL', optional: false },
+                { key: 'XXL', optional: false },
+                { key: '3XL+', optional: true }
+            ];
+            const labels = [];
+            const data = [];
+            spec.forEach(({ key, optional }) => {
+                const val = Number(s[key]) || 0;
+                if (!optional || val > 0) {
+                    labels.push(key);
+                    data.push(val);
+                }
+            });
+            return { labels, data };
+        }
         function renderGlobalMerchSection(merch, prim, sec) {
             if(!merch) return;
             const label = document.getElementById('global-merch-rev-label');
@@ -704,9 +727,9 @@
                 new Chart(mmEl.getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev', 'Merch Rev'], datasets: [{ data: [mRev || 0.001, meRev || 0.001], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } } });
             }
             const szEl = document.getElementById('globalMerchSizeBar');
-            const s = merch.sizes || {};
-            if(szEl) {
-                new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
+            const sizeChart = buildGarmentSizeChartData(merch.sizes);
+            if(szEl && sizeChart.labels.length) {
+                new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: sizeChart.labels, datasets: [{ data: sizeChart.data, backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
             }
         }
         function applyReportBranding(title, faviconDataUrl) {
@@ -846,6 +869,12 @@
             }
         }
 
+        function resolveShowTrafficSections(payload) {
+            const ch = String(payload?.salesChannel || '').toLowerCase();
+            if (ch !== 'eurostore' && ch !== 'rhino-store') return true;
+            return payload?.showTrafficSections === true;
+        }
+
         async function renderReportPayload(payload) {
             const note = document.getElementById('report-currency-note');
             if(note) note.classList.toggle('hidden', viewerCurrency === REPORT_BASE_CURRENCY);
@@ -902,11 +931,13 @@
                 }
             }
 
+            const showTrafficSections = resolveShowTrafficSections(payload);
+
             const populateSegments = (prefix, d) => {
                 const pane = document.getElementById(`${prefix}-pane`); if(!pane) return; let musicUnitsCount = 0;
                 if(typeof d.campaignChartUnits === 'number') musicUnitsCount = d.campaignChartUnits;
                 else if(d.musicProducts) { Object.values(d.musicProducts).forEach(m => { musicUnitsCount += m.units; }); }
-                const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+                const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
                 const getCategoryBarColors = (topCats) => {
                     const defaults = [prim, sec, tert, quat, '#94a3b8'];
                     const toteCol = payload.colors?.toteBag || '#6366f1';
@@ -915,10 +946,10 @@
 
                 pane.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 segment-grid-2">
-                    <div class="space-y-4 flex flex-col justify-between">
+                    <div class="space-y-4 flex flex-col ${showTrafficSections ? 'justify-between' : ''}">
                         <div class="dashboard-card border-l-4" style="border-color: var(--accent-primary)"><div class="flex justify-between items-start segment-kpi-row"><div><p class="text-[10px] uppercase font-bold card-header-custom">Territory Revenue</p><p class="text-2xl font-bold">${formatMoney(parseCurrencyLike(d.revenue))}</p><p class="text-xs mt-1 text-gray-500">${d.items} units sold across ${d.orders} orders (AOV: ${formatMoney(parseCurrencyLike(d.aov))})</p></div><div class="text-right"><p class="text-[10px] uppercase font-bold card-header-custom">Campaign D2C Chart Units</p><p class="text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p></div></div></div>
                         <div class="dashboard-card flex-1"><h3 class="text-xs font-bold card-header-custom mb-2">${d.standoutSectionTitle || (d.campaignChartMode === 'no_focus' ? 'Standout Products' : 'Standout campaign music formats')}</h3><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><tbody id="${prefix}-table"></tbody></table></div></div>
-                        <div class="dashboard-card bg-white border border-gray-200"><p class="text-[10px] font-bold card-header-custom mb-2">Web traffic & device split</p><div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 text-center traffic-kpi-grid"><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Sessions</span><span class="font-semibold text-xs">${typeof d.sessions === 'number' ? d.sessions.toLocaleString() : d.sessions}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">ATC rate</span><span class="font-semibold text-xs">${d.atcRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Conv.</span><span class="font-semibold text-xs text-green-700">${d.conversionRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">UPT</span><span class="font-semibold text-xs">${d.upt || '0.00'}</span></div></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-pie-canvas"></canvas></div></div>
+                        ${showTrafficSections ? `<div class="dashboard-card bg-white border border-gray-200"><p class="text-[10px] font-bold card-header-custom mb-2">Web traffic & device split</p><div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 text-center traffic-kpi-grid"><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Sessions</span><span class="font-semibold text-xs">${typeof d.sessions === 'number' ? d.sessions.toLocaleString() : d.sessions}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">ATC rate</span><span class="font-semibold text-xs">${d.atcRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">Conv.</span><span class="font-semibold text-xs text-green-700">${d.conversionRate || '0.0%'}</span></div><div class="bg-white p-2 rounded border border-gray-200"><span class="text-[10px] text-gray-400 block font-medium">UPT</span><span class="font-semibold text-xs">${d.upt || '0.00'}</span></div></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-pie-canvas"></canvas></div></div>` : ''}
                     </div>
                     <div class="space-y-4 flex flex-col justify-between"><div class="dashboard-card"><div class="flex justify-between items-center mb-2"><span class="text-[10px] font-bold card-header-custom">Music vs merch (net rev)</span><span class="text-[11px] font-medium text-gray-500">Merch: ${formatMoney(merch.merchRev||0)}</span></div><div class="chart-shell chart-h-pie"><canvas id="${prefix}-mm-pie"></canvas></div></div><div class="dashboard-card"><div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold card-header-custom">Garment sizing (units)</span></div><div class="chart-shell chart-h-bar"><canvas id="${prefix}-size-bar"></canvas></div></div><div class="dashboard-card flex-1"><span class="text-[10px] font-bold card-header-custom block mb-2">Top merch categories</span><div class="chart-shell chart-h-cat"><canvas id="${prefix}-cat-bar"></canvas></div></div></div>
                     </div>
@@ -934,9 +965,14 @@
                 setTimeout(() => {
                     if(typeof Chart === 'undefined') return;
                     registerPiePercentOverlayPlugin();
-                    if(document.getElementById(`${prefix}-pie-canvas`)) new Chart(document.getElementById(`${prefix}-pie-canvas`).getContext('2d'), { type: 'doughnut', data: { labels: ['Mobile', 'Desktop'], datasets: [{ data: [d.mobilePerc || 85, d.desktopPct || 15], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } } });
+                    if(showTrafficSections && document.getElementById(`${prefix}-pie-canvas`)) new Chart(document.getElementById(`${prefix}-pie-canvas`).getContext('2d'), { type: 'doughnut', data: { labels: ['Mobile', 'Desktop'], datasets: [{ data: [d.mobilePerc || 85, d.desktopPct || 15], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } } });
                     if(document.getElementById(`${prefix}-mm-pie`)) new Chart(document.getElementById(`${prefix}-mm-pie`).getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev','Merch Rev'], datasets: [{ data: [merch.musicRev || 1, merch.merchRev || 1], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
-                    if(document.getElementById(`${prefix}-size-bar`)) { const s = merch.sizes || {}; new Chart(document.getElementById(`${prefix}-size-bar`).getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } }); }
+                    if(document.getElementById(`${prefix}-size-bar`)) {
+                        const sizeChart = buildGarmentSizeChartData(merch.sizes);
+                        if (sizeChart.labels.length) {
+                            new Chart(document.getElementById(`${prefix}-size-bar`).getContext('2d'), { type: 'bar', data: { labels: sizeChart.labels, datasets: [{ data: sizeChart.data, backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } });
+                        }
+                    }
                     if(document.getElementById(`${prefix}-cat-bar`)) { const topCats = Object.entries(merch.categories || {}).sort((a,b)=>b[1]-a[1]).slice(0,5); new Chart(document.getElementById(`${prefix}-cat-bar`).getContext('2d'), { type: 'bar', data: { labels: topCats.map(x=>x[0]), datasets: [{ data: topCats.map(x=>x[1]), backgroundColor: getCategoryBarColors(topCats), borderRadius:3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}, callback: v => formatMoneyAxis(v)}}, y:{ticks:{font:{size:9}}}} } }); }
                 }, 50);
             };

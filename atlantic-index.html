@@ -349,6 +349,19 @@
         }
         .rep-tag.domestic { border-color: var(--atl-red); color: var(--atl-red); }
         .rep-tag.international { border-color: var(--atl-black); }
+        .report-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            align-items: center;
+        }
+        .rep-tag.store {
+            background: var(--atl-cream);
+            color: var(--atl-black);
+            border-color: var(--atl-border);
+            text-transform: none;
+            letter-spacing: 0.02em;
+        }
         .metric-label {
             display: block;
             font-size: 0.625rem;
@@ -735,6 +748,7 @@
             'recordLabel:campaign_data->recordLabel',
             'artistName:campaign_data->artistName',
             'rep:campaign_data->rep',
+            'salesChannel:campaign_data->salesChannel',
             'setupBy:campaign_data->setupBy',
             'title:campaign_data->title',
             'reportSlug:campaign_data->reportSlug',
@@ -764,6 +778,7 @@
                     recordLabel: row.recordLabel,
                     artistName: row.artistName,
                     rep: row.rep,
+                    salesChannel: row.salesChannel,
                     setupBy: row.setupBy,
                     title: row.title,
                     reportSlug: row.reportSlug,
@@ -887,11 +902,27 @@
             return d.start ? `From ${d.start}` : `Until ${d.end}`;
         }
 
+        function getSalesChannelLabel(channel) {
+            const key = String(channel || '').trim().toLowerCase();
+            if (key === 'eurostore') return 'Eurostore';
+            if (key === 'rhino-store') return 'Rhino store';
+            return '';
+        }
+
+        function renderReportTags(cd) {
+            const rep = String(cd.rep || '').trim() || 'Unassigned';
+            const bucket = getRepBucket(cd.rep);
+            const storeLabel = getSalesChannelLabel(cd.salesChannel);
+            const tags = [`<span class="rep-tag ${bucket}">${escapeHtml(rep)}</span>`];
+            if (storeLabel) {
+                tags.push(`<span class="rep-tag store">${escapeHtml(storeLabel)}</span>`);
+            }
+            return `<div class="report-tags">${tags.join('')}</div>`;
+        }
+
         function renderReportRow(report) {
             const cd = report.campaign_data || {};
             const url = getLiveUrl(report);
-            const rep = String(cd.rep || '').trim() || 'Unassigned';
-            const bucket = getRepBucket(cd.rep);
             const orders = parseGlobalOrders(cd.global);
             const revenue = parseGlobalRevenue(cd.global);
             const updated = formatLastUpdated(cd.lastUpdatedAt);
@@ -904,7 +935,7 @@
                     ${setupBy ? `<div class="report-meta">Set up by ${escapeHtml(setupBy)}</div>` : ''}
                     <div class="report-meta">Campaign dates: ${escapeHtml(dateRange)}</div>
                 </div>
-                <div><span class="rep-tag ${bucket}">${escapeHtml(rep)}</span></div>
+                <div>${renderReportTags(cd)}</div>
                 <div><span class="metric-label">Orders</span><span class="metric-value">${formatOrders(orders)}</span></div>
                 <div><span class="metric-label">Revenue</span><span class="metric-value revenue">${formatRevenue(revenue)}</span></div>
                 <div>
@@ -1465,6 +1496,25 @@
             }
         }
 
+        function getReportPeriodRevenueCap(cd, markets, range, productFilter) {
+            return markets.reduce((sum, mk) => {
+                const mData = cd[mk];
+                if (!mData) return sum;
+                return sum + getCategoryPeriodRevenue(mData, range, productFilter);
+            }, 0);
+        }
+
+        function reconcileProductRevenueToPeriodCap(products, cap) {
+            if (!products.size || !(cap > 0)) return;
+            let sum = 0;
+            products.forEach(m => { sum += m.revenue; });
+            if (!(sum > cap)) return;
+            const scale = cap / sum;
+            products.forEach((m, name) => {
+                products.set(name, { units: m.units, revenue: m.revenue * scale });
+            });
+        }
+
         function collectProductsFromReport(report, filters) {
             const cd = report?.campaign_data || {};
             const markets = getMarketsForFilter(filters.market);
@@ -1486,62 +1536,62 @@
                     });
                 });
 
-                if (products.size > 0) return products;
+                if (products.size === 0) {
+                    const periodProducts = new Map();
 
-                const periodProducts = new Map();
+                    markets.forEach(mk => {
+                        const mData = cd[mk];
+                        if (!mData) return;
+                        const kindLookup = buildProductKindLookup(mData);
 
-                markets.forEach(mk => {
-                    const mData = cd[mk];
-                    if (!mData) return;
-                    const kindLookup = buildProductKindLookup(mData);
-
-                    Object.entries(mData.weeklyProductUnits || {}).forEach(([weekKey, prods]) => {
-                        if (!weekOverlapsRange(weekKey, range)) return;
-                        const fraction = weekOverlapFraction(weekKey, range);
-                        if (fraction <= 0) return;
-                        Object.entries(prods || {}).forEach(([name, raw]) => {
-                            const units = (typeof raw === 'number' ? (Number(raw) || 0) : (Number(raw?.units) || 0)) * fraction;
-                            const revenue = (typeof raw === 'object' && raw !== null ? (Number(raw?.revenue) || 0) : 0) * fraction;
-                            const kind = typeof raw === 'object' && raw?.kind
-                                ? raw.kind
-                                : resolveProductKind(name, mData, kindLookup);
-                            if (!productMatchesCategory(kind, productFilter)) return;
-                            if (units <= 0 && revenue <= 0) return;
-                            const prev = periodProducts.get(name) || { units: 0, revenue: 0, kind };
-                            periodProducts.set(name, {
-                                units: prev.units + units,
-                                revenue: prev.revenue + revenue,
-                                kind
+                        Object.entries(mData.weeklyProductUnits || {}).forEach(([weekKey, prods]) => {
+                            if (!weekOverlapsRange(weekKey, range)) return;
+                            const fraction = weekOverlapFraction(weekKey, range);
+                            if (fraction <= 0) return;
+                            Object.entries(prods || {}).forEach(([name, raw]) => {
+                                const units = (typeof raw === 'number' ? (Number(raw) || 0) : (Number(raw?.units) || 0)) * fraction;
+                                const revenue = (typeof raw === 'object' && raw !== null ? (Number(raw?.revenue) || 0) : 0) * fraction;
+                                const kind = typeof raw === 'object' && raw?.kind
+                                    ? raw.kind
+                                    : resolveProductKind(name, mData, kindLookup);
+                                if (!productMatchesCategory(kind, productFilter)) return;
+                                if (units <= 0 && revenue <= 0) return;
+                                const prev = periodProducts.get(name) || { units: 0, revenue: 0, kind };
+                                periodProducts.set(name, {
+                                    units: prev.units + units,
+                                    revenue: prev.revenue + revenue,
+                                    kind
+                                });
                             });
                         });
                     });
-                });
 
-                const hasWeeklyRevenue = Array.from(periodProducts.values()).some(m => m.revenue > 0);
+                    const hasWeeklyRevenue = Array.from(periodProducts.values()).some(m => m.revenue > 0);
 
-                if (hasWeeklyRevenue) {
-                    periodProducts.forEach((metrics, name) => {
-                        addProductEntry(products, name, metrics.units, metrics.revenue, metrics.kind, productFilter);
-                    });
-                    return products;
+                    if (hasWeeklyRevenue) {
+                        periodProducts.forEach((metrics, name) => {
+                            addProductEntry(products, name, metrics.units, metrics.revenue, metrics.kind, productFilter);
+                        });
+                    } else {
+                        let categoryPeriodRev = 0;
+                        let totalPeriodUnits = 0;
+                        periodProducts.forEach(m => { totalPeriodUnits += m.units; });
+                        markets.forEach(mk => {
+                            const mData = cd[mk];
+                            if (!mData) return;
+                            categoryPeriodRev += getCategoryPeriodRevenue(mData, range, productFilter);
+                        });
+
+                        if (periodProducts.size > 0 && totalPeriodUnits > 0 && categoryPeriodRev > 0) {
+                            periodProducts.forEach((metrics, name) => {
+                                const share = metrics.units / totalPeriodUnits;
+                                addProductEntry(products, name, metrics.units, categoryPeriodRev * share, metrics.kind, productFilter);
+                            });
+                        }
+                    }
                 }
 
-                let categoryPeriodRev = 0;
-                let totalPeriodUnits = 0;
-                periodProducts.forEach(m => { totalPeriodUnits += m.units; });
-                markets.forEach(mk => {
-                    const mData = cd[mk];
-                    if (!mData) return;
-                    categoryPeriodRev += getCategoryPeriodRevenue(mData, range, productFilter);
-                });
-
-                if (periodProducts.size > 0 && totalPeriodUnits > 0 && categoryPeriodRev > 0) {
-                    periodProducts.forEach((metrics, name) => {
-                        const share = metrics.units / totalPeriodUnits;
-                        addProductEntry(products, name, metrics.units, categoryPeriodRev * share, metrics.kind, productFilter);
-                    });
-                }
-
+                reconcileProductRevenueToPeriodCap(products, getReportPeriodRevenueCap(cd, markets, range, productFilter));
                 return products;
             }
 
