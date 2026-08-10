@@ -134,6 +134,9 @@
         }
         .atl-btn-sm:hover { border-color: var(--atl-red); color: var(--atl-red); }
         .atl-btn-sm.copied { border-color: var(--atl-red); color: var(--atl-red); background: var(--atl-red-soft); }
+        .atl-btn-sm.danger { color: #9b1c1c; border-color: rgba(155, 28, 28, 0.35); }
+        .atl-btn-sm.danger:hover { border-color: #9b1c1c; color: #9b1c1c; background: rgba(155, 28, 28, 0.06); }
+        .atl-btn-sm.danger:disabled { opacity: 0.55; cursor: not-allowed; }
         .region-accordion {
             margin-bottom: 1rem;
             border: 1px solid var(--atl-border);
@@ -879,6 +882,48 @@
             }
         }
 
+        async function deleteReportFromIndex(reportId, reportName, btn) {
+            const label = String(reportName || 'this report').trim() || 'this report';
+            const ok = window.confirm(
+                `Remove "${label}" from the Atlantic index?\n\n` +
+                'This permanently deletes the published report. The live URL will stop working, ' +
+                'but you can re-publish from Admin if the sales bank is still saved.'
+            );
+            if (!ok) return;
+
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Removing…';
+            }
+
+            try {
+                const headers = {
+                    apikey: SB_KEY,
+                    Authorization: 'Bearer ' + SB_KEY
+                };
+                const response = await fetchWithTimeout(
+                    SB_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId),
+                    { method: 'DELETE', headers },
+                    30000
+                );
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(errText || ('HTTP ' + response.status));
+                }
+
+                allReports = allReports.filter(r => r.id !== reportId);
+                const searchQuery = document.getElementById('search')?.value || '';
+                renderIndex(filterReports(searchQuery));
+                showToast('Report removed');
+            } catch (err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Remove';
+                }
+                window.alert('Could not remove report: ' + (err.message || 'Network error'));
+            }
+        }
+
         function filterReports(query) {
             const q = String(query || '').trim().toLowerCase();
             if (!q) return allReports;
@@ -944,6 +989,7 @@
                     <div class="row-actions" style="margin-top:0.45rem">
                         <button type="button" class="atl-btn-sm" data-copy="${encodeURIComponent(url)}">Copy</button>
                         <a class="atl-btn-sm" href="${url}" target="_blank" rel="noopener">Open</a>
+                        <button type="button" class="atl-btn-sm danger" data-delete-report="${escapeHtml(report.id)}" data-report-name="${escapeHtml(report.report_name || 'Untitled')}">Remove</button>
                     </div>
                 </div>
             </li>`;
@@ -1745,6 +1791,13 @@
             content.innerHTML = html.join('');
             content.querySelectorAll('[data-copy]').forEach(btn => {
                 btn.addEventListener('click', () => copyText(decodeURIComponent(btn.getAttribute('data-copy')), btn));
+            });
+            content.querySelectorAll('[data-delete-report]').forEach(btn => {
+                btn.addEventListener('click', () => deleteReportFromIndex(
+                    btn.getAttribute('data-delete-report'),
+                    btn.getAttribute('data-report-name'),
+                    btn
+                ));
             });
             setTimeout(() => {
                 try {
