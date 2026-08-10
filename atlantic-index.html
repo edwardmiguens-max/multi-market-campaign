@@ -901,15 +901,15 @@
                     apikey: SB_KEY,
                     Authorization: 'Bearer ' + SB_KEY
                 };
-                const response = await fetchWithTimeout(
-                    SB_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId),
-                    { method: 'DELETE', headers },
-                    30000
+                await raceTimeout(
+                    fetchWithTimeout(
+                        SB_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId),
+                        { method: 'DELETE', headers },
+                        30000
+                    ),
+                    35000,
+                    'Delete report'
                 );
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(errText || ('HTTP ' + response.status));
-                }
 
                 allReports = allReports.filter(r => r.id !== reportId);
                 const searchQuery = document.getElementById('search')?.value || '';
@@ -1092,7 +1092,8 @@
         }
 
         function fetchWithTimeout(url, options, timeoutMs) {
-            if (typeof XMLHttpRequest !== 'undefined') {
+            const method = String((options && options.method) || 'GET').toUpperCase();
+            if (typeof XMLHttpRequest !== 'undefined' && method === 'GET') {
                 const headers = {};
                 Object.entries((options && options.headers) || {}).forEach(([key, value]) => { headers[key] = value; });
                 return xhrJsonGet(url, headers, timeoutMs);
@@ -1105,7 +1106,10 @@
                     const errText = await response.text().catch(() => '');
                     throw new Error('HTTP ' + response.status + (errText ? ': ' + errText.slice(0, 200) : ''));
                 }
-                return response.json();
+                if (method === 'DELETE' || response.status === 204) return null;
+                const text = await response.text();
+                if (!text) return null;
+                try { return JSON.parse(text); } catch (_err) { return text; }
             });
         }
 
