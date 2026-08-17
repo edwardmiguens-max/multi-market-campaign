@@ -57,6 +57,25 @@
         .btn-index-sm { font-size: 0.75rem; padding: 0.4rem 0.65rem; border-radius: 0.375rem; border: 1px solid var(--shopify-border); background: #fff; cursor: pointer; font-weight: 600; color: var(--rep-v-body-txt); }
         .btn-index-sm:hover { background: #f6f6f7; }
         .btn-index-sm.copied { border-color: var(--rep-v-prim); color: var(--rep-v-prim); }
+        .btn-index-sm.danger { color: #b42318; border-color: rgba(180, 35, 24, 0.35); }
+        .btn-index-sm.danger:hover { background: #fef3f2; }
+        .btn-index-sm.danger:disabled { opacity: 0.55; cursor: not-allowed; }
+        .artist-group { border: 1px solid var(--shopify-border); border-radius: 0.65rem; overflow: hidden; background: #fff; }
+        .artist-group + .artist-group { margin-top: 0.75rem; }
+        .artist-group > summary {
+            list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+            gap: 0.75rem; padding: 0.8rem 0.95rem; background: #fafbfb; user-select: none;
+        }
+        .artist-group > summary::-webkit-details-marker { display: none; }
+        .artist-group > summary:hover { background: #f6f6f7; }
+        .artist-group-name { font-weight: 700; font-size: 0.875rem; color: var(--rep-v-body-txt); letter-spacing: 0.02em; }
+        .artist-group-count {
+            font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+            color: var(--rep-v-hdr-txt); background: #fff; border: 1px solid var(--shopify-border);
+            border-radius: 9999px; padding: 0.2rem 0.55rem; white-space: nowrap;
+        }
+        .artist-group .report-table-wrap { border-top: 1px solid var(--shopify-border); }
+        .artist-groups { display: flex; flex-direction: column; }
         .index-state { padding: 2.5rem 1rem; text-align: center; color: var(--rep-v-hdr-txt); font-size: 0.875rem; }
         .index-state.error { color: #b42318; }
         .toast {
@@ -147,7 +166,7 @@
             return base + 'forecast-planner.html?reportSlug=' + encodeURIComponent(slug);
         }
 
-        const INDEX_SELECT = 'id,report_name,setupBy:campaign_data->setupBy,reportSlug:campaign_data->reportSlug';
+        const INDEX_SELECT = 'id,report_name,setupBy:campaign_data->setupBy,reportSlug:campaign_data->reportSlug,artistName:campaign_data->artistName';
 
         function indexRowToReport(row) {
             return {
@@ -155,9 +174,18 @@
                 report_name: row.report_name,
                 campaign_data: {
                     setupBy: row.setupBy ?? '',
-                    reportSlug: row.reportSlug ?? ''
+                    reportSlug: row.reportSlug ?? '',
+                    artistName: row.artistName ?? ''
                 }
             };
+        }
+
+        function getReportArtistName(report) {
+            const named = String(report?.campaign_data?.artistName || '').trim();
+            if (named) return named;
+            const reportName = String(report?.report_name || '').trim();
+            if (reportName.includes(' - ')) return reportName.split(' - ')[0].trim() || 'Unknown Artist';
+            return reportName || 'Unknown Artist';
         }
 
         function escapeHtml(str) {
@@ -193,19 +221,56 @@
             }
         }
 
-        function renderTable(reports) {
-            const content = document.getElementById('content');
-            const countLabel = document.getElementById('count-label');
-            countLabel.textContent = reports.length === allReports.length
-                ? `${reports.length} report${reports.length === 1 ? '' : 's'}`
-                : `${reports.length} of ${allReports.length} reports`;
+        async function deletePublishedReport(reportId, reportName, btn) {
+            const label = String(reportName || 'this report').trim() || 'this report';
+            const ok = window.confirm(
+                `Permanently delete "${label}"?\n\n` +
+                'This removes it from the database, Campaign Reports, and every label index. ' +
+                'The live URL will stop working. You can re-publish from Admin if the sales bank is still saved.'
+            );
+            if (!ok) return;
 
-            if (!reports.length) {
-                content.innerHTML = '<div class="index-state">No published reports found. Publish from Admin to add URLs here.</div>';
-                return;
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Deleting…';
             }
 
-            const rows = reports.map(r => {
+            try {
+                const response = await fetch(SB_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId), {
+                    method: 'DELETE',
+                    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+                });
+                if (!response.ok && response.status !== 204) {
+                    const errText = await response.text().catch(() => '');
+                    throw new Error(errText || ('HTTP ' + response.status));
+                }
+                allReports = allReports.filter(r => r.id !== reportId);
+                renderTable(filterReports(document.getElementById('search')?.value || ''));
+                showToast('Report deleted');
+            } catch (err) {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Delete';
+                }
+                window.alert('Could not delete report: ' + (err.message || 'Network error'));
+            }
+        }
+
+        function groupReportsByArtist(reports) {
+            const groups = new Map();
+            reports.forEach(r => {
+                const artist = getReportArtistName(r);
+                if (!groups.has(artist)) groups.set(artist, []);
+                groups.get(artist).push(r);
+            });
+            const sortByName = (a, b) => String(a.report_name || '').localeCompare(String(b.report_name || ''), undefined, { sensitivity: 'base' });
+            return Array.from(groups.entries())
+                .sort((a, b) => a[0].localeCompare(b[0], undefined, { sensitivity: 'base' }))
+                .map(([artist, list]) => [artist, list.sort(sortByName)]);
+        }
+
+        function renderReportRows(reports) {
+            return reports.map(r => {
                 const url = getLiveUrl(r);
                 const safeName = escapeHtml(r.report_name || 'Untitled');
                 const setupBy = r.campaign_data?.setupBy || '';
@@ -219,18 +284,54 @@
                             <button type="button" class="btn-index-sm" data-copy="${encodeURIComponent(url)}">Copy URL</button>
                             <a class="btn-index-sm" href="${url}" target="_blank" rel="noopener">Open</a>
                             <a class="btn-index-sm" href="${forecastUrl}">Forecast</a>
+                            <button type="button" class="btn-index-sm danger" data-delete-report="${escapeHtml(r.id)}" data-report-name="${safeName}">Delete</button>
                         </div>
                     </td>
                 </tr>`;
             }).join('');
+        }
 
-            content.innerHTML = `<div class="report-table-wrap"><table class="index-table">
-                <thead><tr><th>Campaign</th><th>Set up by</th><th>Live URL</th><th>Actions</th></tr></thead>
-                <tbody>${rows}</tbody>
-            </table></div>`;
+        function renderTable(reports) {
+            const content = document.getElementById('content');
+            const countLabel = document.getElementById('count-label');
+            const groups = groupReportsByArtist(reports);
+            const countText = reports.length === allReports.length
+                ? `${reports.length} report${reports.length === 1 ? '' : 's'}`
+                : `${reports.length} of ${allReports.length} reports`;
+            countLabel.textContent = groups.length
+                ? `${countText} · ${groups.length} artist${groups.length === 1 ? '' : 's'}`
+                : countText;
+
+            if (!reports.length) {
+                content.innerHTML = '<div class="index-state">No published reports found. Publish from Admin to add URLs here.</div>';
+                return;
+            }
+
+            const html = groups.map(([artist, list]) => {
+                const rows = renderReportRows(list);
+                return `<details class="artist-group" open>
+                    <summary>
+                        <span class="artist-group-name">${escapeHtml(artist)}</span>
+                        <span class="artist-group-count">${list.length} report${list.length === 1 ? '' : 's'}</span>
+                    </summary>
+                    <div class="report-table-wrap"><table class="index-table">
+                        <thead><tr><th>Campaign</th><th>Set up by</th><th>Live URL</th><th>Actions</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table></div>
+                </details>`;
+            }).join('');
+
+            content.innerHTML = `<div class="artist-groups">${html}</div>`;
 
             content.querySelectorAll('[data-copy]').forEach(btn => {
                 btn.addEventListener('click', () => copyText(decodeURIComponent(btn.getAttribute('data-copy')), btn));
+            });
+            content.querySelectorAll('[data-delete-report]').forEach(btn => {
+                btn.addEventListener('click', () => deletePublishedReport(
+                    btn.getAttribute('data-delete-report'),
+                    btn.getAttribute('data-report-name'),
+                    btn
+                ));
             });
         }
 
@@ -240,7 +341,8 @@
             return allReports.filter(r => {
                 const name = String(r.report_name || '').toLowerCase();
                 const setupBy = String(r.campaign_data?.setupBy || '').toLowerCase();
-                return name.includes(q) || setupBy.includes(q);
+                const artist = getReportArtistName(r).toLowerCase();
+                return name.includes(q) || setupBy.includes(q) || artist.includes(q);
             });
         }
 

@@ -890,7 +890,8 @@
             'runtimeVersion:campaign_data->runtimeVersion',
             'campaignDates:campaign_data->campaignDates',
             'globalMerch:campaign_data->globalMerch',
-            'indexOverview:campaign_data->indexOverview'
+            'indexOverview:campaign_data->indexOverview',
+            'hiddenFromLabelIndex:campaign_data->hiddenFromLabelIndex'
         ].join(', ');
 
         function marketsFromIndexOverview(indexOverview) {
@@ -921,6 +922,7 @@
                     campaignDates: row.campaignDates,
                     globalMerch: row.globalMerch,
                     indexOverview: row.indexOverview,
+                    hiddenFromLabelIndex: row.hiddenFromLabelIndex,
                     uk: markets.uk,
                     eu: markets.eu,
                     us: markets.us,
@@ -1032,12 +1034,57 @@
             }
         }
 
+        function isHiddenFromLabelIndex(cd) {
+            const v = cd?.hiddenFromLabelIndex;
+            return v === true || v === 'true' || v === 1 || v === '1';
+        }
+
+        async function hideReportFromLabelIndex(reportId) {
+            const headers = {
+                apikey: SB_KEY,
+                Authorization: 'Bearer ' + SB_KEY,
+                'Content-Type': 'application/json',
+                Prefer: 'return=minimal'
+            };
+            const rpcRes = await fetch(SB_URL + '/rest/v1/rpc/hide_report_from_label_index', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ report_id: reportId, hidden: true })
+            });
+            if (rpcRes.ok || rpcRes.status === 204) return;
+
+            const getRes = await fetch(
+                SB_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId) + '&select=campaign_data',
+                { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY } }
+            );
+            if (!getRes.ok) {
+                const errText = await getRes.text().catch(() => '');
+                throw new Error(errText || ('HTTP ' + getRes.status));
+            }
+            const rows = await getRes.json();
+            let current = rows[0]?.campaign_data;
+            if (typeof current === 'string') {
+                try { current = JSON.parse(current); } catch (_err) { current = {}; }
+            }
+            const merged = { ...(current && typeof current === 'object' ? current : {}), hiddenFromLabelIndex: true };
+            const patchRes = await fetch(SB_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId), {
+                method: 'PATCH',
+                headers,
+                body: JSON.stringify({ campaign_data: merged })
+            });
+            if (!patchRes.ok && patchRes.status !== 204) {
+                const errText = await patchRes.text().catch(() => '');
+                throw new Error(errText || ('HTTP ' + patchRes.status));
+            }
+        }
+
         async function deleteReportFromIndex(reportId, reportName, btn) {
             const label = String(reportName || 'this report').trim() || 'this report';
             const ok = window.confirm(
                 `Remove "${label}" from the Warner & Parlophone index?\n\n` +
-                'This permanently deletes the published report. The live URL will stop working, ' +
-                'but you can re-publish from Admin if the sales bank is still saved.'
+                'This hides the report from this index and the Overall Sales Snapshot. ' +
+                'The live URL and Campaign Reports page stay available. ' +
+                'Use Delete on Campaign Reports to permanently delete it.'
             );
             if (!ok) return;
 
@@ -1047,24 +1094,11 @@
             }
 
             try {
-                const headers = {
-                    apikey: SB_KEY,
-                    Authorization: 'Bearer ' + SB_KEY
-                };
-                await raceTimeout(
-                    fetchWithTimeout(
-                        SB_URL + '/rest/v1/reports?id=eq.' + encodeURIComponent(reportId),
-                        { method: 'DELETE', headers },
-                        30000
-                    ),
-                    35000,
-                    'Delete report'
-                );
-
+                await hideReportFromLabelIndex(reportId);
                 allReports = allReports.filter(r => r.id !== reportId);
                 const searchQuery = document.getElementById('search')?.value || '';
                 renderIndex(filterReports(searchQuery));
-                showToast('Report removed');
+                showToast('Report removed from index');
             } catch (err) {
                 if (btn) {
                     btn.disabled = false;
@@ -2037,7 +2071,8 @@
             try {
                 loadArtistRollups(null).catch(() => {});
                 const data = await fetchReportsFromDb();
-                allReports = (Array.isArray(data) ? data : []).map(indexRowToReport).filter(isWarnerOrParlophoneReport);
+                allReports = (Array.isArray(data) ? data : []).map(indexRowToReport)
+                    .filter(r => !isHiddenFromLabelIndex(r.campaign_data) && isWarnerOrParlophoneReport(r));
                 if (!allReports.length) {
                     setLoadStatus('No Warner or Parlophone reports found. Set Record label in Admin and publish a campaign.', true);
                     if (countLabel) countLabel.textContent = '0 reports';

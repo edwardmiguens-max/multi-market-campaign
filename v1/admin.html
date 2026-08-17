@@ -1076,7 +1076,7 @@
             const szEl = document.getElementById('globalMerchSizeBar');
             const s = merch.sizes || {};
             if(szEl) {
-                globalMerchSizeChart = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
+                globalMerchSizeChart = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XXS','XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XXS||0, s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
             }
         }
         function compressFaviconToBase64(file, callback) {
@@ -1468,7 +1468,7 @@
             el.classList.remove('hidden');
         }
         function getEmptyStoreData() {
-            const emptyMarket = () => ({ loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, weeklyUnits: {}, dailyUnits: {}, weeklyMusicRev: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} });
+            const emptyMarket = () => ({ loaded: false, revenue: 0, items: 0, orders: new Set(), products: {}, merchProducts: {}, weekly: {}, daily: {}, weeklyUnits: {}, dailyUnits: {}, weeklyMusicRev: {}, traffic: { sessions: 0, atc: 0, mobile: 85, desktop: 15 }, merch: { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} }, musicProducts: {} });
             return { uk: emptyMarket(), eu: emptyMarket(), us: emptyMarket(), int: emptyMarket() };
         }
         let storeData = getEmptyStoreData();
@@ -3270,7 +3270,7 @@
 
             ['device', 'mm', 'size', 'cat'].forEach(t => { if(chartInstances[`${prefix}_${t}`]) chartInstances[`${prefix}_${t}`].destroy(); });
 
-            const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+            const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
 
             pane.innerHTML = `
                 <div class="grid grid-cols-2 gap-6">
@@ -3333,7 +3333,7 @@
                 const szEl = document.getElementById(`${prefix}-size-bar-preview`);
                 if(szEl) {
                     const s = merch.sizes || {};
-                    chartInstances[`${prefix}_size`] = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } });
+                    chartInstances[`${prefix}_size`] = new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XXS','XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XXS||0, s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } });
                 }
 
                 const catEl = document.getElementById(`${prefix}-cat-bar-preview`);
@@ -3736,7 +3736,7 @@
             Object.keys(storeData).forEach(m => {
                 storeData[m].loaded = true; storeData[m].revenue = 0; storeData[m].items = 0; storeData[m].orders.clear();
                 storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].merchProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {}; storeData[m].weeklyUnits = {}; storeData[m].dailyUnits = {}; storeData[m].weeklyMusicRev = {};
-                storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+                storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
             });
 
             let minOrder = Infinity, maxOrder = -Infinity;
@@ -3905,6 +3905,7 @@
                         if (variant.includes('3XL') || variant.includes('XXXL')) sToken = '3XL+';
                         else if (variant.includes('2XL') || variant.includes('XXL')) sToken = 'XXL';
                         else if (variant.includes('XL') || variant.includes('EXTRA LARGE')) sToken = 'XL';
+                        else if (variant.includes('XXS') || variant.includes('2XS')) sToken = 'XXS';
                         else if (variant.includes('XS') || variant.includes('EXTRA SMALL')) sToken = 'XS';
                         else if (variant === 'L' || vTokens.includes('L') || variant.includes('LARGE')) sToken = 'L';
                         else if (variant === 'M' || vTokens.includes('M') || variant.includes('MEDIUM')) sToken = 'M';

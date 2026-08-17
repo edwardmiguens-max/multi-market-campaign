@@ -706,7 +706,7 @@
             const szEl = document.getElementById('globalMerchSizeBar');
             const s = merch.sizes || {};
             if(szEl) {
-                new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
+                new Chart(szEl.getContext('2d'), { type: 'bar', data: { labels: ['XXS','XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XXS||0, s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 9 } } }, y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 9 } } } } } });
             }
         }
         function applyReportBranding(title, faviconDataUrl) {
@@ -906,7 +906,7 @@
                 const pane = document.getElementById(`${prefix}-pane`); if(!pane) return; let musicUnitsCount = 0;
                 if(typeof d.campaignChartUnits === 'number') musicUnitsCount = d.campaignChartUnits;
                 else if(d.musicProducts) { Object.values(d.musicProducts).forEach(m => { musicUnitsCount += m.units; }); }
-                const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
+                const merch = d.merch || { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
                 const getCategoryBarColors = (topCats) => {
                     const defaults = [prim, sec, tert, quat, '#94a3b8'];
                     const toteCol = payload.colors?.toteBag || '#6366f1';
@@ -936,7 +936,7 @@
                     registerPiePercentOverlayPlugin();
                     if(document.getElementById(`${prefix}-pie-canvas`)) new Chart(document.getElementById(`${prefix}-pie-canvas`).getContext('2d'), { type: 'doughnut', data: { labels: ['Mobile', 'Desktop'], datasets: [{ data: [d.mobilePerc || 85, d.desktopPct || 15], backgroundColor: [prim, sec], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } } } });
                     if(document.getElementById(`${prefix}-mm-pie`)) new Chart(document.getElementById(`${prefix}-mm-pie`).getContext('2d'), { type: 'doughnut', data: { labels: ['Music Rev','Merch Rev'], datasets: [{ data: [merch.musicRev || 1, merch.merchRev || 1], backgroundColor: [prim, sec], borderWidth:0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10}}}} } });
-                    if(document.getElementById(`${prefix}-size-bar`)) { const s = merch.sizes || {}; new Chart(document.getElementById(`${prefix}-size-bar`).getContext('2d'), { type: 'bar', data: { labels: ['XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } }); }
+                    if(document.getElementById(`${prefix}-size-bar`)) { const s = merch.sizes || {}; new Chart(document.getElementById(`${prefix}-size-bar`).getContext('2d'), { type: 'bar', data: { labels: ['XXS','XS','S','M','L','XL','XXL','3XL+'], datasets: [{ data: [s.XXS||0, s.XS||0, s.S||0, s.M||0, s.L||0, s.XL||0, s.XXL||0, s['3XL+']||0], backgroundColor: prim, borderRadius:3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}}}, y:{beginAtZero:true, ticks:{stepSize:1, font:{size:9}}}} } }); }
                     if(document.getElementById(`${prefix}-cat-bar`)) { const topCats = Object.entries(merch.categories || {}).sort((a,b)=>b[1]-a[1]).slice(0,5); new Chart(document.getElementById(`${prefix}-cat-bar`).getContext('2d'), { type: 'bar', data: { labels: topCats.map(x=>x[0]), datasets: [{ data: topCats.map(x=>x[1]), backgroundColor: getCategoryBarColors(topCats), borderRadius:3 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins:{legend:{display:false}}, scales:{x:{ticks:{font:{size:9}, callback: v => formatMoneyAxis(v)}}, y:{ticks:{font:{size:9}}}} } }); }
                 }, 50);
             };

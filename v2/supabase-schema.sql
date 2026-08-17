@@ -61,3 +61,16 @@ create policy "v2 artist_quarter_chunks anon all" on artist_quarter_chunks for a
 
 drop policy if exists "v2 artist_rollups anon all" on artist_rollups;
 create policy "v2 artist_rollups anon all" on artist_rollups for all using (true) with check (true);
+
+-- Hide a published report from label indexes without deleting the row.
+create or replace function hide_report_from_label_index(report_id uuid, hidden boolean default true)
+returns void
+language sql
+security definer
+as $$
+  update reports
+  set campaign_data = jsonb_set(coalesce(campaign_data, '{}'::jsonb), '{hiddenFromLabelIndex}', to_jsonb(hidden), true)
+  where id = report_id;
+$$;
+
+grant execute on function hide_report_from_label_index(uuid, boolean) to anon, authenticated;

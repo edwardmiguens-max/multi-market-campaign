@@ -786,6 +786,7 @@
                 window.__bootLoadedReportId = data.id;
                 window.activeLoadedReportId = data.id;
                 loadedCampaignName = data.report_name || null;
+                window.__loadedHiddenFromLabelIndex = old.hiddenFromLabelIndex === true;
 
                 var clearBtn = document.getElementById('btn-clear-load');
                 if (clearBtn) clearBtn.classList.remove('hidden');
@@ -1087,6 +1088,7 @@
         let globalFaviconBase64 = null;
         let activeLoadedReportId = window.__bootLoadedReportId || window.activeLoadedReportId || null;
         let loadedCampaignName = null;
+        let loadedHiddenFromLabelIndex = false;
 
         function syncPublishButtons() {
             const pubBtn = document.getElementById('btn-publish');
@@ -1114,6 +1116,8 @@
             if (!artistName) return alert('Enter or select an artist first.');
             activeLoadedReportId = null;
             loadedCampaignName = null;
+            loadedHiddenFromLabelIndex = false;
+            window.__loadedHiddenFromLabelIndex = false;
             window.activeLoadedReportId = null;
             const dropdown = document.getElementById('select-campaign-directory');
             if (dropdown) dropdown.value = '';
@@ -4256,6 +4260,8 @@ VISUALIZE sessions TYPE horizontal_bar`
         function resetLoadedCampaignToDefaults() {
             activeLoadedReportId = null;
             loadedCampaignName = null;
+            loadedHiddenFromLabelIndex = false;
+            window.__loadedHiddenFromLabelIndex = false;
             window.activeLoadedReportId = null;
             loadedLeversPayload = null;
             loadedTopCountriesPayload = null;
@@ -4723,6 +4729,8 @@ VISUALIZE sessions TYPE horizontal_bar`
             activeLoadedReportId = data.id;
             window.activeLoadedReportId = data.id;
             loadedCampaignName = data.report_name || null;
+            loadedHiddenFromLabelIndex = old.hiddenFromLabelIndex === true;
+            window.__loadedHiddenFromLabelIndex = loadedHiddenFromLabelIndex;
 
             document.getElementById('btn-clear-load')?.classList.remove('hidden');
             syncPublishButtons();
@@ -6119,7 +6127,8 @@ VISUALIZE sessions TYPE horizontal_bar`
                     bankedQuarters: bankSummary.bankedQuarters,
                     activeQuarter: bankSummary.activeQuarter,
                     artistRollup,
-                    indexOverview: buildIndexOverview()
+                    indexOverview: buildIndexOverview(),
+                    hiddenFromLabelIndex: (!forceNew && (loadedHiddenFromLabelIndex || window.__loadedHiddenFromLabelIndex)) ? true : undefined
                 };
 
                 try {
