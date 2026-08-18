@@ -3753,7 +3753,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 preOrder1: { ...readLeverMarketFlags('preOrder1'), title: document.getElementById('lever-preOrder1-title')?.value || 'Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder1-start-date')?.value || '', startTime: document.getElementById('lever-preOrder1-start-time')?.value || '', endDate: document.getElementById('lever-preOrder1-end-date')?.value || '', endTime: document.getElementById('lever-preOrder1-end-time')?.value || '', shows: getShowRowsFromDom('preOrder1'), npnSignups: Number(document.getElementById('lever-preOrder1-npn')?.value || 0) },
                 preOrder2: { ...readLeverMarketFlags('preOrder2'), title: document.getElementById('lever-preOrder2-title')?.value || 'Second Pre-order for Pre-sale', startDate: document.getElementById('lever-preOrder2-start-date')?.value || '', startTime: document.getElementById('lever-preOrder2-start-time')?.value || '', endDate: document.getElementById('lever-preOrder2-end-date')?.value || '', endTime: document.getElementById('lever-preOrder2-end-time')?.value || '', shows: getShowRowsFromDom('preOrder2'), npnSignups: Number(document.getElementById('lever-preOrder2-npn')?.value || 0) },
                 earlyAccess: { ...readLeverMarketFlags('earlyAccess'), title: document.getElementById('lever-earlyAccess-title')?.value || 'Early Access Period', infoNotes: document.getElementById('lever-earlyAccess-info')?.value || '', startDate: document.getElementById('lever-earlyAccess-start-date')?.value || '', startTime: document.getElementById('lever-earlyAccess-start-time')?.value || '', endDate: document.getElementById('lever-earlyAccess-end-date')?.value || '', endTime: document.getElementById('lever-earlyAccess-end-time')?.value || '' },
-                giftWithPurchase: { ...readLeverMarketFlags('giftWithPurchase'), title: document.getElementById('lever-giftWithPurchase-title')?.value || 'Gift with Purchase', productName: document.getElementById('lever-giftWithPurchase-product')?.value || '' },
+                giftWithPurchase: { ...readLeverMarketFlags('giftWithPurchase'), title: document.getElementById('lever-giftWithPurchase-title')?.value || 'Gift with Purchase', productName: getLeverGiftProductName() },
                 upsell: { ...readLeverMarketFlags('upsell'), title: document.getElementById('lever-upsell-title')?.value || 'Upsell', productName: document.getElementById('lever-upsell-product')?.value || '', discountPercent: Number(document.getElementById('lever-upsell-discount')?.value || 0) },
                 competition: { ...readLeverMarketFlags('competition'), title: document.getElementById('lever-competition-title')?.value || 'Competition', startDate: document.getElementById('lever-competition-start-date')?.value || '', startTime: document.getElementById('lever-competition-start-time')?.value || '', endDate: document.getElementById('lever-competition-end-date')?.value || '', endTime: document.getElementById('lever-competition-end-time')?.value || '', prize: document.getElementById('lever-competition-prize')?.value || '', npnSignups: Number(document.getElementById('lever-competition-npn')?.value || 0) },
                 sale: { ...readLeverMarketFlags('sale'), title: document.getElementById('lever-sale-title')?.value || 'Sale', notes: document.getElementById('lever-sale-notes')?.value || '', startDate: document.getElementById('lever-sale-start-date')?.value || '', startTime: document.getElementById('lever-sale-start-time')?.value || '', endDate: document.getElementById('lever-sale-end-date')?.value || '', endTime: document.getElementById('lever-sale-end-time')?.value || '', saleProducts: getLeverSaleProducts() },
@@ -3774,19 +3774,12 @@ VISUALIZE sessions TYPE horizontal_bar`
                 LEVER_MARKET_CODES.forEach(code => set(`lever-${key}-${code}`, c[`${code}Enabled`], true));
                 set(`lever-${key}-title`, c.title, false);
                 if(key === 'earlyAccess') set('lever-earlyAccess-info', c.infoNotes, false);
-                if(key === 'giftWithPurchase') set('lever-giftWithPurchase-product', c.productName, false);
-                if(key === 'upsell') { set('lever-upsell-product', c.productName, false); set('lever-upsell-discount', c.discountPercent ?? 0, false); }
+                if(key === 'giftWithPurchase') ensureLeverProductOption('lever-giftWithPurchase-product', c.productName || getLoadedLeverProductName('giftWithPurchase'));
+                if(key === 'upsell') { ensureLeverProductOption('lever-upsell-product', c.productName); set('lever-upsell-discount', c.discountPercent ?? 0, false); }
                 if(key === 'competition') { set('lever-competition-prize', c.prize, false); set('lever-competition-npn', c.npnSignups, false); }
                 if(key === 'sale') { set('lever-sale-notes', c.notes, false); setLeverSaleProducts(c.saleProducts || []); }
                 if(key === 'nfcProduct') {
-                    const nfcSel = document.getElementById('lever-nfcProduct-product');
-                    if(nfcSel && c.productName && !Array.from(nfcSel.options).some(o => o.value === c.productName)) {
-                        const opt = document.createElement('option');
-                        opt.value = c.productName;
-                        opt.textContent = c.productName;
-                        nfcSel.appendChild(opt);
-                    }
-                    set('lever-nfcProduct-product', c.productName, false);
+                    ensureLeverProductOption('lever-nfcProduct-product', c.productName);
                     set('lever-nfcProduct-redeemed', c.redeemed ?? 0, false);
                 }
                 if(key === 'digitalDownload') { setLeverDigitalDownloadProducts(c.products || []); set('lever-digitalDownload-redeemed', c.redeemed ?? 0, false); }
@@ -3800,38 +3793,62 @@ VISUALIZE sessions TYPE horizontal_bar`
                 }
             });
         }
-        function populateGwpProductDropdown() {
-            const sel = document.getElementById('lever-giftWithPurchase-product'); if(!sel) return;
-            const prev = sel.value;
-            const names = new Set();
-            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
-            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
-            sel.innerHTML = '<option value="">— Select gift product —</option>' + sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
-            if(prev && sorted.includes(prev)) sel.value = prev;
-        }
-        function populateUpsellProductDropdown() {
-            const sel = document.getElementById('lever-upsell-product'); if(!sel) return;
-            const prev = sel.value;
-            const names = new Set();
-            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
-            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
-            sel.innerHTML = '<option value="">— Select upsell product —</option>' + sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
-            if(prev && sorted.includes(prev)) sel.value = prev;
-        }
-        function populateNfcProductDropdown() {
-            const sel = document.getElementById('lever-nfcProduct-product'); if(!sel) return;
-            const prev = sel.value || loadedLeversPayload?.config?.nfcProduct?.productName || '';
-            const names = new Set();
-            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
-            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
-            sel.innerHTML = '<option value="">— Select NFC product —</option>' + sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
-            if(prev && !sorted.includes(prev)) {
+        function ensureLeverProductOption(selId, name) {
+            const sel = typeof selId === 'string' ? document.getElementById(selId) : selId;
+            if(!sel) return;
+            const value = String(name || '');
+            if(!value) { sel.value = ''; return; }
+            if(!Array.from(sel.options).some(o => o.value === value)) {
                 const opt = document.createElement('option');
-                opt.value = prev;
-                opt.textContent = prev;
+                opt.value = value;
+                opt.textContent = value;
                 sel.appendChild(opt);
             }
-            if(prev) sel.value = prev;
+            sel.value = value;
+        }
+        function getLoadedLeverProductName(key) {
+            const fromConfig = loadedLeversPayload?.config?.[key]?.productName;
+            if(fromConfig) return fromConfig;
+            const computed = loadedLeversPayload?.computed || {};
+            for(const m of LEVER_MARKET_CODES) {
+                const name = computed[m]?.[key]?.productName;
+                if(name) return name;
+            }
+            return '';
+        }
+        function getLeverGiftProductName() {
+            return document.getElementById('lever-giftWithPurchase-product')?.value
+                || getLoadedLeverProductName('giftWithPurchase');
+        }
+        function populateLeverNamedProductDropdown(selId, placeholder, savedName) {
+            const sel = document.getElementById(selId); if(!sel) return;
+            const prev = sel.value || savedName || '';
+            const names = new Set();
+            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
+            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
+            sel.innerHTML = `<option value="">${placeholder}</option>` + sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+            ensureLeverProductOption(sel, prev);
+        }
+        function populateGwpProductDropdown() {
+            populateLeverNamedProductDropdown(
+                'lever-giftWithPurchase-product',
+                '— Select gift product —',
+                getLoadedLeverProductName('giftWithPurchase')
+            );
+        }
+        function populateUpsellProductDropdown() {
+            populateLeverNamedProductDropdown(
+                'lever-upsell-product',
+                '— Select upsell product —',
+                loadedLeversPayload?.config?.upsell?.productName || ''
+            );
+        }
+        function populateNfcProductDropdown() {
+            populateLeverNamedProductDropdown(
+                'lever-nfcProduct-product',
+                '— Select NFC product —',
+                loadedLeversPayload?.config?.nfcProduct?.productName || ''
+            );
         }
         function populateLeverProductDropdowns() {
             populateGwpProductDropdown();
