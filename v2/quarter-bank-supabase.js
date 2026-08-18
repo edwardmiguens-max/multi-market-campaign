@@ -247,6 +247,52 @@
         return data || [];
     }
 
+    function normalizeSkuEntry(entry) {
+        const sku = String(entry?.sku || '').trim();
+        if (!sku) return null;
+        return {
+            sku,
+            product_title: String(entry.product_title || '').trim(),
+            variant_title: String(entry.variant_title || '').trim(),
+            product_type: String(entry.product_type || '').trim() || null,
+            artist_name: String(entry.artist_name || '').trim() || null,
+            record_label: String(entry.record_label || '').trim() || null
+        };
+    }
+
+    async function upsertProductSkus(entries) {
+        const rows = (entries || []).map(normalizeSkuEntry).filter(Boolean);
+        if (!rows.length) return { added: 0, seen: 0, total: null };
+        const client = getClient();
+        if (!client) throw new Error('Supabase client not ready.');
+
+        const { data: rpcData, error: rpcError } = await client.rpc('upsert_product_skus', { entries: rows });
+        if (!rpcError) {
+            const result = rpcData && typeof rpcData === 'object' ? rpcData : {};
+            return {
+                added: Number(result.added) || 0,
+                seen: Number(result.seen) || rows.length,
+                total: result.total == null ? null : Number(result.total)
+            };
+        }
+        if (!isMissingTableError(rpcError) && !String(rpcError.message || '').toLowerCase().includes('could not find the function')) {
+            throw rpcError;
+        }
+
+        const skus = rows.map(r => r.sku);
+        const { data: existingRows, error: existingErr } = await client
+            .from('product_skus')
+            .select('sku')
+            .in('sku', skus);
+        if (existingErr) throw existingErr;
+        const existing = new Set((existingRows || []).map(r => r.sku));
+        const { error: upsertErr } = await client.from('product_skus').upsert(rows, { onConflict: 'sku' });
+        if (upsertErr) throw upsertErr;
+        const added = rows.filter(r => !existing.has(r.sku)).length;
+        const { count } = await client.from('product_skus').select('sku', { count: 'exact', head: true });
+        return { added, seen: rows.length, total: count };
+    }
+
     global.RepQuarterBankSupabase = {
         CHUNK_SIZE,
         getClient,
@@ -259,6 +305,7 @@
         hydrateBankRows,
         saveQuarterRows,
         setQuarterStatus,
-        saveArtistRollup
+        saveArtistRollup,
+        upsertProductSkus
     };
 })(typeof window !== 'undefined' ? window : globalThis);
