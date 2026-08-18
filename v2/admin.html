@@ -404,6 +404,22 @@
                             <input type="text" id="lever-signedUs-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Signed">
                             <div class="flex gap-3 text-[11px]"><label><input type="radio" name="lever-signedUs-mode" value="signed_formats" checked> Signed formats</label><label><input type="radio" name="lever-signedUs-mode" value="signed_art_card"> Signed art card</label></div>
                         </div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="nfcProduct">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-cyan-300">NFC Product</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-nfcProduct-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-nfcProduct-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-nfcProduct-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-nfcProduct-int" class="mr-0.5">ROW</label></div></div>
+                            <input type="text" id="lever-nfcProduct-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="NFC Product">
+                            <div><span class="text-gray-400 text-[10px]">NFC product</span><select id="lever-nfcProduct-product" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white"><option value="">— Select after CSV upload —</option></select></div>
+                            <div><span class="text-gray-400 text-[10px]">Total redeemed</span><input type="number" min="0" id="lever-nfcProduct-redeemed" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="0" placeholder="Enter number"></div>
+                        </div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="digitalDownload">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-lime-300">Digital Download</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-digitalDownload-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-digitalDownload-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-digitalDownload-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-digitalDownload-int" class="mr-0.5">ROW</label></div></div>
+                            <input type="text" id="lever-digitalDownload-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Digital Download">
+                            <div>
+                                <span class="text-gray-400 text-[10px]">Download products (multiple)</span>
+                                <input type="hidden" id="input-lever-digitalDownload-products" value="[]">
+                                <div class="flex items-center gap-2 mt-1"><button type="button" id="btn-lever-digitalDownload-products" class="text-[10px] px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600">Select products</button><span id="lever-digitalDownload-products-label" class="text-[10px] text-gray-400">None selected</span></div>
+                            </div>
+                            <div><span class="text-gray-400 text-[10px]">Total redeemed</span><input type="number" min="0" id="lever-digitalDownload-redeemed" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="0" placeholder="Enter number"></div>
+                        </div>
                     </div>
                 </details>
 
@@ -654,6 +670,24 @@
             <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
                 <button type="button" id="btn-lever-sale-products-cancel" class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
                 <button type="button" id="btn-lever-sale-products-apply" class="text-xs px-3 py-1.5 rounded bg-orange-600 text-white font-semibold hover:bg-orange-500">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lever-digitalDownload-products-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+        <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center px-4 py-3 border-b border-gray-700">
+                <h3 class="text-sm font-bold text-lime-300">Digital Download — Select Products</h3>
+                <button type="button" id="btn-lever-digitalDownload-products-close" class="text-gray-400 hover:text-white text-lg leading-none">&times;</button>
+            </div>
+            <div class="px-4 py-2 border-b border-gray-800 flex gap-2">
+                <button type="button" id="btn-lever-digitalDownload-select-all" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700">Select all</button>
+                <button type="button" id="btn-lever-digitalDownload-clear-all" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700">Clear all</button>
+            </div>
+            <div id="lever-digitalDownload-products-list" class="overflow-y-auto flex-1 p-3 space-y-1 text-xs text-gray-200"></div>
+            <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
+                <button type="button" id="btn-lever-digitalDownload-products-cancel" class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
+                <button type="button" id="btn-lever-digitalDownload-products-apply" class="text-xs px-3 py-1.5 rounded bg-lime-700 text-white font-semibold hover:bg-lime-600">Apply</button>
             </div>
         </div>
     </div>
@@ -2425,7 +2459,7 @@ VISUALIZE sessions TYPE horizontal_bar`
         let loadedLeversPayload = null;
         let loadedAttachedPriorCampaign = null;
 
-        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signedUkEu', 'signedUs'];
+        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signedUkEu', 'signedUs', 'nfcProduct', 'digitalDownload'];
         const LEVER_TIMED_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'competition', 'sale'];
         const LEVER_TIMEZONE_OPTIONS = [
             { value: 'Europe/London', label: 'UK (GMT/BST)' },
@@ -3724,7 +3758,9 @@ VISUALIZE sessions TYPE horizontal_bar`
                 competition: { ...readLeverMarketFlags('competition'), title: document.getElementById('lever-competition-title')?.value || 'Competition', startDate: document.getElementById('lever-competition-start-date')?.value || '', startTime: document.getElementById('lever-competition-start-time')?.value || '', endDate: document.getElementById('lever-competition-end-date')?.value || '', endTime: document.getElementById('lever-competition-end-time')?.value || '', prize: document.getElementById('lever-competition-prize')?.value || '', npnSignups: Number(document.getElementById('lever-competition-npn')?.value || 0) },
                 sale: { ...readLeverMarketFlags('sale'), title: document.getElementById('lever-sale-title')?.value || 'Sale', notes: document.getElementById('lever-sale-notes')?.value || '', startDate: document.getElementById('lever-sale-start-date')?.value || '', startTime: document.getElementById('lever-sale-start-time')?.value || '', endDate: document.getElementById('lever-sale-end-date')?.value || '', endTime: document.getElementById('lever-sale-end-time')?.value || '', saleProducts: getLeverSaleProducts() },
                 signedUkEu: { ...readLeverMarketFlags('signedUkEu'), title: document.getElementById('lever-signedUkEu-title')?.value || 'Signed', mode: signedUkEuModeEl?.value || 'signed_formats' },
-                signedUs: { ...readLeverMarketFlags('signedUs'), title: document.getElementById('lever-signedUs-title')?.value || 'Signed', mode: signedUsModeEl?.value || 'signed_formats' }
+                signedUs: { ...readLeverMarketFlags('signedUs'), title: document.getElementById('lever-signedUs-title')?.value || 'Signed', mode: signedUsModeEl?.value || 'signed_formats' },
+                nfcProduct: { ...readLeverMarketFlags('nfcProduct'), title: document.getElementById('lever-nfcProduct-title')?.value || 'NFC Product', productName: document.getElementById('lever-nfcProduct-product')?.value || '', redeemed: Number(document.getElementById('lever-nfcProduct-redeemed')?.value || 0) },
+                digitalDownload: { ...readLeverMarketFlags('digitalDownload'), title: document.getElementById('lever-digitalDownload-title')?.value || 'Digital Download', products: getLeverDigitalDownloadProducts(), redeemed: Number(document.getElementById('lever-digitalDownload-redeemed')?.value || 0) }
             };
         }
         function applyLeversConfigToForm(cfg) {
@@ -3742,6 +3778,18 @@ VISUALIZE sessions TYPE horizontal_bar`
                 if(key === 'upsell') { set('lever-upsell-product', c.productName, false); set('lever-upsell-discount', c.discountPercent ?? 0, false); }
                 if(key === 'competition') { set('lever-competition-prize', c.prize, false); set('lever-competition-npn', c.npnSignups, false); }
                 if(key === 'sale') { set('lever-sale-notes', c.notes, false); setLeverSaleProducts(c.saleProducts || []); }
+                if(key === 'nfcProduct') {
+                    const nfcSel = document.getElementById('lever-nfcProduct-product');
+                    if(nfcSel && c.productName && !Array.from(nfcSel.options).some(o => o.value === c.productName)) {
+                        const opt = document.createElement('option');
+                        opt.value = c.productName;
+                        opt.textContent = c.productName;
+                        nfcSel.appendChild(opt);
+                    }
+                    set('lever-nfcProduct-product', c.productName, false);
+                    set('lever-nfcProduct-redeemed', c.redeemed ?? 0, false);
+                }
+                if(key === 'digitalDownload') { setLeverDigitalDownloadProducts(c.products || []); set('lever-digitalDownload-redeemed', c.redeemed ?? 0, false); }
                 if(key === 'signedUkEu' && c.mode) { const r = document.querySelector(`input[name="lever-signedUkEu-mode"][value="${c.mode}"]`); if(r) r.checked = true; }
                 if(key === 'signedUs' && c.mode) { const r = document.querySelector(`input[name="lever-signedUs-mode"][value="${c.mode}"]`); if(r) r.checked = true; }
                 if(LEVER_TIMED_KEYS.includes(key)) {
@@ -3770,9 +3818,25 @@ VISUALIZE sessions TYPE horizontal_bar`
             sel.innerHTML = '<option value="">— Select upsell product —</option>' + sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
             if(prev && sorted.includes(prev)) sel.value = prev;
         }
+        function populateNfcProductDropdown() {
+            const sel = document.getElementById('lever-nfcProduct-product'); if(!sel) return;
+            const prev = sel.value || loadedLeversPayload?.config?.nfcProduct?.productName || '';
+            const names = new Set();
+            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
+            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
+            sel.innerHTML = '<option value="">— Select NFC product —</option>' + sorted.map(n => `<option value="${n.replace(/"/g, '&quot;')}">${n}</option>`).join('');
+            if(prev && !sorted.includes(prev)) {
+                const opt = document.createElement('option');
+                opt.value = prev;
+                opt.textContent = prev;
+                sel.appendChild(opt);
+            }
+            if(prev) sel.value = prev;
+        }
         function populateLeverProductDropdowns() {
             populateGwpProductDropdown();
             populateUpsellProductDropdown();
+            populateNfcProductDropdown();
         }
         function getLeverSaleProducts() {
             try {
@@ -3813,6 +3877,46 @@ VISUALIZE sessions TYPE horizontal_bar`
         }
         function closeLeverSaleProductModal() {
             document.getElementById('lever-sale-products-modal')?.classList.add('hidden');
+        }
+        function getLeverDigitalDownloadProducts() {
+            try {
+                const raw = document.getElementById('input-lever-digitalDownload-products')?.value || '[]';
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            } catch (_err) { return []; }
+        }
+        function setLeverDigitalDownloadProducts(names) {
+            const input = document.getElementById('input-lever-digitalDownload-products');
+            if(input) input.value = JSON.stringify(names || []);
+            const label = document.getElementById('lever-digitalDownload-products-label');
+            if(!label) return;
+            if(!names || names.length === 0) label.textContent = 'None selected';
+            else if(names.length === 1) label.textContent = names[0].length > 42 ? names[0].slice(0, 42) + '…' : names[0];
+            else label.textContent = `${names.length} products selected`;
+        }
+        function populateLeverDigitalDownloadProductModal() {
+            const list = document.getElementById('lever-digitalDownload-products-list');
+            if(!list) return;
+            const selected = new Set(getLeverDigitalDownloadProducts());
+            const names = new Set();
+            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
+            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
+            if(sorted.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 italic p-2">Upload a sales CSV first.</p>';
+                return;
+            }
+            list.innerHTML = sorted.map(n => {
+                const safe = n.replace(/"/g, '&quot;');
+                const checked = selected.has(n) ? 'checked' : '';
+                return `<label class="flex items-start gap-2 p-1.5 rounded hover:bg-gray-800 cursor-pointer"><input type="checkbox" class="lever-digitalDownload-product-cb mt-0.5 rounded" value="${safe}" ${checked}><span class="leading-tight">${n}</span></label>`;
+            }).join('');
+        }
+        function openLeverDigitalDownloadProductModal() {
+            populateLeverDigitalDownloadProductModal();
+            document.getElementById('lever-digitalDownload-products-modal')?.classList.remove('hidden');
+        }
+        function closeLeverDigitalDownloadProductModal() {
+            document.getElementById('lever-digitalDownload-products-modal')?.classList.add('hidden');
         }
         function lineUnitPrice(line) {
             if(!line || !line.units) return 0;
@@ -4030,6 +4134,51 @@ VISUALIZE sessions TYPE horizontal_bar`
             const top5 = sortTopProductsByRevenue(Object.entries(products)).slice(0, 5);
             return { chartUnits, chartUnitsPct: marketChartUnits > 0 ? (chartUnits / marketChartUnits) * 100 : 0, marketChartUnits, revenue, top5, mode };
         }
+        function aggregateNamedProductTotals(market, productNames) {
+            const names = (productNames || []).filter(Boolean);
+            const nameSet = new Set(names);
+            const products = {};
+            names.forEach(n => { products[n] = { name: n, units: 0, revenue: 0 }; });
+            let units = 0, revenue = 0;
+            aggregatedLineRows.forEach(l => {
+                if(l.market !== market || !nameSet.has(l.name)) return;
+                units += Number(l.units || 0);
+                revenue += Number(l.rev || 0);
+                if(!products[l.name]) products[l.name] = { name: l.name, units: 0, revenue: 0 };
+                products[l.name].units += Number(l.units || 0);
+                products[l.name].revenue += Number(l.rev || 0);
+            });
+            return { products: names.map(n => products[n]), units, revenue };
+        }
+        function aggregateNfcProductLever(market, cfg) {
+            const productName = cfg.productName || '';
+            const redeemed = Number(cfg.redeemed || 0);
+            if(!productName) return { productName: '', products: [], units: 0, revenue: 0, redeemed, emptyReason: 'Select an NFC product.' };
+            const totals = aggregateNamedProductTotals(market, [productName]);
+            return {
+                productName,
+                products: totals.products,
+                units: totals.units,
+                revenue: totals.revenue,
+                redeemed,
+                emptyReason: totals.units === 0 ? 'No sales for this NFC product in the selected market.' : ''
+            };
+        }
+        function aggregateDigitalDownloadLever(market, cfg) {
+            const productNames = Array.isArray(cfg.products) ? cfg.products.filter(Boolean) : [];
+            const redeemed = Number(cfg.redeemed || 0);
+            if(!productNames.length) return { productNames: [], productName: '', products: [], units: 0, revenue: 0, redeemed, emptyReason: 'Select one or more digital download products.' };
+            const totals = aggregateNamedProductTotals(market, productNames);
+            return {
+                productNames,
+                productName: productNames.join(', '),
+                products: totals.products,
+                units: totals.units,
+                revenue: totals.revenue,
+                redeemed,
+                emptyReason: totals.units === 0 ? 'No sales for the selected download products in this market.' : ''
+            };
+        }
         function buildLeversComputed(config) {
             const gwpNames = getGwpProductNames(config);
             const out = { uk: {}, eu: {}, us: {}, int: {} };
@@ -4043,6 +4192,8 @@ VISUALIZE sessions TYPE horizontal_bar`
                 if(leverEnabledForMarket(config.sale, market)) out[market].sale = { ...aggregateSaleLever(market, config.sale), title: config.sale.title };
                 if(leverEnabledForMarket(config.signedUkEu, market)) out[market].signedUkEu = { ...aggregateSignedLever(market, config.signedUkEu), title: config.signedUkEu.title };
                 if(leverEnabledForMarket(config.signedUs, market)) out[market].signedUs = { ...aggregateSignedLever(market, config.signedUs), title: config.signedUs.title };
+                if(leverEnabledForMarket(config.nfcProduct, market)) out[market].nfcProduct = { ...aggregateNfcProductLever(market, config.nfcProduct), title: config.nfcProduct.title };
+                if(leverEnabledForMarket(config.digitalDownload, market)) out[market].digitalDownload = { ...aggregateDigitalDownloadLever(market, config.digitalDownload), title: config.digitalDownload.title };
             });
             return enrichLeversGlobalCombined(out, config);
         }
@@ -4142,6 +4293,18 @@ VISUALIZE sessions TYPE horizontal_bar`
             const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
             return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: var(--rep-v-tert)"><h3 class="preview-header-label text-base">${data.title || key}</h3><p class="text-xs text-gray-500">${modeLabel}</p><div class="grid grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Signed D2C Chart units</p><p class="preview-body-data text-xl font-bold">${Number(data.chartUnits||0).toLocaleString()}</p><p class="text-xs text-gray-500">${Number(data.chartUnitsPct||0).toFixed(1)}% of market D2C chart</p></div><div class="col-span-2"><p class="text-[10px] uppercase text-gray-400 font-bold">Signed revenue</p><p class="preview-body-data text-xl font-bold">£${Number(data.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No signed products</td></tr>'}</tbody></table></div><div class="h-48"><canvas id="${chartId}"></canvas></div></div></div>`;
         }
+        function renderRedeemedProductLeverCard(key, data, options = {}) {
+            if(!data) return '';
+            const border = options.border || '#06b6d4';
+            const productLabel = options.productLabel || 'Product';
+            const titles = (data.productNames && data.productNames.length) ? data.productNames : (data.productName ? [data.productName] : []);
+            const titleLine = titles.length ? titles.map(t => `<strong>${t}</strong>`).join('<span class="text-gray-400"> · </span>') : '—';
+            const productRows = (data.products || []).map(p => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[240px] truncate">${p.name || p.productName || ''}</td><td class="py-1.5 text-right">${Number(p.units||0).toLocaleString()}</td><td class="py-1.5 text-right">£${Number(p.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
+            const tableHtml = (options.showProductTable && (data.products || []).length > 1)
+                ? `<div><p class="preview-header-label mb-2">Selected products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${productRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No products selected</td></tr>'}</tbody></table></div>`
+                : '';
+            return `<div class="dashboard-card border-l-4 space-y-2" style="border-color: ${border}"><h3 class="preview-header-label text-base">${data.title || key}</h3><p class="text-xs text-gray-500">${productLabel}: ${titleLine}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Units sold</p><p class="preview-body-data text-xl font-bold">${Number(data.units||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Redemptions</p><p class="preview-body-data text-xl font-bold">${Number(data.redeemed||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">Campaign total</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Revenue driven</p><p class="preview-body-data text-xl font-bold">£${Number(data.revenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div></div>${tableHtml}</div>`;
+        }
         function renderLeversPane(market, computed, paneId) {
             const pane = document.getElementById(paneId); if(!pane) return;
             const data = computed?.[market] || {};
@@ -4159,6 +4322,8 @@ VISUALIZE sessions TYPE horizontal_bar`
             if(data.signedUkEu) html += renderSignedLeverCard('signedUkEu', data.signedUkEu, prefix);
             if(data.signedUs) html += renderSignedLeverCard('signedUs', data.signedUs, prefix);
             if(data.signed && !data.signedUkEu && !data.signedUs) html += renderSignedLeverCard('signed', data.signed, prefix);
+            if(data.nfcProduct) html += renderRedeemedProductLeverCard('nfcProduct', data.nfcProduct, { border: '#06b6d4', productLabel: 'Product' });
+            if(data.digitalDownload) html += renderRedeemedProductLeverCard('digitalDownload', data.digitalDownload, { border: '#65a30d', productLabel: 'Products', showProductTable: true });
             if(data.attachedPriorCampaign) html += renderAttachedPriorCampaignLeverCard(data.attachedPriorCampaign, prefix);
             pane.innerHTML = html;
             setTimeout(() => {
@@ -4285,14 +4450,19 @@ VISUALIZE sessions TYPE horizontal_bar`
                 competition: { ...LEVER_MARKETS_OFF, title: 'Competition', startDate: '', startTime: '', endDate: '', endTime: '', prize: '', npnSignups: 0 },
                 sale: { ...LEVER_MARKETS_OFF, title: 'Sale', notes: '', startDate: '', startTime: '', endDate: '', endTime: '', saleProducts: [] },
                 signedUkEu: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' },
-                signedUs: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' }
+                signedUs: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' },
+                nfcProduct: { ...LEVER_MARKETS_OFF, title: 'NFC Product', productName: '', redeemed: 0 },
+                digitalDownload: { ...LEVER_MARKETS_OFF, title: 'Digital Download', products: [], redeemed: 0 }
             });
             LEVER_SHOW_KEYS.forEach(k => renderShowRowsToDom(k, []));
             const gwpSel = document.getElementById('lever-giftWithPurchase-product');
             if(gwpSel) gwpSel.innerHTML = '<option value="">— Select after CSV upload —</option>';
             const upsellSel = document.getElementById('lever-upsell-product');
             if(upsellSel) upsellSel.innerHTML = '<option value="">— Select after CSV upload —</option>';
+            const nfcSel = document.getElementById('lever-nfcProduct-product');
+            if(nfcSel) nfcSel.innerHTML = '<option value="">— Select after CSV upload —</option>';
             setLeverSaleProducts([]);
+            setLeverDigitalDownloadProducts([]);
         }
         function clearAllIngestedData() {
             windowCurrentCSVData = null;
@@ -5956,6 +6126,17 @@ VISUALIZE sessions TYPE horizontal_bar`
                 const selected = Array.from(document.querySelectorAll('.lever-sale-product-cb:checked')).map(cb => cb.value);
                 setLeverSaleProducts(selected);
                 closeLeverSaleProductModal();
+                calculateGlobalDashboard();
+            });
+            document.getElementById('btn-lever-digitalDownload-products')?.addEventListener('click', openLeverDigitalDownloadProductModal);
+            document.getElementById('btn-lever-digitalDownload-products-close')?.addEventListener('click', closeLeverDigitalDownloadProductModal);
+            document.getElementById('btn-lever-digitalDownload-products-cancel')?.addEventListener('click', closeLeverDigitalDownloadProductModal);
+            document.getElementById('btn-lever-digitalDownload-select-all')?.addEventListener('click', () => { document.querySelectorAll('.lever-digitalDownload-product-cb').forEach(cb => { cb.checked = true; }); });
+            document.getElementById('btn-lever-digitalDownload-clear-all')?.addEventListener('click', () => { document.querySelectorAll('.lever-digitalDownload-product-cb').forEach(cb => { cb.checked = false; }); });
+            document.getElementById('btn-lever-digitalDownload-products-apply')?.addEventListener('click', () => {
+                const selected = Array.from(document.querySelectorAll('.lever-digitalDownload-product-cb:checked')).map(cb => cb.value);
+                setLeverDigitalDownloadProducts(selected);
+                closeLeverDigitalDownloadProductModal();
                 calculateGlobalDashboard();
             });
             document.getElementById('input-store-has-us-market')?.addEventListener('change', () => { syncUsMarketDerivedUi(); if(windowCurrentCSVData) runDataAggregation(); });

@@ -605,6 +605,15 @@
                 const totals = d.totals || { units: 0, revenue: 0 };
                 return `<div class="dashboard-card border-l-4 space-y-3" style="border-left-color:#7c3aed"><h3 class="text-base font-bold">${d.title || 'Prior Campaign Album Sales'}</h3><div class="grid grid-cols-2 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Album units (attached)</p><p class="text-2xl font-bold">${Number(totals.units || 0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Album net sales (attached)</p><p class="text-2xl font-bold">${formatGBP(totals.revenue)}</p></div></div><div><p class="text-xs font-bold card-header-custom uppercase mb-2">Selected album formats</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Format</th><th class="text-right py-1">Units</th><th class="text-right py-1">Net sales</th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No formats selected</td></tr>'}</tbody></table></div></div></div>`;
             };
+            const redeemedProduct = (d, opts = {}) => {
+                const titles = (d.productNames && d.productNames.length) ? d.productNames : (d.productName ? [d.productName] : []);
+                const titleLine = titles.length ? titles.map(t => `<strong>${t}</strong>`).join('<span class="text-gray-400"> · </span>') : '—';
+                const productRows = (d.products || []).map(p => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[240px] truncate">${p.name || p.productName || ''}</td><td class="py-1.5 text-right">${Number(p.units||0).toLocaleString()}</td><td class="py-1.5 text-right">${formatGBP(p.revenue)}</td></tr>`).join('');
+                const tableHtml = (opts.showProductTable && (d.products || []).length > 1)
+                    ? `<div><p class="text-xs font-bold card-header-custom uppercase mb-2">Selected products</p><div class="report-table-wrap"><table class="w-full text-sm min-w-[240px]"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${productRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No products selected</td></tr>'}</tbody></table></div></div>`
+                    : '';
+                return `<div class="dashboard-card border-l-4 space-y-2" style="border-left-color:${opts.border || '#06b6d4'}"><h3 class="text-base font-bold">${d.title || opts.titleFallback || 'Product'}</h3><p class="text-xs text-gray-500">${opts.productLabel || 'Product'}: ${titleLine}</p>${d.emptyReason ? `<p class="text-xs text-amber-600 italic">${d.emptyReason}</p>` : ''}<div class="grid grid-cols-3 gap-3 lever-kpi-grid"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Units sold</p><p class="text-2xl font-bold">${Number(d.units||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Redemptions</p><p class="text-2xl font-bold">${Number(d.redeemed||0).toLocaleString()}</p><p class="text-[10px] text-gray-400">Campaign total</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Revenue driven</p><p class="text-2xl font-bold">${formatGBP(d.revenue)}</p></div></div>${tableHtml}</div>`;
+            };
             let html = '';
             if(data.preOrder1) html += timed('preOrder1', data.preOrder1);
             if(data.preOrder2) html += timed('preOrder2', data.preOrder2);
@@ -616,6 +625,8 @@
             if(data.signedUkEu) html += signedCard(data.signedUkEu, 'signedUkEu');
             if(data.signedUs) html += signedCard(data.signedUs, 'signedUs');
             if(data.signed && !data.signedUkEu && !data.signedUs) html += signedCard(data.signed, 'signed');
+            if(data.nfcProduct) html += redeemedProduct(data.nfcProduct, { titleFallback: 'NFC Product', productLabel: 'Product', border: '#06b6d4' });
+            if(data.digitalDownload) html += redeemedProduct(data.digitalDownload, { titleFallback: 'Digital Download', productLabel: 'Products', border: '#65a30d', showProductTable: true });
             if(data.attachedPriorCampaign) html += attachedPrior(data.attachedPriorCampaign);
             pane.innerHTML = html;
             if(typeof Chart === 'undefined') return;
