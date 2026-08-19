@@ -1345,10 +1345,10 @@
                 query: `FROM sales
   SHOW net_items_sold, net_sales
   WHERE order_name IS NOT NULL
-  GROUP BY order_name, product_variant_title, market, product_title,
-    line_item_id, day, day_of_week, hour_of_day, shipping_country, product_type,
-    customer_id WITH TOTALS
-  SINCE startOfYear(0y) UNTIL today
+  GROUP BY order_name, product_variant_sku, product_variant_title,
+    shipping_country, market, product_title, line_item_id, day, day_of_week,
+    hour_of_day, product_type, customer_id WITH TOTALS
+  SINCE startOfMonth(0m) UNTIL today
   ORDER BY day ASC
   LIMIT 9999999`
             },
@@ -1362,7 +1362,7 @@
     AND human_or_bot_session IN ('human', 'bot')
   GROUP BY session_country, session_device_type, day, day_of_week, hour_of_day
     WITH GROUP_TOTALS, TOTALS, CURRENCY 'GBP'
-  SINCE startOfYear(0y) UNTIL today
+  SINCE startOfMonth(0m) UNTIL today
   ORDER BY sessions__session_country_totals DESC,
     sessions__session_country_session_device_type_totals DESC,
     sessions__session_country_session_device_type_day_totals DESC,
@@ -5309,11 +5309,13 @@ VISUALIZE sessions TYPE horizontal_bar`
             const acceptedRowsByMarket = { uk: 0, eu: 0, us: 0, int: 0 };
             const acceptedRevenueByMarket = { uk: 0, eu: 0, us: 0, int: 0 };
             csvRows.forEach((row, rowIdx) => {
-                let name = '', variant = '', pType = '', id = '', rev = 0, rawQty = 1, netItemsSold = null, marketVal = '', dayVal = null, hourVal = null, shippingCountry = '', compareAtPrice = null, lineDiscount = null;
+                let name = '', variant = '', pType = '', id = '', sku = '', rev = 0, rawQty = 1, netItemsSold = null, marketVal = '', dayVal = null, hourVal = null, shippingCountry = '', compareAtPrice = null, lineDiscount = null;
                 Object.keys(row).forEach(k => {
                     if (!k) return;
                     const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if (cleanK.includes('producttitle') || cleanK.includes('lineitemname') || cleanK === 'title') name = row[k];
+                    if (cleanK.includes('productvariantsku') || cleanK === 'sku' || cleanK === 'barcode' || cleanK === 'upc' || cleanK === 'ean') {
+                        if (!sku) sku = String(row[k] ?? '').trim();
+                    } else if (cleanK.includes('producttitle') || cleanK.includes('lineitemname') || cleanK === 'title') name = row[k];
                     else if (cleanK.includes('productvarianttitle')) variant = String(row[k] || '').toUpperCase();
                     else if (cleanK.includes('variant') || cleanK.includes('size') || cleanK.includes('option1')) { if(!variant) variant = String(row[k] || '').toUpperCase(); }
                     else if (cleanK.includes('producttype') || cleanK === 'type') pType = String(row[k] || '').trim();
@@ -5396,10 +5398,14 @@ VISUALIZE sessions TYPE horizontal_bar`
                     storeData[tMk].daily[dayKey] += rev;
                     if(hasProductTitle) {
                         if(!storeData[tMk].dailyProducts[dayKey]) storeData[tMk].dailyProducts[dayKey] = {};
-                        if(!storeData[tMk].dailyProducts[dayKey][name]) storeData[tMk].dailyProducts[dayKey][name] = { units: 0, revenue: 0, kind: isMusic ? 'music' : 'merch' };
+                        if(!storeData[tMk].dailyProducts[dayKey][name]) storeData[tMk].dailyProducts[dayKey][name] = { units: 0, revenue: 0, kind: isMusic ? 'music' : 'merch', skus: [] };
                         storeData[tMk].dailyProducts[dayKey][name].units += derivedQty;
                         storeData[tMk].dailyProducts[dayKey][name].revenue += rev;
                         storeData[tMk].dailyProducts[dayKey][name].kind = isMusic ? 'music' : 'merch';
+                        const skuVal = String(sku || '').trim();
+                        if (skuVal && !storeData[tMk].dailyProducts[dayKey][name].skus.includes(skuVal)) {
+                            storeData[tMk].dailyProducts[dayKey][name].skus.push(skuVal);
+                        }
                     }
                 }
                 const countsForChart = isMusic && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts);
@@ -6357,6 +6363,10 @@ VISUALIZE sessions TYPE horizontal_bar`
                                 revenue,
                                 kind: m?.kind === 'music' ? 'music' : 'merch'
                             };
+                            const skus = Array.isArray(m?.skus)
+                                ? m.skus.map((s) => String(s || '').trim()).filter(Boolean)
+                                : (m?.sku ? [String(m.sku).trim()] : []);
+                            if (skus.length) dayOut[name].skus = Array.from(new Set(skus));
                         });
                         if (Object.keys(dayOut).length) out[day] = dayOut;
                     });
