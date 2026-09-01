@@ -1215,6 +1215,22 @@
                 }
             });
         }
+        function parseGarmentSizeToken(variant) {
+            const raw = String(variant || '').trim();
+            if(!raw || /^default(\s+title)?$/i.test(raw)) return null;
+            const norm = raw.toUpperCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+            const compact = norm.replace(/\s+/g, '');
+            const tokens = norm.split(/[\s\/\\_]+/);
+            if(/3X(L|LARGE)|XXXL/.test(compact) || norm.includes('3X LARGE')) return '3XL+';
+            if(/2X(L|LARGE)|XXL/.test(compact) || norm === '2X LARGE' || (tokens[0] === '2X' && tokens[1] === 'LARGE')) return 'XXL';
+            if(norm === 'X LARGE' || compact === 'XL' || norm.includes('EXTRA LARGE') || (tokens.includes('XL') && !compact.includes('2XL') && !compact.includes('3XL'))) return 'XL';
+            if(tokens.includes('XXS') || norm.includes('2X SMALL') || compact.includes('2XS')) return 'XXS';
+            if(norm === 'X SMALL' || compact === 'XS' || norm.includes('EXTRA SMALL')) return 'XS';
+            if(norm === 'LARGE' || norm === 'L' || (tokens.length === 1 && tokens[0] === 'L')) return 'L';
+            if(norm === 'MEDIUM' || norm === 'M' || (tokens.length === 1 && tokens[0] === 'M')) return 'M';
+            if(norm === 'SMALL' || norm === 'S' || (tokens.length === 1 && tokens[0] === 'S')) return 'S';
+            return null;
+        }
         function buildGarmentSizeChartData(sizes) {
             const s = sizes || {};
             const spec = [
@@ -5464,15 +5480,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                             if(!storeData[tMk].merch.categories[cat]) storeData[tMk].merch.categories[cat] = 0;
                             storeData[tMk].merch.categories[cat] += rev;
                         }
-                        const vTokens = variant.split(/[\s\/\-\\_]+/); let sToken = null;
-                        if (variant.includes('3XL') || variant.includes('XXXL')) sToken = '3XL+';
-                        else if (variant.includes('2XL') || variant.includes('XXL')) sToken = 'XXL';
-                        else if (variant.includes('XL') || variant.includes('EXTRA LARGE')) sToken = 'XL';
-                        else if (variant.includes('XXS') || variant.includes('2XS')) sToken = 'XXS';
-                        else if (variant.includes('XS') || variant.includes('EXTRA SMALL')) sToken = 'XS';
-                        else if (variant === 'L' || vTokens.includes('L') || variant.includes('LARGE')) sToken = 'L';
-                        else if (variant === 'M' || vTokens.includes('M') || variant.includes('MEDIUM')) sToken = 'M';
-                        else if (variant === 'S' || vTokens.includes('S') || variant.includes('SMALL')) sToken = 'S';
+                        const sToken = parseGarmentSizeToken(variant);
                         if(sToken) storeData[tMk].merch.sizes[sToken] += (netItemsSold !== null ? netItemsSold : qty);
                     }
                 }
