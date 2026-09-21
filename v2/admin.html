@@ -1218,17 +1218,21 @@
         function parseGarmentSizeToken(variant) {
             const raw = String(variant || '').trim();
             if(!raw || /^default(\s+title)?$/i.test(raw)) return null;
-            const norm = raw.toUpperCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+            // Size is usually the first segment (e.g. "XLarge / Black", "2X / Pink").
+            const primary = raw.split('/')[0].trim();
+            const norm = primary.toUpperCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
             const compact = norm.replace(/\s+/g, '');
-            const tokens = norm.split(/[\s\/\\_]+/);
-            if(/3X(L|LARGE)|XXXL/.test(compact) || norm.includes('3X LARGE')) return '3XL+';
-            if(/2X(L|LARGE)|XXL/.test(compact) || norm === '2X LARGE' || (tokens[0] === '2X' && tokens[1] === 'LARGE')) return 'XXL';
-            if(norm === 'X LARGE' || compact === 'XL' || norm.includes('EXTRA LARGE') || (tokens.includes('XL') && !compact.includes('2XL') && !compact.includes('3XL'))) return 'XL';
-            if(tokens.includes('XXS') || norm.includes('2X SMALL') || compact.includes('2XS')) return 'XXS';
-            if(norm === 'X SMALL' || compact === 'XS' || norm.includes('EXTRA SMALL')) return 'XS';
-            if(norm === 'LARGE' || norm === 'L' || (tokens.length === 1 && tokens[0] === 'L')) return 'L';
-            if(norm === 'MEDIUM' || norm === 'M' || (tokens.length === 1 && tokens[0] === 'M')) return 'M';
-            if(norm === 'SMALL' || norm === 'S' || (tokens.length === 1 && tokens[0] === 'S')) return 'S';
+            // 3XL+ — Shopify: 3X-Large, 3XL, 3X, XXXL
+            if(compact === '3X' || /3X(L|LARGE)|XXXL/.test(compact) || norm === '3X LARGE') return '3XL+';
+            // XXL — Shopify: 2X, 2XL, 2X-Large, XXL
+            if(compact === '2X' || compact === '2XL' || compact === 'XXL' || /2X(L|LARGE)|XXL/.test(compact) || norm === '2X LARGE') return 'XXL';
+            // XL — Shopify: XL, XLarge, X-Large, Extra Large (XLARGE has no space)
+            if(compact === 'XL' || compact === 'XLARGE' || norm === 'X LARGE' || norm.includes('EXTRA LARGE')) return 'XL';
+            if(compact === 'XXS' || compact === '2XS' || norm.includes('2X SMALL')) return 'XXS';
+            if(compact === 'XS' || compact === 'XSMALL' || norm === 'X SMALL' || norm.includes('EXTRA SMALL')) return 'XS';
+            if(compact === 'LARGE' || compact === 'L') return 'L';
+            if(compact === 'MEDIUM' || compact === 'M') return 'M';
+            if(compact === 'SMALL' || compact === 'S') return 'S';
             return null;
         }
         function buildGarmentSizeChartData(sizes) {
@@ -1357,13 +1361,13 @@
         const SHOPIFY_REPORT_INSTRUCTIONS = {
             master: {
                 title: 'Option A: Master Sales File',
-                intro: 'In Shopify Analytics, open any sales report and replace the parameters with the below. Once generated, save the report with the title "Master Data Report". If the report is slow to load then change the timeframe to "Month to Date" or "Quarter to Date" and upload multiple files:',
+                intro: 'In Shopify Analytics, open any sales report and replace the parameters with the below. Once generated, save the report with the title "Master Data Report". Eurostore / Rhino uploads need Product vendor in the export so rows can be filtered to one artist. If the report is slow to load then change the timeframe to "Month to Date" or "Quarter to Date" and upload multiple files:',
                 query: `FROM sales
   SHOW net_items_sold, net_sales
   WHERE order_name IS NOT NULL
   GROUP BY order_name, product_variant_sku, product_variant_title,
-    shipping_country, market, product_title, line_item_id, day, day_of_week,
-    hour_of_day, product_type, customer_id WITH TOTALS
+    shipping_country, market, product_title, product_vendor, line_item_id, day,
+    day_of_week, hour_of_day, product_type, customer_id WITH TOTALS
   SINCE startOfMonth(0m) UNTIL today
   ORDER BY day ASC
   LIMIT 9999999`
@@ -2105,6 +2109,13 @@ VISUALIZE sessions TYPE horizontal_bar`
                 if(cleanK === 'productvendor' || cleanK === 'vendor') vendor = String(row[k] || '').trim();
             });
             return vendor;
+        }
+        function csvHasProductVendorColumn(rows) {
+            if(!Array.isArray(rows) || !rows.length) return false;
+            return rows.some(row => Object.keys(row || {}).some(k => {
+                const cleanK = String(k || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                return cleanK === 'productvendor' || cleanK === 'vendor';
+            }));
         }
         function getSelectedSalesChannel() {
             return document.getElementById('input-sales-channel')?.value?.trim() || '';
@@ -5723,10 +5734,13 @@ VISUALIZE sessions TYPE horizontal_bar`
                 const salesChannel = getSelectedSalesChannel();
                 if (isMegastoreSalesChannel(salesChannel)) {
                     const beforeFilter = newRows.length;
+                    if (!csvHasProductVendorColumn(newRows)) {
+                        batchNotes.push(`${file.name}: missing Product vendor column — Eurostore/Rhino uploads need product_vendor in the Shopify query GROUP BY.`);
+                    }
                     newRows = filterRowsByProductVendor(newRows, vendorName);
                     batchNotes.push(`${file.name}: ${beforeFilter.toLocaleString()} rows → ${newRows.length.toLocaleString()} for "${vendorName}" (Product vendor)`);
                     if (beforeFilter > 0 && !newRows.length) {
-                        batchNotes.push(`  ↳ No rows matched Product vendor "${vendorName}" — check artist name spelling against the CSV.`);
+                        batchNotes.push(`  ↳ No rows matched Product vendor "${vendorName}" — check artist name spelling against the CSV, or re-export with product_vendor in the query.`);
                     }
                 } else {
                     const vendorKeys = new Set();
