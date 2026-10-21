@@ -148,6 +148,7 @@
                         <option value="Parlophone">Parlophone</option>
                         <option value="Roadrunner">Roadrunner</option>
                         <option value="Rhino">Rhino</option>
+                        <option value="Third Party">Third Party</option>
                     </select>
                 </div>
                 <div>
@@ -736,8 +737,56 @@
                     return null;
                 }
             }
+            var CAMPAIGN_DIRECTORY_SELECT = 'id, report_name, recordLabel:campaign_data->recordLabel';
+            var CAMPAIGN_DIRECTORY_SELECT_REST = 'id,report_name,recordLabel:campaign_data->recordLabel';
+            var KNOWN_RECORD_LABELS = ['Atlantic', 'Warner Records', 'Parlophone', 'Roadrunner', 'Rhino', 'Third Party'];
+            function escapeCampaignDirHtml(value) {
+                return String(value == null ? '' : value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;');
+            }
+            function getCampaignDirectoryLabel(item) {
+                var label = item && item.recordLabel;
+                if (label != null && typeof label === 'object') label = label.recordLabel || '';
+                label = String(label == null ? '' : label).trim();
+                return label || 'No Label';
+            }
+            function buildCampaignDirectoryOptionsHtml(data) {
+                var groups = {};
+                (data || []).forEach(function (item) {
+                    var label = getCampaignDirectoryLabel(item);
+                    if (!groups[label]) groups[label] = [];
+                    groups[label].push(item);
+                });
+                var keys = Object.keys(groups);
+                keys.sort(function (a, b) {
+                    if (a === 'No Label') return 1;
+                    if (b === 'No Label') return -1;
+                    var ia = KNOWN_RECORD_LABELS.indexOf(a);
+                    var ib = KNOWN_RECORD_LABELS.indexOf(b);
+                    if (ia !== -1 || ib !== -1) {
+                        if (ia === -1) return 1;
+                        if (ib === -1) return -1;
+                        return ia - ib;
+                    }
+                    return a.localeCompare(b, undefined, { sensitivity: 'base' });
+                });
+                var html = '<option value="">-- Choose Campaign --</option>';
+                keys.forEach(function (label) {
+                    html += '<optgroup label="' + escapeCampaignDirHtml(label) + '">';
+                    groups[label].forEach(function (item) {
+                        var name = item.report_name || item.id;
+                        html += '<option value="' + escapeCampaignDirHtml(item.id) + '">' + escapeCampaignDirHtml(name) + '</option>';
+                    });
+                    html += '</optgroup>';
+                });
+                return html;
+            }
+            window.buildCampaignDirectoryOptionsHtml = buildCampaignDirectoryOptionsHtml;
             function fetchReportsDirectoryRest() {
-                return fetch(SB_URL + '/rest/v1/reports?select=id,report_name&order=report_name.asc', {
+                return fetch(SB_URL + '/rest/v1/reports?select=' + encodeURIComponent(CAMPAIGN_DIRECTORY_SELECT_REST) + '&order=report_name.asc', {
                     headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
                 }).then(function (res) {
                     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -757,7 +806,7 @@
                 var client = initReportSupabaseClient();
                 var queryPromise;
                 if (client) {
-                    queryPromise = client.from('reports').select('id, report_name').order('report_name', { ascending: true })
+                    queryPromise = client.from('reports').select(CAMPAIGN_DIRECTORY_SELECT).order('report_name', { ascending: true })
                         .then(function (res) {
                             if (res.error) throw res.error;
                             return res.data;
@@ -771,11 +820,7 @@
                             dropdown.innerHTML = '<option value="">-- No Campaigns in Database --</option>';
                             return;
                         }
-                        var html = '<option value="">-- Choose Campaign --</option>';
-                        data.forEach(function (item) {
-                            html += '<option value="' + item.id + '">' + (item.report_name || item.id) + '</option>';
-                        });
-                        dropdown.innerHTML = html;
+                        dropdown.innerHTML = buildCampaignDirectoryOptionsHtml(data);
                         if (typeof wireCampaignSelectBoot === 'function') wireCampaignSelectBoot();
                     })
                     .catch(function (err) {
@@ -4442,23 +4487,32 @@ VISUALIZE sessions TYPE horizontal_bar`
             dropdown.innerHTML = '<option value="">🔄 Booting Supabase API...</option>';
             if(retryBtn) retryBtn.classList.add('hidden');
             const client = getSupabaseClient();
+            const selectCols = 'id, report_name, recordLabel:campaign_data->recordLabel';
+            const selectRest = 'id,report_name,recordLabel:campaign_data->recordLabel';
             try {
                 let data = null;
                 if(client) {
-                    const { data: rows, error } = await client.from('reports').select('id, report_name').order('report_name', { ascending: true });
+                    const { data: rows, error } = await client.from('reports').select(selectCols).order('report_name', { ascending: true });
                     if (error) throw error;
                     data = rows;
                 } else {
-                    const res = await fetch(`${supabaseUrl}/rest/v1/reports?select=id,report_name&order=report_name.asc`, {
+                    const res = await fetch(`${supabaseUrl}/rest/v1/reports?select=${encodeURIComponent(selectRest)}&order=report_name.asc`, {
                         headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
                     });
                     if(!res.ok) throw new Error('HTTP ' + res.status);
                     data = await res.json();
                 }
                 if (!data || data.length === 0) { dropdown.innerHTML = '<option value="">-- No Campaigns in Database --</option>'; return; }
-                let html = '<option value="">-- Choose Campaign --</option>';
-                data.forEach(item => { html += `<option value="${item.id}">${item.report_name || item.id}</option>`; });
-                dropdown.innerHTML = html; 
+                const buildHtml = typeof window.buildCampaignDirectoryOptionsHtml === 'function'
+                    ? window.buildCampaignDirectoryOptionsHtml
+                    : null;
+                dropdown.innerHTML = buildHtml
+                    ? buildHtml(data)
+                    : (() => {
+                        let html = '<option value="">-- Choose Campaign --</option>';
+                        data.forEach(item => { html += `<option value="${item.id}">${item.report_name || item.id}</option>`; });
+                        return html;
+                    })();
                 if (preserveId) dropdown.value = preserveId;
                 if (typeof wireCampaignSelectHandler === 'function') wireCampaignSelectHandler();
             } catch (err) { 
