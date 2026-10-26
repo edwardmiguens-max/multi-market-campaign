@@ -1483,10 +1483,16 @@ VISUALIZE sessions TYPE horizontal_bar`
                 v2SupabaseReady = false;
                 return false;
             }
-            const probe = await RepQuarterBankSupabase.probeTables(client);
-            v2SupabaseReady = !!probe.ok;
-            if (!probe.ok && probe.reason === 'tables_missing') {
-                setV2QuarterNote('Run v2/supabase-schema.sql (in this repo) in Supabase SQL Editor to enable cloud bank.');
+            try {
+                const probe = await RepQuarterBankSupabase.probeTables(client);
+                v2SupabaseReady = !!probe.ok;
+                if (!probe.ok && probe.reason === 'tables_missing') {
+                    setV2QuarterNote('Run v2/supabase-schema.sql (in this repo) in Supabase SQL Editor to enable cloud bank.');
+                }
+            } catch (err) {
+                console.warn('Supabase probe failed — continuing with local bank only:', err);
+                v2SupabaseReady = false;
+                setV2QuarterNote(`Cloud unreachable — local bank only (${err?.message || err})`);
             }
             return v2SupabaseReady;
         }
@@ -1661,7 +1667,12 @@ VISUALIZE sessions TYPE horizontal_bar`
             if (options?.hydrateRows !== false) {
                 await RepQuarterBank.hydrateBankRowsLocal(v2QuarterBank);
                 if (supabaseOk && v2QuarterBank?.artistId && typeof RepQuarterBankSupabase !== 'undefined') {
-                    await RepQuarterBankSupabase.hydrateBankRows(v2QuarterBank);
+                    try {
+                        await RepQuarterBankSupabase.hydrateBankRows(v2QuarterBank);
+                    } catch (hydrateErr) {
+                        console.warn('Supabase hydrate failed — using local rows:', hydrateErr);
+                        setV2QuarterNote(`Cloud hydrate failed — local rows only (${hydrateErr?.message || hydrateErr})`);
+                    }
                 }
             }
             if (prevSessionRows) {
@@ -1680,7 +1691,11 @@ VISUALIZE sessions TYPE horizontal_bar`
             if (!keys.length) return;
             await RepQuarterBank.hydrateBankRowsLocal(v2QuarterBank, { quarterKeys: keys });
             if (v2SupabaseReady && v2QuarterBank.artistId && typeof RepQuarterBankSupabase !== 'undefined') {
-                await RepQuarterBankSupabase.hydrateBankRows(v2QuarterBank, { quarterKeys: keys });
+                try {
+                    await RepQuarterBankSupabase.hydrateBankRows(v2QuarterBank, { quarterKeys: keys });
+                } catch (hydrateErr) {
+                    console.warn('Supabase ensure hydrate failed — using local rows:', hydrateErr);
+                }
             }
         }
 
@@ -1993,6 +2008,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const batchLabel = files.length > 1 ? `${files.length} traffic files` : files[0].name;
             try {
                 const ingest = await ingestTrafficRowsToBank(combinedRows, { name: batchLabel });
+                combinedRows = [];
                 const appliedText = ingest.applied.map(a => `${a.quarterKey}: ${a.rowCount.toLocaleString()}`).join(', ');
                 batchNotes.push(`Applied → ${appliedText || 'none'}`);
                 if (ingest.cloudWarnings?.length) batchNotes.push(...ingest.cloudWarnings.map(w => `  ↳ ${w}`));
@@ -2130,13 +2146,37 @@ VISUALIZE sessions TYPE horizontal_bar`
             window.__csvDataGeneration = (window.__csvDataGeneration || 0) + 1;
             loadCampaignInFlight = null;
         }
-        function normalizeCsvRows(rows) {
+        function shouldKeepCsvColumn(key) {
+            const cleanK = String(key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (!cleanK) return false;
+            return cleanK.includes('ordername') || cleanK === 'orderid'
+                || cleanK.includes('productvariantsku') || cleanK === 'sku' || cleanK === 'barcode' || cleanK === 'upc' || cleanK === 'ean'
+                || cleanK.includes('producttitle') || cleanK.includes('lineitemname') || cleanK === 'title' || cleanK === 'name'
+                || cleanK.includes('productvarianttitle') || cleanK.includes('variant') || cleanK.includes('size') || cleanK.includes('option1')
+                || cleanK.includes('producttype') || cleanK === 'type'
+                || cleanK.includes('netsales') || cleanK === 'revenue' || (cleanK.includes('sales') && !cleanK.includes('country'))
+                || cleanK.includes('quantity') || cleanK === 'qty'
+                || cleanK.includes('netitemssold') || (cleanK.includes('items') && cleanK.includes('sold'))
+                || cleanK.includes('compareatprice') || cleanK.includes('compareprice')
+                || cleanK.includes('linediscount') || cleanK.includes('discountamount') || cleanK === 'discount'
+                || cleanK.includes('shippingcountry') || cleanK === 'shipcountry'
+                || cleanK.includes('billingcountry') || cleanK === 'billingcountry'
+                || cleanK === 'country' || cleanK === 'destinationcountry' || cleanK === 'customercountry'
+                || cleanK === 'day' || cleanK === 'reportingday' || cleanK.includes('date') || cleanK.includes('timestamp') || cleanK.includes('created')
+                || cleanK.includes('market')
+                || cleanK === 'productvendor' || cleanK === 'vendor'
+                || cleanK.includes('hourofday') || cleanK === 'hour';
+        }
+        function normalizeCsvRows(rows, options = {}) {
             if(!Array.isArray(rows)) return [];
+            const slim = options.slim !== false;
             return rows.map(row => {
                 if(!row || typeof row !== 'object') return row;
                 const out = {};
                 Object.keys(row).forEach(k => {
                     const key = String(k || '').replace(/^\uFEFF/, '').trim();
+                    if (!key) return;
+                    if (slim && !shouldKeepCsvColumn(key)) return;
                     out[key] = row[k];
                 });
                 return out;
@@ -5479,14 +5519,10 @@ VISUALIZE sessions TYPE horizontal_bar`
                     storeData[tMk].daily[dayKey] += rev;
                     if(hasProductTitle) {
                         if(!storeData[tMk].dailyProducts[dayKey]) storeData[tMk].dailyProducts[dayKey] = {};
-                        if(!storeData[tMk].dailyProducts[dayKey][name]) storeData[tMk].dailyProducts[dayKey][name] = { units: 0, revenue: 0, kind: isMusic ? 'music' : 'merch', skus: [] };
+                        if(!storeData[tMk].dailyProducts[dayKey][name]) storeData[tMk].dailyProducts[dayKey][name] = { units: 0, revenue: 0, kind: isMusic ? 'music' : 'merch' };
                         storeData[tMk].dailyProducts[dayKey][name].units += derivedQty;
                         storeData[tMk].dailyProducts[dayKey][name].revenue += rev;
                         storeData[tMk].dailyProducts[dayKey][name].kind = isMusic ? 'music' : 'merch';
-                        const skuVal = String(sku || '').trim();
-                        if (skuVal && !storeData[tMk].dailyProducts[dayKey][name].skus.includes(skuVal)) {
-                            storeData[tMk].dailyProducts[dayKey][name].skus.push(skuVal);
-                        }
                     }
                 }
                 const countsForChart = isMusic && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts);
@@ -5652,12 +5688,21 @@ VISUALIZE sessions TYPE horizontal_bar`
         }
 
         function parseCsvFileAsync(file) {
+            // Keep parsing on the main thread. Papa worker mode fetches the script as a Worker
+            // and throws TypeError: Failed to fetch on Google Sites / locked-down CSP hosts.
             return new Promise((resolve, reject) => {
-                Papa.parse(file, {
-                    header: true, dynamicTyping: true, skipEmptyLines: true,
-                    error: reject,
-                    complete: (res) => resolve({ data: res.data || [], meta: res.meta || {}, file })
-                });
+                try {
+                    Papa.parse(file, {
+                        header: true,
+                        dynamicTyping: false,
+                        skipEmptyLines: true,
+                        worker: false,
+                        error: reject,
+                        complete: (res) => resolve({ data: res.data || [], meta: res.meta || {}, file })
+                    });
+                } catch (err) {
+                    reject(err);
+                }
             });
         }
 
@@ -5784,6 +5829,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                     continue;
                 }
                 let newRows = normalizeCsvRows(parsed.data);
+                parsed.data = null;
                 lastMeta = parsed.meta;
                 const salesChannel = getSelectedSalesChannel();
                 if (isMegastoreSalesChannel(salesChannel)) {
@@ -5829,10 +5875,12 @@ VISUALIZE sessions TYPE horizontal_bar`
                 return;
             }
 
-            renderCsvUploadStatus(`Writing ${combinedRows.length.toLocaleString()} rows to quarter bank…`, 'wait');
+            const combinedCount = combinedRows.length;
+            renderCsvUploadStatus(`Writing ${combinedCount.toLocaleString()} rows to quarter bank…`, 'wait');
             const batchLabel = files.length > 1 ? `${files.length} files` : files[0].name;
             try {
                 const ingest = await ingestMasterRowsToBank(combinedRows, { name: batchLabel });
+                combinedRows = [];
                 const appliedText = ingest.applied.map(a => `${a.quarterKey}: ${a.rowCount.toLocaleString()}`).join(', ');
                 batchNotes.push(`Applied → ${appliedText || 'none'}`);
                 if (ingest.cloudWarnings?.length) batchNotes.push(...ingest.cloudWarnings.map(w => `  ↳ ${w}`));
@@ -5919,7 +5967,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const file = files[0];
             renderCsvUploadStatus(`Reading ${file.name}…`, 'wait');
             Papa.parse(file, {
-                header: true, dynamicTyping: true, skipEmptyLines: true,
+                header: true, dynamicTyping: false, skipEmptyLines: true, worker: false,
                 error: function(err) {
                     ingestionWarnings = [`CSV parse failed: ${err?.message || 'Unknown error'}. Try re-exporting from Shopify.`];
                     renderWarnings();
@@ -6351,7 +6399,64 @@ VISUALIZE sessions TYPE horizontal_bar`
                 });
             }
 
-            async function preparePublishPayload(basePayload) {
+            function slimDailyProductsForPublish(dailyProducts, options = {}) {
+                const topNPerDay = Number(options.topNPerDay) || 0;
+                const out = {};
+                Object.entries(dailyProducts || {}).forEach(([day, prods]) => {
+                    let entries = Object.entries(prods || {}).filter(([, m]) => {
+                        return (Number(m?.units) || 0) > 0 || (Number(m?.revenue) || 0) > 0;
+                    });
+                    if (topNPerDay > 0) {
+                        entries = entries
+                            .sort((a, b) => (Number(b[1]?.revenue) || 0) - (Number(a[1]?.revenue) || 0))
+                            .slice(0, topNPerDay);
+                    }
+                    const dayOut = {};
+                    entries.forEach(([name, m]) => {
+                        dayOut[name] = {
+                            units: Number(m?.units) || 0,
+                            revenue: Math.round((Number(m?.revenue) || 0) * 100) / 100,
+                            kind: m?.kind === 'music' ? 'music' : 'merch'
+                        };
+                    });
+                    if (Object.keys(dayOut).length) out[day] = dayOut;
+                });
+                return out;
+            }
+
+            function stripHeavyMarketProductMatrices(payload, level = 0) {
+                ['uk', 'eu', 'us', 'int'].forEach(m => {
+                    if (!payload[m]) return;
+                    // Index pages read dailyProducts / weeklyProductUnits from indexOverview only.
+                    delete payload[m].dailyProducts;
+                    delete payload[m].weeklyProductUnits;
+                });
+                if (payload.indexOverview) {
+                    ['uk', 'eu', 'us', 'int'].forEach(m => {
+                        const seg = payload.indexOverview[m];
+                        if (!seg) return;
+                        if (seg.dailyProducts) {
+                            seg.dailyProducts = slimDailyProductsForPublish(seg.dailyProducts, {
+                                topNPerDay: level >= 4 ? 25 : (level >= 3 ? 40 : 0)
+                            });
+                        }
+                        if (level >= 4 && seg.weeklyProductUnits) {
+                            const slimWeekly = {};
+                            Object.entries(seg.weeklyProductUnits).forEach(([week, prods]) => {
+                                const top = Object.entries(prods || {})
+                                    .sort((a, b) => (Number(b[1]?.revenue) || Number(b[1]?.units) || 0) - (Number(a[1]?.revenue) || Number(a[1]?.units) || 0))
+                                    .slice(0, 40);
+                                if (!top.length) return;
+                                slimWeekly[week] = Object.fromEntries(top);
+                            });
+                            seg.weeklyProductUnits = slimWeekly;
+                        }
+                    });
+                }
+                return payload;
+            }
+
+            async function preparePublishPayload(basePayload, level = 0) {
                 const payload = JSON.parse(JSON.stringify(basePayload));
                 const cardBg = payload.colors?.cardBg || '#ffffff';
                 delete payload.comparison;
@@ -6361,14 +6466,26 @@ VISUALIZE sessions TYPE horizontal_bar`
                         payload[m].campaignChartUnits = Object.values(payload[m].musicProducts).reduce((sum, p) => sum + (Number(p?.units) || 0), 0);
                         delete payload[m].musicProducts;
                     }
+                    if (payload[m].dailyProducts) {
+                        payload[m].dailyProducts = slimDailyProductsForPublish(payload[m].dailyProducts);
+                    }
                 });
-                if(payload.logoBase64) payload.logoBase64 = await optimizeLogoForPublish(payload.logoBase64, 240000, cardBg, payload.logoColorOverlay !== false);
+                stripHeavyMarketProductMatrices(payload, level);
+
+                const logoMax = level >= 2 ? 120000 : 240000;
+                const productMax = level >= 3 ? 0 : (level >= 2 ? 120000 : (level >= 1 ? 200000 : 360000));
+                if(payload.logoBase64) payload.logoBase64 = await optimizeLogoForPublish(payload.logoBase64, logoMax, cardBg, payload.logoColorOverlay !== false);
                 if(payload.faviconBase64) payload.faviconBase64 = await optimizeFaviconForPublish(payload.faviconBase64);
                 if(payload.productImages) {
-                    for(const slot of ['p1', 'p2', 'p3', 'p4']) {
-                        if(payload.productImages[slot]) payload.productImages[slot] = await optimizeDataUrlForPublish(payload.productImages[slot], 360000, cardBg);
+                    if (productMax <= 0) {
+                        payload.productImages = { p1: null, p2: null, p3: null, p4: null };
+                    } else {
+                        for(const slot of ['p1', 'p2', 'p3', 'p4']) {
+                            if(payload.productImages[slot]) payload.productImages[slot] = await optimizeDataUrlForPublish(payload.productImages[slot], productMax, cardBg);
+                        }
                     }
                 }
+                payload.publishCompactLevel = level;
                 payload.lastUpdatedAt = new Date().toISOString();
                 return payload;
             }
@@ -6423,36 +6540,13 @@ VISUALIZE sessions TYPE horizontal_bar`
                     const topMerchProductsArr = Object.entries(d.merchProducts || {}).sort((a,b)=>(b[1]?.revenue || 0)-(a[1]?.revenue || 0)).slice(0,5).map(([pName, metrics]) => [pName, { units: metrics?.units || 0, revenue: metrics?.revenue || 0 }]);
                     const euTopCountries = prefix === 'eu' ? getEuTopCountriesForDisplay() : undefined;
                     const intTopCountries = prefix === 'int' ? getIntTopCountriesForDisplay() : undefined;
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, topMerchProducts: topMerchProductsArr, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: d.dailyProducts || {}, campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, topMerchProducts: topMerchProductsArr, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: slimDailyProductsForPublish(d.dailyProducts), campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
-                const slimDailyProductsForIndex = (dailyProducts) => {
-                    const out = {};
-                    Object.entries(dailyProducts || {}).forEach(([day, prods]) => {
-                        const dayOut = {};
-                        Object.entries(prods || {}).forEach(([name, m]) => {
-                            const units = Number(m?.units) || 0;
-                            const revenue = Number(m?.revenue) || 0;
-                            if (units <= 0 && revenue <= 0) return;
-                            dayOut[name] = {
-                                units,
-                                revenue,
-                                kind: m?.kind === 'music' ? 'music' : 'merch'
-                            };
-                            const skus = Array.isArray(m?.skus)
-                                ? m.skus.map((s) => String(s || '').trim()).filter(Boolean)
-                                : (m?.sku ? [String(m.sku).trim()] : []);
-                            if (skus.length) dayOut[name].skus = Array.from(new Set(skus));
-                        });
-                        if (Object.keys(dayOut).length) out[day] = dayOut;
-                    });
-                    return out;
-                };
-
-                const buildIndexOverview = () => {
+                const buildIndexOverviewFromSegments = (segments) => {
                     const out = {};
                     ['uk', 'eu', 'us', 'int'].forEach(prefix => {
-                        const seg = packageMarketSegment(prefix);
+                        const seg = segments[prefix];
                         if (!seg) return;
                         out[prefix] = {
                             revenue: seg.revenue,
@@ -6464,10 +6558,16 @@ VISUALIZE sessions TYPE horizontal_bar`
                             topMusicFormats: seg.topMusicFormats || [],
                             topMerchProducts: seg.topMerchProducts || [],
                             weeklyProductUnits: seg.weeklyProductUnits || {},
-                            dailyProducts: slimDailyProductsForIndex(seg.dailyProducts)
+                            dailyProducts: seg.dailyProducts || {}
                         };
                     });
                     return out;
+                };
+
+                const marketSegmentWithoutProductMatrix = (seg) => {
+                    if (!seg) return seg;
+                    const { dailyProducts, weeklyProductUnits, ...rest } = seg;
+                    return rest;
                 };
 
                 const timelineForPublish = resolveTimelineChart(m => storeData[m]);
@@ -6477,6 +6577,12 @@ VISUALIZE sessions TYPE horizontal_bar`
                     await rebuildCsvFromBank();
                 }
                 const artistRollup = buildArtistRollupForPublish();
+                const packagedMarkets = {
+                    uk: packageMarketSegment('uk'),
+                    eu: packageMarketSegment('eu'),
+                    us: packageMarketSegment('us'),
+                    int: packageMarketSegment('int')
+                };
                 const payload = {
                     runtimeVersion: RUNTIME_VERSION,
                     sourceOfTruth: { canonical: 'html', txtRole: 'snapshot_only', model: 'v2-quarter-bank' },
@@ -6490,7 +6596,10 @@ VISUALIZE sessions TYPE horizontal_bar`
                     colors: { logo: document.getElementById('color-logo')?.value || '#202223', accordion: document.getElementById('color-accordion')?.value || '#202223', bg: document.getElementById('color-bg')?.value || '#f6f6f7', cardBg: document.getElementById('color-card')?.value || '#ffffff', primary: document.getElementById('color-primary')?.value || '#008060', secondary: document.getElementById('color-secondary')?.value || '#5c6ac4', tertiary: document.getElementById('color-tertiary')?.value || '#9c6ade', quaternary: document.getElementById('color-quaternary')?.value || '#47c1bf', toteBag: document.getElementById('color-tote-bag')?.value || '#6371c7', mapGradientDark: document.getElementById('color-map-gradient-dark')?.value || '#005bd3', cardHeaderText: document.getElementById('color-card-header-text')?.value || '#6d7175', accordionHeaderText: document.getElementById('color-accordion-header-text')?.value || '#ffffff', textColor: document.getElementById('color-body-font')?.value || '#202223' },
                     globalChartData: [ Number(storeData.uk?.revenue || 0), Number(storeData.eu?.revenue || 0), Number(storeData.us?.revenue || 0), Number(storeData.int?.revenue || 0) ],
                     global: { revenue: document.getElementById('kpi-revenue')?.textContent || '£0.00', items: document.getElementById('kpi-items')?.textContent || '0', orders: document.getElementById('kpi-orders')?.textContent || '0', aov: document.getElementById('kpi-aov')?.textContent || '£0.00' },
-                    uk: packageMarketSegment('uk'), eu: packageMarketSegment('eu'), us: packageMarketSegment('us'), int: packageMarketSegment('int'),
+                    uk: marketSegmentWithoutProductMatrix(packagedMarkets.uk),
+                    eu: marketSegmentWithoutProductMatrix(packagedMarkets.eu),
+                    us: marketSegmentWithoutProductMatrix(packagedMarkets.us),
+                    int: marketSegmentWithoutProductMatrix(packagedMarkets.int),
                     topCountries: buildTopCountriesPayload(),
                     globalMerch: buildGlobalMerchPayload(),
                     salesforcePriorUnits: salesforcePriorUnits || null,
@@ -6499,26 +6608,54 @@ VISUALIZE sessions TYPE horizontal_bar`
                     bankedQuarters: bankSummary.bankedQuarters,
                     activeQuarter: bankSummary.activeQuarter,
                     artistRollup,
-                    indexOverview: buildIndexOverview(),
+                    indexOverview: buildIndexOverviewFromSegments(packagedMarkets),
                     hiddenFromLabelIndex: (!forceNew && (loadedHiddenFromLabelIndex || window.__loadedHiddenFromLabelIndex)) ? true : undefined
                 };
 
                 try {
                     let targetId = forceNew ? null : activeLoadedReportId;
-                    const publishPayload = await preparePublishPayload(payload);
-                    publishPayload.reportSlug = await resolveUniqueReportSlug(nameInput, targetId);
-                    const payloadStr = JSON.stringify({ report_name: nameInput, campaign_data: publishPayload });
-                    if (resDiv) resDiv.innerHTML = `⏳ Dispatching (${(payloadStr.length / 1024 / 1024).toFixed(1)} MB)...`;
-                    let response;
+                    const reportSlug = await resolveUniqueReportSlug(nameInput, targetId);
                     const fetchHeaders = { 'Content-Type': 'application/json', 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}`, 'Prefer': 'return=representation' };
+                    const maxLevel = 4;
+                    const sizeBudgetBytes = 2.8 * 1024 * 1024;
+                    let publishPayload = null;
+                    let response = null;
+                    let lastErrText = '';
 
-                    if (targetId) {
-                        response = await fetch(`${supabaseUrl}/rest/v1/reports?id=eq.${targetId}`, { method: 'PATCH', headers: fetchHeaders, body: payloadStr });
-                    } else {
-                        response = await fetch(`${supabaseUrl}/rest/v1/reports`, { method: 'POST', headers: fetchHeaders, body: payloadStr });
+                    for (let level = 0; level <= maxLevel; level++) {
+                        publishPayload = await preparePublishPayload(payload, level);
+                        publishPayload.reportSlug = reportSlug;
+                        const payloadStr = JSON.stringify({ report_name: nameInput, campaign_data: publishPayload });
+                        const sizeMb = payloadStr.length / 1024 / 1024;
+                        if (resDiv) {
+                            resDiv.innerHTML = level === 0
+                                ? `⏳ Dispatching (${sizeMb.toFixed(1)} MB)...`
+                                : `⏳ Retrying with stronger compaction (level ${level}, ${sizeMb.toFixed(1)} MB)...`;
+                        }
+                        if (payloadStr.length > sizeBudgetBytes && level < maxLevel) {
+                            console.warn(`Publish payload ${sizeMb.toFixed(1)} MB exceeds budget — escalating compaction`);
+                            continue;
+                        }
+
+                        if (targetId) {
+                            response = await fetch(`${supabaseUrl}/rest/v1/reports?id=eq.${targetId}`, { method: 'PATCH', headers: fetchHeaders, body: payloadStr });
+                        } else {
+                            response = await fetch(`${supabaseUrl}/rest/v1/reports`, { method: 'POST', headers: fetchHeaders, body: payloadStr });
+                        }
+
+                        if (response.ok) break;
+                        lastErrText = await response.text();
+                        const timedOut = /57014|statement timeout|timeout/i.test(lastErrText);
+                        if (timedOut && level < maxLevel) {
+                            console.warn(`Publish timeout at compaction level ${level}, retrying…`, lastErrText.slice(0, 200));
+                            continue;
+                        }
+                        throw new Error(`HTTP ${response.status}: ${lastErrText}`);
                     }
 
-                    if (!response.ok) { const errText = await response.text(); throw new Error(`HTTP ${response.status}: ${errText}`); }
+                    if (!response || !response.ok) {
+                        throw new Error(lastErrText ? `HTTP write failed: ${lastErrText}` : 'Publish failed after compaction retries.');
+                    }
 
                     const data = await response.json();
                     if (!data || data.length === 0) throw new Error('Insert returned no ID.');
@@ -6545,7 +6682,10 @@ VISUALIZE sessions TYPE horizontal_bar`
                         resDiv.classList.remove('text-yellow-400', 'text-red-400');
                         resDiv.classList.add('text-green-400');
                         const savedLabel = forceNew ? 'New report created' : 'Successfully saved';
-                        resDiv.innerHTML = `✅ ${savedLabel}!<br>${window.formatLiveReportLinkHtml(nameInput, publishPayload)}`;
+                        const compactNote = publishPayload.publishCompactLevel > 0
+                            ? `<br><span class="text-[10px] opacity-80">Saved with compaction level ${publishPayload.publishCompactLevel} (large YTD payload).</span>`
+                            : '';
+                        resDiv.innerHTML = `✅ ${savedLabel}!<br>${window.formatLiveReportLinkHtml(nameInput, publishPayload)}${compactNote}`;
                     }
                     refreshCampaignDirectory();
                     refreshArtistDirectory().then(() => syncArtistDirectorySelect());
@@ -6555,7 +6695,9 @@ VISUALIZE sessions TYPE horizontal_bar`
                     if (resDiv) {
                         resDiv.classList.remove('text-yellow-400', 'text-green-400');
                         resDiv.classList.add('text-red-400');
-                        const hint = String(err.message || '').includes('57014') ? '<br><span class="text-[10px] opacity-80">Tip: payload was auto-compacted. If this persists, reduce product image count or ask Supabase to raise statement_timeout.</span>' : '';
+                        const hint = String(err.message || '').includes('57014')
+                            ? '<br><span class="text-[10px] opacity-80">Tip: auto-compaction still timed out. Remove product images and try again, or split the date range into two campaign reports.</span>'
+                            : '';
                         resDiv.innerHTML = `❌ Write Rejected: <br><span class="text-[10px] opacity-90">${err.message || JSON.stringify(err)}</span>${hint}`;
                     }
                 }
