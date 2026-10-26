@@ -1613,30 +1613,45 @@ VISUALIZE sessions TYPE horizontal_bar`
                 return;
             }
 
-            await initV2QuarterBank();
-            await initV2TrafficQuarterBank();
-            const loaded = await rebuildCsvFromBank();
-            const trafficLoaded = await rebuildTrafficFromBank();
-            syncArtistDirectorySelect();
-            if (loaded) {
-                const summary = RepQuarterBank.buildBankSummary(v2QuarterBank);
-                ingestionWarnings = [`Loaded ${name} — ${summary.totalRows.toLocaleString()} sales rows in quarter bank.`];
+            try {
+                renderCsvUploadStatus(`Loading ${name} bank…`, 'wait');
+                await initV2QuarterBank();
+                await initV2TrafficQuarterBank();
+                const loaded = await rebuildCsvFromBank();
+                const trafficLoaded = await rebuildTrafficFromBank();
+                syncArtistDirectorySelect();
+                if (loaded) {
+                    const summary = RepQuarterBank.buildBankSummary(v2QuarterBank);
+                    ingestionWarnings = [`Loaded ${name} — ${summary.totalRows.toLocaleString()} sales rows in quarter bank.`];
+                    renderWarnings();
+                    runDataAggregation();
+                    renderCsvUploadStatus(`${name} sales bank loaded`, 'ok');
+                } else if (trafficLoaded) {
+                    const trafficSummary = RepQuarterBank.buildBankSummary(v2TrafficQuarterBank);
+                    ingestionWarnings = [`Loaded ${name} — ${trafficSummary.totalRows.toLocaleString()} traffic rows in quarter bank. Upload Master Sales CSV for revenue data.`];
+                    renderWarnings();
+                    calculateGlobalDashboard();
+                    renderCsvUploadStatus(`${name} traffic bank loaded`, 'ok');
+                } else {
+                    ingestionWarnings = [`${name} selected — no sales rows yet. Upload Master Sales CSV below.`];
+                    renderWarnings();
+                    renderCsvUploadStatus(`${name} — upload sales data to begin`, 'wait');
+                }
+                if (options?.refreshDirectory) await refreshArtistDirectory();
+                syncPublishButtons();
+            } catch (err) {
+                console.error('Artist bank load failed:', err);
+                windowCurrentCSVData = null;
+                window.__hasCsvData = false;
+                ingestionWarnings = [
+                    `Could not load full bank for ${name}: ${err?.message || err}`,
+                    'Tip: open a published campaign for this artist (uses the saved snapshot) or re-upload sales in smaller month files.'
+                ];
                 renderWarnings();
-                runDataAggregation();
-                renderCsvUploadStatus(`${name} sales bank loaded`, 'ok');
-            } else if (trafficLoaded) {
-                const trafficSummary = RepQuarterBank.buildBankSummary(v2TrafficQuarterBank);
-                ingestionWarnings = [`Loaded ${name} — ${trafficSummary.totalRows.toLocaleString()} traffic rows in quarter bank. Upload Master Sales CSV for revenue data.`];
-                renderWarnings();
-                calculateGlobalDashboard();
-                renderCsvUploadStatus(`${name} traffic bank loaded`, 'ok');
-            } else {
-                ingestionWarnings = [`${name} selected — no sales rows yet. Upload Master Sales CSV below.`];
-                renderWarnings();
-                renderCsvUploadStatus(`${name} — upload sales data to begin`, 'wait');
+                renderCsvUploadStatus(`Bank load failed for ${name}`, 'err');
+                syncArtistDirectorySelect();
+                syncPublishButtons();
             }
-            if (options?.refreshDirectory) await refreshArtistDirectory();
-            syncPublishButtons();
         }
 
         async function initV2QuarterBank(options) {
@@ -2063,14 +2078,27 @@ VISUALIZE sessions TYPE horizontal_bar`
                 renderQuarterBankUI();
                 return false;
             }
-            const filtered = applyMegastoreVendorFilter(combined);
+            const salesOnly = filterSalesRowsFromBank(combined);
+            if (salesOnly.droppedTraffic > 0) {
+                ingestionWarnings.push(
+                    `Ignored ${salesOnly.droppedTraffic.toLocaleString()} traffic/analytics rows found in the sales quarter bank (upload those via Append Analytics / Traffic File instead).`
+                );
+                renderWarnings();
+            }
+            if (!salesOnly.rows.length) {
+                windowCurrentCSVData = null;
+                window.__hasCsvData = false;
+                renderQuarterBankUI();
+                return false;
+            }
+            const filtered = applyMegastoreVendorFilter(salesOnly.rows);
             windowCurrentCSVData = filtered;
             windowCurrentCSVMk = 'master';
             markCsvUploadReady();
             renderQuarterBankUI();
-            if (isMegastoreSalesChannel(getSelectedSalesChannel()) && filtered.length !== combined.length) {
+            if (isMegastoreSalesChannel(getSelectedSalesChannel()) && filtered.length !== salesOnly.rows.length) {
                 const artistName = document.getElementById('input-artist-name')?.value?.trim() || 'artist';
-                ingestionWarnings.push(`Megastore filter: ${combined.length.toLocaleString()} rows in bank → ${filtered.length.toLocaleString()} for Product vendor "${artistName}". Clear bank & re-upload with Sales source = Eurostore to store filtered rows only.`);
+                ingestionWarnings.push(`Megastore filter: ${salesOnly.rows.length.toLocaleString()} rows in bank → ${filtered.length.toLocaleString()} for Product vendor "${artistName}". Clear bank & re-upload with Sales source = Eurostore to store filtered rows only.`);
                 renderWarnings();
             }
             return true;
@@ -2096,7 +2124,8 @@ VISUALIZE sessions TYPE horizontal_bar`
 
         function restoreV2BankFromPayload(old) {
             if (!old || typeof RepQuarterBank === 'undefined') return;
-            initV2QuarterBank().then(() => {
+            // Metadata only — do not hydrate tens of thousands of rows on campaign load (OOM / Aw, Snap!).
+            initV2QuarterBank({ hydrateRows: false }).then(() => {
                 if (!v2QuarterBank) return;
                 if (old.activeQuarter) v2QuarterBank.activeQuarter = old.activeQuarter;
                 (old.bankedQuarters || []).forEach(qk => {
@@ -2112,6 +2141,29 @@ VISUALIZE sessions TYPE horizontal_bar`
                 RepQuarterBank.saveBank(v2QuarterBank);
                 renderQuarterBankUI();
             });
+        }
+
+        function isTrafficAnalyticsRow(row) {
+            if (!row || typeof row !== 'object') return false;
+            let hasSessions = false;
+            let hasSales = false;
+            Object.keys(row).forEach(k => {
+                const cleanK = String(k || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanK === 'sessions' || cleanK === 'sessioncountry' || cleanK.includes('sessiondevicetype')) hasSessions = true;
+                if (cleanK.includes('netsales') || cleanK.includes('ordername') || cleanK.includes('producttitle')) hasSales = true;
+            });
+            return hasSessions && !hasSales;
+        }
+
+        function filterSalesRowsFromBank(rows) {
+            if (!Array.isArray(rows) || !rows.length) return { rows: rows || [], droppedTraffic: 0 };
+            const out = [];
+            let droppedTraffic = 0;
+            rows.forEach(row => {
+                if (isTrafficAnalyticsRow(row)) droppedTraffic += 1;
+                else out.push(row);
+            });
+            return { rows: out, droppedTraffic };
         }
 
         function buildArtistRollupForPublish() {
@@ -3006,12 +3058,6 @@ VISUALIZE sessions TYPE horizontal_bar`
             if(document.getElementById('prior-campaign-market-eu')) document.getElementById('prior-campaign-market-eu').checked = !!f.eu;
             if(document.getElementById('prior-campaign-market-us')) document.getElementById('prior-campaign-market-us').checked = !!f.us;
             if(document.getElementById('prior-campaign-market-int')) document.getElementById('prior-campaign-market-int').checked = !!f.int;
-        }
-        function syncPriorCampaignModeUi() {
-            const mode = getPriorCampaignMode();
-            const btn = document.getElementById('btn-prior-campaign-formats');
-            if(btn) btn.classList.toggle('hidden', mode !== 'selected');
-            updatePriorCampaignFormatsLabel(getPriorCampaignSelectedFormats());
         }
         function updatePriorCampaignFormatsLabel(names) {
             const label = document.getElementById('prior-campaign-formats-label');
@@ -5254,14 +5300,17 @@ VISUALIZE sessions TYPE horizontal_bar`
             for (const slot of ['p1', 'p2', 'p3', 'p4']) applyProductImage(slot, old.productImages?.[slot] || null);
             setSalesforcePriorUnits(old.salesforcePriorUnits || null, false);
 
-            rebuildCsvFromBank().then(() => {
+            // Always paint the published snapshot first. Auto-hydrating a large artist bank
+            // (e.g. Alex Warren ~50k+ rows) on campaign select can crash the tab (Aw, Snap!).
+            windowCurrentCSVData = null;
+            window.__hasCsvData = false;
             applySavedCampaignDates(old);
-            if (hasLiveCsvUpload()) {
-                runDataAggregation();
-            } else {
             const snapRev = old.global?.revenue || '£0.00';
             const snapOrders = old.global?.orders || '0';
-            ingestionWarnings.push(`Preview shows last published snapshot (${snapRev} · ${snapOrders} orders). Upload Master Sales CSV in Data Upload to refresh from Shopify.`);
+            ingestionWarnings = [
+                `Preview shows last published snapshot (${snapRev} · ${snapOrders} orders).`,
+                'To refresh from the artist bank, choose the artist in Artist sales data (or re-upload Master Sales). Avoid loading the full bank unless you need to republish.'
+            ];
             renderWarnings();
             ['uk', 'eu', 'us', 'int'].forEach(m => {
                 const mData = getLegacyMarket(old, m);
@@ -5272,7 +5321,13 @@ VISUALIZE sessions TYPE horizontal_bar`
                     storeData[m].items = parseInt(safeStr(mData.items).replace(/[^0-9.-]+/g, ''), 10) || 0;
                     const rawOrdString = safeStr(mData.orders).replace(/[^0-9.-]+/g, '');
                     const ordCount = parseInt(rawOrdString, 10) || 0;
-                    storeData[m].orders = new Set(Array.from({ length: ordCount }, (_, i) => `imported_${m}_${i}`));
+                    // Lightweight order stand-in — avoid allocating tens of thousands of strings.
+                    storeData[m].orders = {
+                        size: ordCount,
+                        add() {},
+                        clear() { this.size = 0; },
+                        forEach() {}
+                    };
                     storeData[m].products = {};
                     storeData[m].merchProducts = {};
                     if (Array.isArray(mData.topProducts)) {
@@ -5297,6 +5352,10 @@ VISUALIZE sessions TYPE horizontal_bar`
                     const calcAtc = Math.round((loadedAtcRate / 100) * loadedSess) || (ordCount * 4);
                     storeData[m].weekly = mData.weekly || mData.monthly || { 'Period 1': storeData[m].revenue * 0.25, 'Period 2': storeData[m].revenue * 0.25, 'Period 3': storeData[m].revenue * 0.25, 'Period 4': storeData[m].revenue * 0.25 };
                     storeData[m].daily = mData.daily || {};
+                    storeData[m].weeklyUnits = mData.weeklyUnits || {};
+                    storeData[m].dailyUnits = mData.dailyUnits || {};
+                    storeData[m].weeklyMusicRev = mData.weeklyMusicRev || {};
+                    storeData[m].dailyProducts = mData.dailyProducts || {};
                     storeData[m].traffic = { sessions: loadedSess, atc: calcAtc, mobile: parseInt(mData.mobilePerc, 10) || 85, desktop: parseInt(mData.desktopPct, 10) || 15 };
                     storeData[m].merch = mData.merch || { musicRev: 0, merchRev: 0, sizes: { XS: 0, S: 0, M: 0, L: 0, XL: 0, XXL: 0, '3XL+': 0 }, categories: {} };
                 } else {
@@ -5305,10 +5364,8 @@ VISUALIZE sessions TYPE horizontal_bar`
             });
 
             calculateGlobalDashboard();
-            }
             window.__pendingCampaignLoadId = null;
             window.showLiveReportLinkInSidebar(data.report_name, old, `✅ Loaded <strong>${data.report_name || 'campaign'}</strong>`);
-            });
         }
         window.applyLogoBase64 = applyLogoBase64;
         window.applyLoadedCampaignRecord = applyLoadedCampaignRecord;
