@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Atlantic Records — WMX D2C Campaign Reports</title>
@@ -9,7 +10,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,500;0,600;0,700;0,800;1,500&family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+    
+    <link rel="icon" href="assets/atlantic-favicon.png" type="image/png">
     <style>
+
         :root {
             --atl-white: #FFFFFF;
             --atl-red: #E31C24;
@@ -583,61 +587,945 @@
             color: var(--atl-muted);
             font-style: italic;
         }
+    
+
+        /* —— Shipped Sales styles (merged for v1.2) —— */
+
+
+        :root {
+            --atl-white: #FFFFFF;
+            --atl-red: #E31C24;
+            --atl-black: #121212;
+            --atl-cream: #F4F0EA;
+            --atl-muted: #6B6560;
+            --atl-border: rgba(18, 18, 18, 0.12);
+            --atl-red-soft: rgba(227, 28, 36, 0.1);
+            --atl-font-display: 'Jost', 'Futura', 'Century Gothic', sans-serif;
+            --atl-font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --atl-font-editorial: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--atl-white);
+            color: var(--atl-black);
+            font-family: var(--atl-font-body);
+            -webkit-font-smoothing: antialiased;
+        }
+        .atl-page { max-width: 72rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+        .atl-header {
+            display: flex;
+            align-items: center;
+            gap: clamp(1.5rem, 4vw, 2.75rem);
+            margin-bottom: 2.5rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--atl-border);
+        }
+        .atl-logo {
+            flex-shrink: 0;
+            width: clamp(4.5rem, 12vw, 6.5rem);
+            height: clamp(4.5rem, 12vw, 6.5rem);
+            display: block;
+            object-fit: contain;
+        }
+        .atl-header-copy { min-width: 0; }
+        .atl-header-copy h1 {
+            margin: 0;
+            font-family: var(--atl-font-display);
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            line-height: 1;
+            text-transform: uppercase;
+            color: var(--atl-black);
+        }
+        .atl-header-copy p {
+            margin: 0.65rem 0 0;
+            font-family: var(--atl-font-editorial);
+            font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+            font-style: italic;
+            font-weight: 400;
+            color: var(--atl-muted);
+            line-height: 1.45;
+            max-width: 36rem;
+        }
+        @media (max-width: 900px) {
+            .atl-header { flex-direction: column; align-items: flex-start; }
+        }
+        .atl-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            font-family: inherit;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            padding: 0.625rem 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s, transform 0.15s;
+            border: none;
+        }
+        .atl-btn:hover { transform: translateY(-1px); }
+        .atl-btn-primary { background: var(--atl-red); color: var(--atl-white); }
+        .atl-btn-primary:hover { background: #c91820; }
+        .atl-btn-secondary {
+            background: transparent;
+            color: var(--atl-black);
+            border: 1px solid var(--atl-border);
+        }
+        .atl-btn-secondary:hover { border-color: var(--atl-black); }
+        .sheet-status {
+            display: block;
+            margin: 0.15rem 0 0;
+            font-size: 0.6875rem;
+            color: var(--atl-muted);
+            font-weight: 600;
+            line-height: 1.35;
+            white-space: nowrap;
+        }
+        .sheet-status.ok { color: #047857; }
+        .sheet-status.err { color: var(--atl-red); }
+        .sheet-status:empty { display: none; }
+        .atl-overview {
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            background: var(--atl-white);
+        }
+        .atl-overview-head {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.15rem;
+            background: var(--atl-cream);
+            border-bottom: 1px solid var(--atl-border);
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .atl-overview-head h2 {
+            margin: 0;
+            font-family: var(--atl-font-display);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--atl-black);
+        }
+        .atl-overview-note {
+            font-size: 0.6875rem;
+            color: var(--atl-muted);
+            font-style: italic;
+        }
+        .atl-overview-filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 0.75rem 1rem;
+            padding: 0.85rem 1.15rem;
+            border-bottom: 1px solid var(--atl-border);
+            background: var(--atl-white);
+        }
+        .atl-filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+        .atl-filter-group.global {
+            margin-left: auto;
+        }
+        .atl-filter {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            min-width: 7.5rem;
+        }
+        .atl-filter label {
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+        }
+        .atl-filter select,
+        .atl-filter input[type="month"] {
+            appearance: none;
+            background: var(--atl-cream);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.3rem;
+            color: var(--atl-black);
+            font: inherit;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.45rem 1.75rem 0.45rem 0.55rem;
+            cursor: pointer;
+        }
+        .atl-filter select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%236B6560' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.45rem center;
+        }
+        .atl-filter input[type="month"] {
+            min-width: 9.5rem;
+            padding-right: 0.55rem;
+        }
+        .atl-filter-group .custom-range[hidden] {
+            display: none !important;
+        }
+        .atl-filter select:focus,
+        .atl-filter input[type="month"]:focus {
+            outline: none;
+            border-color: var(--atl-red);
+            box-shadow: 0 0 0 2px var(--atl-red-soft);
+        }
+        .atl-overview-kpis {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0;
+            border-bottom: 1px solid var(--atl-border);
+        }
+        @media (max-width: 768px) {
+            .atl-overview-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        .atl-kpi {
+            padding: 1rem 1.15rem;
+            border-right: 1px solid var(--atl-border);
+        }
+        .atl-kpi:last-child { border-right: none; }
+        @media (max-width: 768px) {
+            .atl-kpi:nth-child(2n) { border-right: none; }
+            .atl-kpi:nth-child(-n+2) { border-bottom: 1px solid var(--atl-border); }
+        }
+        .atl-kpi-label {
+            display: block;
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+            margin-bottom: 0.35rem;
+        }
+        .atl-kpi-value {
+            display: block;
+            font-family: var(--atl-font-display);
+            font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--atl-black);
+        }
+        .atl-kpi-value.revenue { color: var(--atl-red); }
+        .atl-kpi-value.product {
+            font-family: var(--atl-font-body);
+            font-size: clamp(0.8125rem, 2vw, 0.9375rem);
+            font-weight: 600;
+            line-height: 1.35;
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            max-width: 100%;
+        }
+        .atl-top-stores { padding: 1rem 1.15rem 1.15rem; }
+        .atl-top-stores h3 {
+            margin: 0 0 0.75rem;
+            font-family: var(--atl-font-display);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--atl-black);
+        }
+        .atl-top-stores-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8125rem;
+        }
+        .atl-top-stores-table th {
+            text-align: left;
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+            padding: 0 0.5rem 0.5rem 0;
+            border-bottom: 1px solid var(--atl-border);
+        }
+        .atl-top-stores-table th.num,
+        .atl-top-stores-table td.num { text-align: right; }
+        .atl-top-stores-table td {
+            padding: 0.55rem 0.5rem 0.55rem 0;
+            border-bottom: 1px solid rgba(18, 18, 18, 0.06);
+            vertical-align: middle;
+        }
+        .atl-top-stores-table tr:last-child td { border-bottom: none; }
+        .atl-top-stores-table .rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 9999px;
+            background: var(--atl-cream);
+            font-size: 0.625rem;
+            font-weight: 700;
+            margin-right: 0.45rem;
+            color: var(--atl-muted);
+            flex-shrink: 0;
+        }
+        .artist-cell {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            gap: 0.4rem 0.55rem;
+            min-width: 0;
+            max-width: 100%;
+        }
+        .artist-name,
+        .product-name {
+            font-weight: 700;
+            flex: 1 1 0;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .atl-top-stores-empty {
+            font-size: 0.8125rem;
+            color: var(--atl-muted);
+            font-style: italic;
+        }
+        .rep-tag {
+            display: inline-block;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            padding: 0.22rem 0.55rem;
+            border-radius: 9999px;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+            background: var(--atl-cream);
+            color: var(--atl-black);
+            border: 1px solid var(--atl-border);
+        }
+        .rep-tag.store {
+            text-transform: none;
+        }
+        .rep-tag.eurostore {
+            border-color: var(--atl-black);
+        }
+        .rep-tag.d2c {
+            border-color: var(--atl-red);
+            color: var(--atl-red);
+        }
+        .rep-tag.rhino {
+            border-color: #6b5b4b;
+            color: #6b5b4b;
+        }
+        .rep-tag.multi {
+            border-color: var(--atl-black);
+            cursor: help;
+        }
+        .rep-tag.unknown {
+            border-color: var(--atl-border);
+            color: var(--atl-muted);
+        }
+        .store-multi {
+            display: inline-flex;
+            flex-shrink: 0;
+        }
+        .artist-cell > .rep-tag {
+            flex-shrink: 0;
+        }
+        .store-multi-pop { display: none; }
+        .floating-tip {
+            position: fixed;
+            z-index: 9999;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            max-width: min(22rem, calc(100vw - 1rem));
+            padding: 0.55rem 0.65rem;
+            background: var(--atl-white);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.4rem;
+            box-shadow: 0 10px 28px rgba(18, 18, 18, 0.16);
+            pointer-events: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--atl-black);
+            line-height: 1.35;
+            word-break: break-word;
+        }
+        .floating-tip[hidden] { display: none !important; }
+        .floating-tip.tip-text {
+            display: block;
+            white-space: normal;
+        }
+        .rank-card table,
+        .atl-top-stores-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+        .rank-card th:nth-child(1),
+        .rank-card td:nth-child(1),
+        .atl-top-stores-table th:nth-child(1),
+        .atl-top-stores-table td:nth-child(1) {
+            width: auto;
+        }
+        .rank-card th.num,
+        .rank-card td.num {
+            width: 4.75rem;
+            white-space: nowrap;
+        }
+        .rank-card th.num:last-child,
+        .rank-card td.num:last-child {
+            width: 7rem;
+        }
+        /* Shared Top 5 rhythm: Artist | metric | Units | Revenue */
+        .atl-top-stores-table {
+            table-layout: fixed;
+        }
+        .atl-top-stores-table th:not(:first-child),
+        .atl-top-stores-table td:not(:first-child) { text-align: right; }
+        .atl-top-stores-table th.num,
+        .atl-top-stores-table td.num {
+            white-space: nowrap;
+            padding-left: 1.75rem;
+            padding-right: 0.85rem;
+        }
+        .atl-top-stores-table th.num:nth-child(2),
+        .atl-top-stores-table td.num:nth-child(2) {
+            width: 9rem;
+        }
+        .atl-top-stores-table th.num:nth-child(3),
+        .atl-top-stores-table td.num:nth-child(3) {
+            width: 7rem;
+        }
+        .atl-top-stores-table th.num:last-child,
+        .atl-top-stores-table td.num:last-child {
+            width: 11rem;
+            padding-right: 0;
+        }
+        .rank-card table.product-rank-table th:nth-child(2),
+        .rank-card table.product-rank-table td:nth-child(2) {
+            width: 7.25rem;
+        }
+        .rank-card table.product-rank-table .product-artist {
+            display: block;
+            max-width: 100%;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: default;
+        }
+        .accordion-chevron {
+            width: 1rem;
+            height: 1rem;
+            flex-shrink: 0;
+            transition: transform 0.2s ease;
+        }
+        details[open] > summary .accordion-chevron { transform: rotate(180deg); }
+        .period-stack { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
+        .period-card {
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background: var(--atl-white);
+        }
+        .period-card > summary {
+            list-style: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.85rem 1.15rem;
+            background: var(--atl-cream);
+            border-bottom: 1px solid transparent;
+            font-family: var(--atl-font-display);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--atl-black);
+            user-select: none;
+        }
+        .period-card > summary::-webkit-details-marker { display: none; }
+        .period-card[open] > summary { border-bottom-color: var(--atl-border); }
+        .period-card > summary .accordion-chevron { color: var(--atl-black); }
+        .period-card-sub {
+            padding: 0.45rem 1.15rem;
+            font-family: var(--atl-font-editorial);
+            font-size: 0.75rem;
+            font-style: italic;
+            color: var(--atl-muted);
+            border-bottom: 1px solid var(--atl-border);
+            background: var(--atl-white);
+        }
+        .period-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        @media (max-width: 640px) {
+            .period-grid { grid-template-columns: 1fr; }
+        }
+        .period-box {
+            padding: 1rem 1.15rem;
+            border-right: 1px solid var(--atl-border);
+        }
+        .period-box:last-child { border-right: none; }
+        @media (max-width: 640px) {
+            .period-box { border-right: none; border-bottom: 1px solid var(--atl-border); }
+            .period-box:last-child { border-bottom: none; }
+        }
+        .period-box h4 {
+            margin: 0 0 0.35rem;
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+        }
+        .period-box .amt {
+            font-family: var(--atl-font-display);
+            font-size: clamp(1.125rem, 2.5vw, 1.375rem);
+            font-weight: 700;
+            color: var(--atl-red);
+        }
+        .period-box .amt .pct {
+            font-family: var(--atl-font-body);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--atl-muted);
+        }
+        .period-box .units {
+            margin-top: 0.2rem;
+            font-size: 0.75rem;
+            color: var(--atl-muted);
+            font-weight: 600;
+        }
+        .period-box .units.art-card-note {
+            margin-top: 0.15rem;
+            font-weight: 500;
+        }
+        .tables-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 900px) {
+            .tables-grid { grid-template-columns: 1fr; }
+        }
+        .rank-card {
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            background: var(--atl-white);
+        }
+        .rank-card-head {
+            padding: 0.85rem 1.15rem;
+            background: var(--atl-cream);
+            border-bottom: 1px solid var(--atl-border);
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-family: var(--atl-font-display);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .rank-card-body { padding: 0.75rem 1.15rem 1rem; }
+        .rank-card table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+        .rank-card th {
+            text-align: left;
+            font-size: 0.625rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--atl-muted);
+            padding: 0 0.35rem 0.5rem 0;
+            border-bottom: 1px solid var(--atl-border);
+        }
+        .rank-card th.num,
+        .rank-card td.num { text-align: right; }
+        .rank-card td {
+            padding: 0.5rem 0.35rem 0.5rem 0;
+            border-bottom: 1px solid rgba(18, 18, 18, 0.06);
+            vertical-align: middle;
+        }
+        .rank-card tr:last-child td { border-bottom: none; }
+        .artist-selector-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0 0 1.5rem;
+            padding: 0.35rem 0.85rem 0.35rem 0;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+            background: var(--atl-cream);
+            overflow: hidden;
+        }
+        .artist-selector-main {
+            display: flex;
+            flex: 1 1 auto;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.65rem 1rem;
+            min-width: 0;
+            margin: 0;
+            padding: 0.85rem 1.15rem;
+            border: none;
+            background: transparent;
+            color: var(--atl-black);
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+        .artist-selector-main:hover,
+        .artist-selector-main:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.03);
+        }
+        .artist-selector-main:hover h2,
+        .artist-selector-main:focus h2 {
+            color: var(--atl-red);
+        }
+        .artist-selector-main h2 {
+            margin: 0;
+            font-family: var(--atl-font-display);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--atl-black);
+            transition: color 0.15s;
+        }
+        .artist-selector-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0;
+            min-width: 0;
+            margin-left: auto;
+            text-align: left;
+        }
+        .artist-selector-meta .atl-overview-note {
+            margin: 0;
+        }
+        .artist-selector-actions {
+            display: flex;
+            flex: 0 0 auto;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-left: 0;
+            padding: 0.35rem 0.15rem 0.35rem 0;
+        }
+        .artist-clear-btn {
+            display: none;
+            flex: 0 0 auto;
+            font-size: 0.75rem;
+            padding: 0.4rem 0.75rem;
+        }
+        .artist-clear-btn.visible { display: inline-flex; }
+        .artist-refresh-btn {
+            flex: 0 0 auto;
+        }
+        .artist-refresh-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .artist-row .check {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.1rem;
+            height: 1.1rem;
+            margin-right: 0.45rem;
+            border: 1px solid var(--atl-border);
+            border-radius: 0.25rem;
+            background: var(--atl-white);
+            color: transparent;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .artist-row.active .check {
+            border-color: var(--atl-red);
+            background: var(--atl-red);
+            color: var(--atl-white);
+        }
+        .modal-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 18, 18, 0.45);
+            z-index: 40;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal-panel {
+            width: min(40rem, 100%);
+            max-height: min(80vh, 44rem);
+            display: flex;
+            flex-direction: column;
+            background: var(--atl-white);
+            border-radius: 0.5rem;
+            border: 1px solid var(--atl-border);
+            box-shadow: 0 16px 40px rgba(18, 18, 18, 0.18);
+            overflow: hidden;
+        }
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.15rem;
+            background: var(--atl-cream);
+            border-bottom: 1px solid var(--atl-border);
+        }
+        .modal-head h2 {
+            margin: 0;
+            font-family: var(--atl-font-display);
+            font-size: 0.8125rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .modal-close {
+            border: 1px solid var(--atl-border);
+            background: var(--atl-white);
+            border-radius: 0.3rem;
+            font: inherit;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.35rem 0.65rem;
+            cursor: pointer;
+        }
+        .modal-close:hover { border-color: var(--atl-red); color: var(--atl-red); }
+        .modal-search-wrap {
+            padding: 0.85rem 1.15rem;
+            border-bottom: 1px solid var(--atl-border);
+        }
+        .modal-search {
+            width: 100%;
+            background: var(--atl-cream);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.375rem;
+            color: var(--atl-black);
+            padding: 0.65rem 0.85rem;
+            font: inherit;
+            font-size: 0.875rem;
+        }
+        .modal-search:focus {
+            outline: none;
+            border-color: var(--atl-red);
+            box-shadow: 0 0 0 2px var(--atl-red-soft);
+        }
+        .modal-body {
+            overflow: auto;
+            padding: 0.5rem;
+            flex: 1;
+            min-height: 0;
+        }
+        .artist-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .artist-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) auto auto;
+            gap: 0.75rem;
+            align-items: center;
+            width: 100%;
+            padding: 0.85rem;
+            border: 1px solid transparent;
+            border-radius: 0.4rem;
+            font-size: 0.8125rem;
+            background: var(--atl-white);
+            text-align: left;
+            font: inherit;
+            color: inherit;
+            cursor: pointer;
+        }
+        .artist-row:hover,
+        .artist-row:focus {
+            background: var(--atl-cream);
+            border-color: var(--atl-border);
+            outline: none;
+        }
+        .artist-row.active {
+            border-color: var(--atl-red);
+            background: var(--atl-red-soft);
+        }
+        @media (max-width: 700px) {
+            .artist-row { grid-template-columns: 1fr; gap: 0.35rem; }
+        }
+        .artist-row-name {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+            color: var(--atl-black);
+            line-height: 1.2;
+        }
+        .metric-label {
+            display: block;
+            font-size: 0.625rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--atl-muted);
+            font-weight: 600;
+            margin-bottom: 0.1rem;
+        }
+        .metric-value {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--atl-black);
+        }
+        .metric-value.revenue { color: var(--atl-red); }
+        .index-state {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--atl-muted);
+            font-family: var(--atl-font-editorial);
+            font-size: 0.9375rem;
+            font-style: italic;
+            border: 1px dashed var(--atl-border);
+            border-radius: 0.5rem;
+            background: var(--atl-cream);
+        }
+    
+
+        /* —— V1.2 view tabs —— */
+        .atl-view-tabs {
+            display: flex;
+            width: 100%;
+            gap: 0.35rem;
+            margin: -0.75rem 0 1.75rem;
+            padding: 0.3rem;
+            background: var(--atl-cream);
+            border: 1px solid var(--atl-border);
+            border-radius: 0.5rem;
+        }
+        .atl-view-tab {
+            appearance: none;
+            flex: 1 1 0;
+            border: none;
+            background: transparent;
+            color: var(--atl-muted);
+            font-family: var(--atl-font-display);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            text-align: center;
+            justify-content: center;
+            padding: 0.7rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .atl-view-tab:hover { color: var(--atl-black); }
+        .atl-view-tab[aria-selected="true"] {
+            background: var(--atl-white);
+            color: var(--atl-black);
+            box-shadow: 0 1px 2px rgba(18, 18, 18, 0.06);
+        }
+        .atl-view-tab:focus-visible {
+            outline: 2px solid var(--atl-red);
+            outline-offset: 2px;
+        }
+        .atl-view-panel[hidden] { display: none !important; }
+
     </style>
 </head>
 <body>
     <div class="atl-page">
         <header class="atl-header">
-            <img id="atlantic-logo-img" class="atl-logo" src="data:image/png;base64,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" alt="Atlantic Records" width="104" height="104" decoding="async">
+            <img class="atl-logo" src="assets/atlantic-logo-2025.png" alt="Atlantic Records" width="104" height="104" decoding="async">
             <div class="atl-header-copy">
                 <h1>WMX D2C Campaign Reports</h1>
-                <p>Domestic &amp; international campaign performance — organised by artist and region.</p>
+                <p>Domestic &amp; international campaign performance — Sales and Shipped views in one index.</p>
             </div>
         </header>
+        <div class="atl-view-tabs" role="tablist" aria-label="Dashboard view">
+            <button type="button" class="atl-view-tab" role="tab" id="tab-sales" data-view="sales" aria-controls="panel-sales" aria-selected="true">Sales</button>
+            <button type="button" class="atl-view-tab" role="tab" id="tab-shipped" data-view="shipped" aria-controls="panel-shipped" aria-selected="false" tabindex="-1">Shipped</button>
+        </div>
+        <div class="atl-view-panel" id="panel-sales" role="tabpanel" aria-labelledby="tab-sales">
 
         <section class="atl-overview" id="atl-overview" aria-label="Atlantic portfolio overview">
             <div class="atl-overview-head">
                 <h2>Overall Sales Snapshot</h2>
-                <span class="atl-overview-note" id="overview-period-label">All artists · Lifetime</span>
+                <span class="atl-overview-note" id="overview-period-label">UK · Financial YTD</span>
             </div>
             <div class="atl-overview-filters">
-                <div class="atl-filter">
-                    <label for="filter-product">Product category</label>
-                    <select id="filter-product" aria-label="Filter by product category">
-                        <option value="all">All</option>
-                        <option value="music">Music</option>
-                        <option value="merch">Merch</option>
-                    </select>
+                <div class="atl-filter-group snapshot">
+                    <div class="atl-filter">
+                        <label for="filter-product">Product category</label>
+                        <select id="filter-product" aria-label="Filter by product category">
+                            <option value="all">All</option>
+                            <option value="music">Music</option>
+                            <option value="merch">Merch</option>
+                        </select>
+                    </div>
+                    <div class="atl-filter">
+                        <label for="filter-period">Period</label>
+                        <select id="filter-period" aria-label="Filter by period">
+                            <option value="lifetime">Lifetime</option>
+                            <option value="financial_ytd" selected>Financial YTD</option>
+                            <option value="calendar_ytd">Calendar YTD</option>
+                            <option value="previous_financial_year">Previous Financial Year</option>
+                            <option value="previous_calendar_year">Previous Calendar Year</option>
+                            <option value="prev_week">Previous Week</option>
+                            <option value="wtd">Week to Date</option>
+                            <option value="prev_month">Previous Month</option>
+                            <option value="mtd">Month to Date</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="atl-filter">
-                    <label for="filter-market">Market</label>
-                    <select id="filter-market" aria-label="Filter by market">
-                        <option value="all">All</option>
-                        <option value="uk">UK</option>
-                        <option value="eu">EU</option>
-                        <option value="us">US</option>
-                        <option value="row">ROW</option>
-                    </select>
-                </div>
-                <div class="atl-filter">
-                    <label for="filter-rep">Rep owner</label>
-                    <select id="filter-rep" aria-label="Filter by rep owner">
-                        <option value="all">All</option>
-                        <option value="domestic">Domestic</option>
-                        <option value="international">International</option>
-                    </select>
-                </div>
-                <div class="atl-filter">
-                    <label for="filter-period">Period</label>
-                    <select id="filter-period" aria-label="Filter by period">
-                        <option value="lifetime">Lifetime</option>
-                        <option value="calendar_ytd">Calendar YTD</option>
-                        <option value="financial_ytd">Financial YTD</option>
-                        <option value="mtd">MTD</option>
-                        <option value="wtd">WTD</option>
-                        <option value="prev_week">Previous week</option>
-                        <option value="prev_month">Previous month</option>
-                    </select>
+                <div class="atl-filter-group global">
+                    <div class="atl-filter">
+                        <label for="filter-market">Market</label>
+                        <select id="filter-market" aria-label="Filter by market">
+                            <option value="all">All</option>
+                            <option value="uk" selected>UK</option>
+                            <option value="eu">EU</option>
+                            <option value="us">US</option>
+                            <option value="row">ROW</option>
+                        </select>
+                    </div>
+                    <div class="atl-filter">
+                        <label for="filter-store">Store</label>
+                        <select id="filter-store" aria-label="Filter by store">
+                            <option value="all">All</option>
+                            <option value="d2c">D2C Store</option>
+                            <option value="eurostore">Eurostore</option>
+                        </select>
+                    </div>
+                    <div class="atl-filter">
+                        <label for="filter-rep">Rep owner</label>
+                        <select id="filter-rep" aria-label="Filter by rep owner">
+                            <option value="all">All</option>
+                            <option value="domestic">Domestic</option>
+                            <option value="international">International</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="atl-overview-kpis">
@@ -677,11 +1565,167 @@
         <div id="content">
             <div class="index-state" id="load-status">Booting Atlantic index…</div>
         </div>
+        </div>
+        <div class="atl-view-panel" id="panel-shipped" role="tabpanel" aria-labelledby="tab-shipped" hidden>
+
+        <section class="atl-overview" aria-label="Shipped sales snapshot">
+            <div class="atl-overview-head">
+                <h2>Overall Shipped Sales Snapshot</h2>
+                <span class="atl-overview-note" id="overview-note">Waiting for shipped sales data…</span>
+            </div>
+            <div class="atl-overview-filters">
+                <div class="atl-filter-group snapshot">
+                    <div class="atl-filter">
+                        <label for="shipped-filter-product">Product category</label>
+                        <select id="shipped-filter-product">
+                            <option value="all">All</option>
+                            <option value="music">Music</option>
+                            <option value="merch">Merch</option>
+                        </select>
+                    </div>
+                    <div class="atl-filter">
+                        <label for="shipped-filter-period">Period</label>
+                        <select id="shipped-filter-period">
+                            <option value="lifetime">Lifetime</option>
+                            <option value="financial_ytd" selected>Financial YTD</option>
+                            <option value="calendar_ytd">Calendar YTD</option>
+                            <option value="previous_financial_year">Previous Financial Year</option>
+                            <option value="previous_calendar_year">Previous Calendar Year</option>
+                            <option value="prior_month">Last month</option>
+                            <option value="latest_month">Current month</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    <div class="atl-filter custom-range" id="custom-start-wrap" hidden>
+                        <label for="shipped-filter-custom-start">Start</label>
+                        <input type="month" id="shipped-filter-custom-start" aria-label="Custom period start">
+                    </div>
+                    <div class="atl-filter custom-range" id="custom-end-wrap" hidden>
+                        <label for="shipped-filter-custom-end">End</label>
+                        <input type="month" id="shipped-filter-custom-end" aria-label="Custom period end">
+                    </div>
+                </div>
+                <div class="atl-filter-group global">
+                    <div class="atl-filter">
+                        <label for="shipped-filter-market">Market</label>
+                        <select id="shipped-filter-market">
+                            <option value="all">All</option>
+                            <option value="uk" selected>UK</option>
+                            <option value="eu">EU</option>
+                            <option value="row">ROW</option>
+                        </select>
+                    </div>
+                    <div class="atl-filter">
+                        <label for="shipped-filter-store">Store</label>
+                        <select id="shipped-filter-store">
+                            <option value="all">All</option>
+                            <option value="d2c">D2C Store</option>
+                            <option value="eurostore">Eurostore</option>
+                            <option value="rhino">Rhino Store</option>
+                        </select>
+                    </div>
+                    <div class="atl-filter">
+                        <label for="shipped-filter-rep">Rep owner</label>
+                        <select id="shipped-filter-rep">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="atl-overview-kpis">
+                <div class="atl-kpi">
+                    <span class="atl-kpi-label">Artists</span>
+                    <span class="atl-kpi-value" id="kpi-artists">—</span>
+                </div>
+                <div class="atl-kpi">
+                    <span class="atl-kpi-label">Units</span>
+                    <span class="atl-kpi-value" id="kpi-units">—</span>
+                </div>
+                <div class="atl-kpi">
+                    <span class="atl-kpi-label">Net revenue</span>
+                    <span class="atl-kpi-value revenue" id="kpi-revenue">—</span>
+                </div>
+                <div class="atl-kpi">
+                    <span class="atl-kpi-label">Star product - revenue</span>
+                    <span class="atl-kpi-value product" id="kpi-star">—</span>
+                </div>
+            </div>
+            <div class="atl-top-stores">
+                <h3>Top 5 artists shipped</h3>
+                <div id="top-artists-body">
+                    <div class="atl-top-stores-empty">Waiting for shipped sales data…</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="artist-selector-bar" id="artist-selector-bar">
+            <button type="button" class="artist-selector-main" id="btn-artists-shipped" aria-haspopup="dialog">
+                <h2>Artist Selector</h2>
+                <span class="artist-selector-meta">
+                    <span class="atl-overview-note" id="artist-dir-note">Open to choose artists</span>
+                    <span class="sheet-status" id="upload-status-sheet" aria-live="polite"></span>
+                </span>
+            </button>
+            <div class="artist-selector-actions">
+                <button type="button" class="atl-btn atl-btn-secondary artist-clear-btn" id="btn-clear-artist">Clear artists</button>
+                <button type="button" class="atl-btn atl-btn-secondary artist-refresh-btn" id="btn-refresh-sheet">Refresh</button>
+            </div>
+        </div>
+
+        <div class="period-stack" id="period-stack">
+            <details class="period-card" id="card-latest">
+                <summary><span>Current month net revenue</span><svg class="accordion-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+            </details>
+            <details class="period-card" id="card-prior">
+                <summary><span>Last month net revenue</span><svg class="accordion-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+            </details>
+            <details class="period-card" id="card-fytd">
+                <summary><span>Financial YTD net revenue</span><svg class="accordion-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary>
+            </details>
+        </div>
+
+        <div class="tables-grid" id="rank-tables" hidden>
+            <div class="rank-card">
+                <div class="rank-card-head" id="rank-latest-head">Top Artists — Current Month</div>
+                <div class="rank-card-body" id="rank-latest"></div>
+            </div>
+            <div class="rank-card">
+                <div class="rank-card-head" id="rank-fytd-head">Top Artists — Financial YTD</div>
+                <div class="rank-card-body" id="rank-fytd"></div>
+            </div>
+        </div>
+
+        <div class="tables-grid" id="product-rank-tables" hidden>
+            <div class="rank-card">
+                <div class="rank-card-head">Top Products — Current Month</div>
+                <div class="rank-card-body" id="product-rank-latest"></div>
+            </div>
+            <div class="rank-card">
+                <div class="rank-card-head">Top Products — Financial YTD</div>
+                <div class="rank-card-body" id="product-rank-fytd"></div>
+            </div>
+        </div>
+        </div>
     </div>
-
-    <div class="toast" id="toast">Copied to clipboard</div>
-
+<div class="toast" id="toast">Copied to clipboard</div>
+<div class="modal-backdrop" id="artist-modal" role="dialog" aria-modal="true" aria-labelledby="artist-modal-title" hidden>
+        <div class="modal-panel">
+            <div class="modal-head">
+                <h2 id="artist-modal-title">Artist Selector</h2>
+                <div class="modal-head-actions">
+                    <button type="button" class="modal-close" id="btn-close-artist-modal">Done</button>
+                </div>
+            </div>
+            <div class="modal-search-wrap">
+                <input type="search" class="modal-search" id="artist-modal-search" placeholder="Search artists…" autocomplete="off">
+            </div>
+            <div class="modal-body" id="artist-modal-body">
+                <div class="index-state">Upload data to list Atlantic artists with shipped sales.</div>
+            </div>
+        </div>
+    </div>
     <script>
+
         (function () {
             function showBootStatus(message, isError) {
                 var el = document.getElementById('load-status') || document.getElementById('content');
@@ -699,9 +1743,10 @@
                 showBootStatus('Unhandled error: ' + reason, true);
             });
         })();
+    
     </script>
-
     <script>
+
         const SB_URL = 'https://obrjpgucgcrclukkvook.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9icmpwZ3VjZ2NyY2x1a2t2b29rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzM1OTksImV4cCI6MjA5NzQwOTU5OX0.tN2DmXRTjcvR1azRcvILTxNZEViXkIutVlqYBhbPOq8';
         const LABEL_FILTER = 'atlantic';
@@ -714,19 +1759,25 @@
 
         const overviewFilters = {
             product: 'all',
-            market: 'all',
+            market: 'uk',
+            store: 'all',
             rep: 'all',
-            period: 'lifetime'
+            period: 'financial_ytd'
         };
 
         const PERIOD_LABELS = {
             lifetime: 'Lifetime',
-            calendar_ytd: 'Calendar YTD',
             financial_ytd: 'Financial YTD',
-            mtd: 'MTD',
-            wtd: 'WTD',
-            prev_week: 'Previous week',
-            prev_month: 'Previous month'
+            calendar_ytd: 'Calendar YTD',
+            previous_financial_year: 'Previous Financial Year',
+            previous_calendar_year: 'Previous Calendar Year',
+            prev_week: 'Previous Week',
+            wtd: 'Week to Date',
+            prev_month: 'Previous Month',
+            mtd: 'Month to Date',
+            // Legacy aliases still supported if cached UI values exist
+            prior_month: 'Previous Month',
+            latest_month: 'Month to Date'
         };
 
         const MARKET_KEYS = { uk: 'uk', eu: 'eu', us: 'us', row: 'int' };
@@ -1282,12 +2333,22 @@
                     const fyStartYear = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
                     return { start: `${fyStartYear}-10-01`, end: today };
                 }
+                case 'previous_calendar_year': {
+                    const y = now.getFullYear() - 1;
+                    return { start: `${y}-01-01`, end: `${y}-12-31` };
+                }
+                case 'previous_financial_year': {
+                    const fyEndYear = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+                    const fyStartYear = fyEndYear - 1;
+                    return { start: `${fyStartYear}-10-01`, end: `${fyEndYear}-09-30` };
+                }
                 case 'mtd':
+                case 'latest_month': // legacy alias of Month to Date
                     return { start: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`, end: today };
                 case 'wtd': {
                     const d = new Date(now);
                     const day = d.getDay();
-                    const diff = day === 0 ? 6 : day - 1;
+                    const diff = day === 0 ? 6 : day - 1; // Monday start
                     d.setDate(d.getDate() - diff);
                     return { start: isoDayKey(d), end: today };
                 }
@@ -1301,7 +2362,8 @@
                     endDate.setDate(endDate.getDate() + 6);
                     return { start, end: isoDayKey(endDate) };
                 }
-                case 'prev_month': {
+                case 'prev_month':
+                case 'prior_month': {
                     const monthIndex = now.getMonth();
                     const year = monthIndex === 0 ? now.getFullYear() - 1 : now.getFullYear();
                     const month = monthIndex === 0 ? 12 : monthIndex;
@@ -1339,6 +2401,20 @@
         function artistPassesRepFilter(reports, repFilter) {
             if (repFilter === 'all') return true;
             return getArtistRepBucket(reports) === repFilter;
+        }
+
+        function normalizeSalesStoreKey(channel) {
+            const key = String(channel || '').trim().toLowerCase();
+            if (key === 'eurostore' || key === 'uk music store' || key === 'music store') return 'eurostore';
+            if (key === 'rhino-store' || key === 'rhino' || key === 'dig') return 'rhino';
+            return 'd2c';
+        }
+
+        function filterReportsByStore(reports, storeFilter) {
+            if (!storeFilter || storeFilter === 'all') return reports;
+            return (reports || []).filter(r =>
+                normalizeSalesStoreKey(r?.campaign_data?.salesChannel) === storeFilter
+            );
         }
 
         function sliceMarketByPeriod(mkData, range) {
@@ -1395,14 +2471,16 @@
         }
 
         function computeArtistStoreMetrics(artistName, reports, filters) {
-            if (!artistPassesRepFilter(reports, filters.rep)) return null;
+            const scopedReports = filterReportsByStore(reports, filters.store);
+            if (!scopedReports.length) return null;
+            if (!artistPassesRepFilter(scopedReports, filters.rep)) return null;
 
-            const rollup = getArtistRollupFromReports(reports, artistName);
-            const canonical = pickCanonicalReport(reports);
+            const rollup = getArtistRollupFromReports(scopedReports, artistName);
+            const canonical = pickCanonicalReport(scopedReports);
             const cd = canonical?.campaign_data || {};
             const markets = getMarketsForFilter(filters.market);
             const range = getPeriodRange(filters.period);
-            const useRollup = filters.period === 'lifetime' && filters.market === 'all';
+            const useRollup = filters.period === 'lifetime' && filters.market === 'all' && filters.store === 'all';
 
             let metrics;
             if (useRollup && rollup) {
@@ -1694,8 +2772,10 @@
             let best = null;
             const range = getPeriodRange(filters.period);
             Object.entries(artistGroups).forEach(([artist, reports]) => {
-                if (!artistPassesRepFilter(reports, filters.rep)) return;
-                const canonical = pickCanonicalReport(reports);
+                const scopedReports = filterReportsByStore(reports, filters.store);
+                if (!scopedReports.length) return;
+                if (!artistPassesRepFilter(scopedReports, filters.rep)) return;
+                const canonical = pickCanonicalReport(scopedReports);
                 const products = collectProductsFromReport(canonical, filters);
                 products.forEach((metrics, name) => {
                     if (metrics.revenue <= 0) return;
@@ -1754,16 +2834,16 @@
             }
             const rows = topStores.map((store, i) => `<tr>
                 <td><span class="rank">${i + 1}</span><span class="artist-name">${escapeHtml(store.artist)}</span></td>
-                <td>${formatOrders(store.orders)}</td>
-                <td>${formatOrders(store.units)}</td>
-                <td>${formatRevenue(store.revenue)}</td>
+                <td class="num">${formatOrders(store.orders)}</td>
+                <td class="num">${formatOrders(store.units)}</td>
+                <td class="num">${formatRevenue(store.revenue)}</td>
             </tr>`).join('');
             return `<table class="atl-top-stores-table">
                 <thead><tr>
                     <th>Artist</th>
-                    <th>Orders</th>
-                    <th>Units</th>
-                    <th>Total net revenue</th>
+                    <th class="num">Orders</th>
+                    <th class="num">Units</th>
+                    <th class="num">Total net revenue</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
             </table>`;
@@ -1782,6 +2862,13 @@
 
             const parts = [];
             if (filters.rep !== 'all') parts.push(filters.rep === 'domestic' ? 'Domestic reps' : 'International reps');
+            if (filters.store !== 'all') {
+                parts.push(
+                    filters.store === 'eurostore' ? 'Eurostore'
+                        : filters.store === 'rhino' ? 'Rhino Store'
+                            : 'D2C Store'
+                );
+            }
             if (filters.market !== 'all') parts.push(filters.market === 'row' ? 'ROW' : filters.market.toUpperCase());
             if (filters.product !== 'all') parts.push(filters.product === 'music' ? 'Music' : 'Merch');
             parts.push(PERIOD_LABELS[filters.period] || 'Lifetime');
@@ -1794,6 +2881,7 @@
         function readOverviewFiltersFromDom() {
             overviewFilters.product = document.getElementById('filter-product').value;
             overviewFilters.market = document.getElementById('filter-market').value;
+            overviewFilters.store = document.getElementById('filter-store')?.value || 'all';
             overviewFilters.rep = document.getElementById('filter-rep').value;
             overviewFilters.period = document.getElementById('filter-period').value;
         }
@@ -1884,7 +2972,7 @@
                 if (refreshBtn) refreshBtn.addEventListener('click', loadReports);
                 const searchEl = document.getElementById('search');
                 if (searchEl) searchEl.addEventListener('input', (e) => renderIndex(filterReports(e.target.value)));
-                ['filter-product', 'filter-market', 'filter-rep', 'filter-period'].forEach(id => {
+                ['filter-product', 'filter-market', 'filter-store', 'filter-rep', 'filter-period'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.addEventListener('change', onOverviewFilterChange);
                 });
@@ -1899,6 +2987,1392 @@
         } else {
             initAtlanticIndex();
         }
+    
     </script>
+    <script>
+
+(function () {
+    const STORAGE_WEEKLY = 'atl-shipped-sales-weekly-v3';
+    const STORAGE_MONTHLY = 'atl-shipped-sales-monthly-v2';
+    const IDB_NAME = 'atl-shipped-sales';
+    const IDB_STORE = 'feeds';
+    const IDB_VERSION = 1;
+    const GOOGLE_SHEET = {
+        id: '1gN-eVa7eLzX7i75CSvK_ZoMb02voQ9tl6CVwAHylUiE',
+        // One tab per financial year in the final workbook.
+        tabs: [
+            { name: 'FY24 Data', gid: '1487145915', required: true },
+            { name: 'FY25 Data', gid: '211356012', required: true },
+            { name: 'FY26 Data', gid: '208852108', required: true },
+            { name: 'FY27 Data', gid: '1393685947', required: true }
+        ],
+        // JSONP via gviz — browser fetch() to Google Sheets is blocked by CORS ("Failed to fetch").
+        jsonpUrl: function (callbackName, tab) {
+            let url = 'https://docs.google.com/spreadsheets/d/' + this.id + '/gviz/tq?tqx=' +
+                encodeURIComponent('out:json;responseHandler:' + callbackName);
+            if (tab && tab.gid) url += '&gid=' + encodeURIComponent(tab.gid);
+            else if (tab && tab.name) url += '&sheet=' + encodeURIComponent(tab.name);
+            return url;
+        }
+    };
+    const CHEVRON = '<svg class="accordion-chevron" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+
+    const EU_COUNTRIES = new Set([
+        'Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic', 'Czechia',
+        'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Ireland',
+        'Italy', 'Latvia', 'Lithuania', 'Luxembourg', 'Malta', 'Netherlands', 'Poland',
+        'Portugal', 'Romania', 'Slovakia', 'Slovenia', 'Spain', 'Sweden'
+    ]);
+    const UK_COUNTRIES = new Set([
+        'United Kingdom', 'England', 'Scotland', 'Wales', 'Northern Ireland',
+        'Guernsey', 'Jersey', 'Isle of Man'
+    ]);
+    const EU_ISO = new Set([
+        'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE',
+        'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'
+    ]);
+
+    /** Weekly Monday flash feed (open-month updates). */
+    let weeklyRows = [];
+    /** Monthly close / correct / validate feed. */
+    let monthlyRows = [];
+    /** Merged running figures shown in the dashboard. */
+    let rows = [];
+    /** @type {Set<string>} */
+    let selectedArtists = new Set();
+    let modalArtistQuery = '';
+
+    const filters = {
+        product: 'all',
+        market: 'uk',
+        store: 'all',
+        rep: 'all',
+        period: 'financial_ytd',
+        customStart: '',
+        customEnd: ''
+    };
+
+    function money(n) {
+        const v = Number(n) || 0;
+        return '£' + v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function intFmt(n) {
+        return Math.round(Number(n) || 0).toLocaleString();
+    }
+    function escapeHtml(s) {
+        return String(s)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+    function isAtlanticLabel(label) {
+        return String(label || '').toLowerCase().includes('atlantic');
+    }
+    /** HEADER_SITE → store channel. Artist-named sites = D2C; Music Store = Eurostore; Dig = Rhino Store. */
+    function headerSiteToStore(headerSite) {
+        const key = String(headerSite || '').trim().toLowerCase();
+        if (key === 'music store' || key === 'uk music store') return 'eurostore';
+        if (key === 'dig' || key === 'rhino store' || key === 'rhino') return 'rhino';
+        return 'd2c';
+    }
+    function storeLabel(key) {
+        if (key === 'eurostore') return 'Eurostore';
+        if (key === 'rhino') return 'Rhino Store';
+        if (key === 'd2c') return 'D2C Store';
+        return 'Unknown';
+    }
+    function normalizeStoreKeys(storeKeys) {
+        const keys = Array.isArray(storeKeys) ? storeKeys : [storeKeys];
+        const order = { d2c: 0, eurostore: 1, rhino: 2, unknown: 3 };
+        return Array.from(new Set(keys.filter(Boolean)))
+            .sort((a, b) => (order[a] ?? 9) - (order[b] ?? 9));
+    }
+    function storeTagsOnlyHtml(storeKeys) {
+        const unique = normalizeStoreKeys(storeKeys);
+        if (!unique.length) return '<span class="rep-tag store unknown">Unknown</span>';
+        return unique.map(k =>
+            '<span class="rep-tag store ' + k + '">' + escapeHtml(storeLabel(k)) + '</span>'
+        ).join('');
+    }
+    function storeTagHtml(storeKeys) {
+        const unique = normalizeStoreKeys(storeKeys);
+        if (!unique.length) return '<span class="rep-tag store unknown">Unknown</span>';
+        if (unique.length === 1) {
+            return '<span class="rep-tag store ' + unique[0] + '">' +
+                escapeHtml(storeLabel(unique[0])) + '</span>';
+        }
+        return '<span class="store-multi" tabindex="0" data-tip-html="1" aria-label="Multiple stores">' +
+            '<span class="rep-tag store multi">Multiple Stores</span>' +
+            '<span class="store-multi-pop">' + storeTagsOnlyHtml(unique) + '</span>' +
+            '</span>';
+    }
+
+    let floatingTipEl = null;
+    function ensureFloatingTip() {
+        if (!floatingTipEl) {
+            floatingTipEl = document.createElement('div');
+            floatingTipEl.id = 'floating-tip';
+            floatingTipEl.className = 'floating-tip';
+            floatingTipEl.hidden = true;
+            document.body.appendChild(floatingTipEl);
+        }
+        return floatingTipEl;
+    }
+    function hideFloatingTip() {
+        if (floatingTipEl) floatingTipEl.hidden = true;
+    }
+    function showFloatingTip(anchor, content, asHtml) {
+        const tip = ensureFloatingTip();
+        tip.classList.toggle('tip-text', !asHtml);
+        if (asHtml) tip.innerHTML = content;
+        else tip.textContent = content;
+        tip.hidden = false;
+        const rect = anchor.getBoundingClientRect();
+        const tipRect = tip.getBoundingClientRect();
+        let left = rect.left;
+        let top = rect.bottom + 8;
+        if (left + tipRect.width > window.innerWidth - 8) {
+            left = Math.max(8, window.innerWidth - tipRect.width - 8);
+        }
+        if (top + tipRect.height > window.innerHeight - 8) {
+            top = Math.max(8, rect.top - tipRect.height - 8);
+        }
+        tip.style.left = left + 'px';
+        tip.style.top = top + 'px';
+    }
+    function bindFloatingTips(root) {
+        const scope = root || document;
+        scope.querySelectorAll('[data-tip-html], [data-tip-text]').forEach(el => {
+            if (el.dataset.tipBound === '1') return;
+            el.dataset.tipBound = '1';
+            const show = () => {
+                if (el.hasAttribute('data-tip-html')) {
+                    const pop = el.querySelector('.store-multi-pop');
+                    if (pop) showFloatingTip(el, pop.innerHTML, true);
+                    return;
+                }
+                const text = el.getAttribute('data-tip-text') || '';
+                if (text) showFloatingTip(el, text, false);
+            };
+            el.addEventListener('mouseenter', show);
+            el.addEventListener('focus', show);
+            el.addEventListener('mouseleave', hideFloatingTip);
+            el.addEventListener('blur', hideFloatingTip);
+        });
+    }
+
+    const MERCH_SIZE_RE = /[\s\-\(]*(XXS|XS|S|M|L|XL|XXL|XXXL|2XL|3XL|4XL|ONE\s*SIZE|ONESIZE|OS)\s*\)?\s*$/i;
+    /** Signed art cards: music revenue, not music units, excluded from Top Products. */
+    function isSignedArtCard(title) {
+        return /signed\s*art[\s-]*cards?/i.test(String(title || ''));
+    }
+    /** First letter of each word capitalised; remaining letters lowercase. */
+    function toTitleCase(value) {
+        return String(value || '')
+            .toLowerCase()
+            .replace(/(^|[\s\-_/(&+,.[\]{}])([a-zà-öø-ÿ])/g, (_, sep, ch) => sep + ch.toUpperCase());
+    }
+    /** Strip mojibake / curly quote formatting that shows as â€œ etc. */
+    function cleanProductTitle(title) {
+        let s = String(title || '');
+        s = s
+            .replace(/(\d)\s*â€\u009d/g, '$1"')
+            .replace(/â€œ/g, '')
+            .replace(/â€\u009d/g, '')
+            .replace(/â€\u009c/g, '')
+            .replace(/â€/g, '')
+            .replace(/â€˜/g, '')
+            .replace(/â€™/g, "'")
+            .replace(/â€˜/g, "'")
+            .replace(/[“”„‟«»]/g, '')
+            .replace(/[‘’‚‛]/g, "'")
+            .replace(/[\u0080-\u009F]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        return toTitleCase(s);
+    }
+    function merchBaseTitle(title) {
+        const raw = cleanProductTitle(title);
+        const base = raw.replace(MERCH_SIZE_RE, '').replace(/[\(\)\s\-–—]+$/g, '').trim();
+        return base || raw || 'Untitled product';
+    }
+    function productRollupKey(r) {
+        if (r.isArtCard) return 'artcard::' + (String(r.productId || r.title || '').trim() || 'unknown');
+        if (r.product === 'merch') {
+            return 'merch::' + String(r.artist || '').trim().toLowerCase() + '::' +
+                merchBaseTitle(r.title).toLowerCase();
+        }
+        return 'sku::' + (String(r.productId || r.title || '').trim() || 'unknown');
+    }
+    function productDisplayTitle(r) {
+        if (r.product === 'merch' && !r.isArtCard) return merchBaseTitle(r.title);
+        return cleanProductTitle(r.title) || r.productId || 'Untitled product';
+    }
+    function marketFromCountry(country) {
+        const c = String(country || '').trim();
+        const iso = c.toUpperCase();
+        if (UK_COUNTRIES.has(c) || iso === 'GB' || iso === 'UK') return 'uk';
+        if (EU_COUNTRIES.has(c) || EU_ISO.has(iso)) return 'eu';
+        return 'row';
+    }
+    function categoryBucket(cat) {
+        const s = String(cat || '').trim().toLowerCase();
+        if (s === 'merch') return 'merch';
+        // Physical + Digital → Music (matches Atlantic index product filter)
+        if (s === 'physical' || s === 'digital' || s === 'music') return 'music';
+        return s || 'other';
+    }
+    function monthCompare(a, b) {
+        return String(a).localeCompare(String(b));
+    }
+    function getAvailableMonths(list) {
+        return Array.from(new Set(list.map(r => r.month).filter(Boolean))).sort(monthCompare);
+    }
+    /** Calendar YYYY-MM for "today" (local). */
+    function calendarCurrentMonth() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+    /**
+     * Month used for Current / Last / FYTD windows.
+     * Prefers calendar month when reporting has not caught up yet
+     * (e.g. data through Sep while today is Oct → Current = Oct).
+     */
+    function referenceMonth(months) {
+        const cal = calendarCurrentMonth();
+        if (!months.length) return cal;
+        const dataLatest = months[months.length - 1];
+        if (cal >= dataLatest) return cal;
+        return dataLatest;
+    }
+    function financialYtdStartMonth(refMonth) {
+        const [y, m] = String(refMonth).split('-').map(Number);
+        const fyStartYear = m >= 10 ? y : y - 1;
+        return fyStartYear + '-10';
+    }
+    function calendarYtdStartMonth(refMonth) {
+        return String(refMonth).slice(0, 4) + '-01';
+    }
+    /** Previous FY relative to ref month (Atlantic FY = Oct–Sep). */
+    function previousFinancialYearRange(refMonth) {
+        const fyStart = financialYtdStartMonth(refMonth);
+        const fyStartYear = Number(fyStart.slice(0, 4));
+        return {
+            start: (fyStartYear - 1) + '-10',
+            end: fyStartYear + '-09'
+        };
+    }
+    function previousCalendarYearRange(refMonth) {
+        const y = Number(String(refMonth).slice(0, 4)) - 1;
+        return { start: y + '-01', end: y + '-12' };
+    }
+    function priorMonth(month) {
+        const [y, m] = String(month).split('-').map(Number);
+        if (m === 1) return (y - 1) + '-12';
+        return y + '-' + String(m - 1).padStart(2, '0');
+    }
+    function monthLabel(month) {
+        if (!month) return '—';
+        const [y, m] = String(month).split('-');
+        const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        return names[Number(m) - 1] + ' ' + y;
+    }
+    function normalizeMonthInput(value) {
+        const s = String(value || '').trim().slice(0, 7);
+        return /^\d{4}-\d{2}$/.test(s) ? s : '';
+    }
+    function customRange() {
+        let start = normalizeMonthInput(filters.customStart);
+        let end = normalizeMonthInput(filters.customEnd);
+        if (start && end && start > end) {
+            const tmp = start;
+            start = end;
+            end = tmp;
+        }
+        return { start, end };
+    }
+    function updateCustomRangeVisibility() {
+        const show = filters.period === 'custom';
+        document.getElementById('custom-start-wrap').hidden = !show;
+        document.getElementById('custom-end-wrap').hidden = !show;
+        if (show) {
+            const months = getAvailableMonths(rows);
+            if (!filters.customStart && months.length) {
+                filters.customStart = months[0];
+                document.getElementById('shipped-filter-custom-start').value = filters.customStart;
+            }
+            if (!filters.customEnd && months.length) {
+                filters.customEnd = months[months.length - 1];
+                document.getElementById('shipped-filter-custom-end').value = filters.customEnd;
+            }
+        }
+    }
+    function periodPredicate(period, months) {
+        if (!months.length) return () => true;
+        const latest = referenceMonth(months);
+        if (period === 'lifetime') return () => true;
+        if (period === 'latest_month') return (m) => m === latest;
+        if (period === 'prior_month') {
+            const p = priorMonth(latest);
+            return (m) => m === p;
+        }
+        if (period === 'financial_ytd') {
+            const start = financialYtdStartMonth(latest);
+            return (m) => m >= start && m <= latest;
+        }
+        if (period === 'calendar_ytd') {
+            const start = calendarYtdStartMonth(latest);
+            return (m) => m >= start && m <= latest;
+        }
+        if (period === 'previous_financial_year') {
+            const range = previousFinancialYearRange(latest);
+            return (m) => m >= range.start && m <= range.end;
+        }
+        if (period === 'previous_calendar_year') {
+            const range = previousCalendarYearRange(latest);
+            return (m) => m >= range.start && m <= range.end;
+        }
+        if (period === 'custom') {
+            const range = customRange();
+            if (!range.start && !range.end) return () => true;
+            return (m) => {
+                if (range.start && m < range.start) return false;
+                if (range.end && m > range.end) return false;
+                return true;
+            };
+        }
+        return () => true;
+    }
+    function periodNoteLabel(period, months) {
+        if (!months.length) return 'No data';
+        const latest = referenceMonth(months);
+        const dataLatest = months[months.length - 1];
+        switch (period) {
+            case 'latest_month': return monthLabel(latest);
+            case 'prior_month': return monthLabel(priorMonth(latest));
+            case 'financial_ytd': return 'FYTD from ' + monthLabel(financialYtdStartMonth(latest));
+            case 'calendar_ytd': return 'CYTD ' + latest.slice(0, 4);
+            case 'previous_financial_year': {
+                const range = previousFinancialYearRange(latest);
+                return monthLabel(range.start) + ' – ' + monthLabel(range.end);
+            }
+            case 'previous_calendar_year': {
+                const range = previousCalendarYearRange(latest);
+                return monthLabel(range.start) + ' – ' + monthLabel(range.end);
+            }
+            case 'custom': {
+                const range = customRange();
+                if (range.start && range.end) return monthLabel(range.start) + ' – ' + monthLabel(range.end);
+                if (range.start) return 'From ' + monthLabel(range.start);
+                if (range.end) return 'Through ' + monthLabel(range.end);
+                return 'Custom range';
+            }
+            default: return 'Lifetime · ' + monthLabel(months[0]) + ' → ' + monthLabel(dataLatest);
+        }
+    }
+
+    function setStatus(msg, kind) {
+        const el = document.getElementById('upload-status-sheet');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.className = 'sheet-status' + (kind ? ' ' + kind : '');
+    }
+
+    function normalizeHeader(h) {
+        return String(h || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function findHeaderRow(matrix) {
+        for (let i = 0; i < Math.min(matrix.length, 15); i++) {
+            const cells = (matrix[i] || []).map(normalizeHeader);
+            const hasMonth = cells.includes('month') || cells.includes('reported_month');
+            if (hasMonth && cells.includes('artist') && cells.some(c => c.includes('label'))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function detectWorkbookKind(header) {
+        const joined = header.join(' | ');
+        if (joined.includes('reported_month') || joined.includes('product_net_eur') || joined.includes('product net eur') || joined.includes('label_report')) {
+            return 'weekly';
+        }
+        return 'monthly';
+    }
+
+    function parseNumberCell(v) {
+        if (v == null || v === '') return 0;
+        if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+        const s = String(v).replace(/[£$€,\s]/g, '').trim();
+        const n = Number(s);
+        return Number.isFinite(n) ? n : 0;
+    }
+
+    function parseDataMatrix(matrix, expectedSource) {
+        const headerIdx = findHeaderRow(matrix);
+        if (headerIdx < 0) throw new Error('Could not find header row (MONTH / ARTIST / LABEL)');
+        const header = matrix[headerIdx].map(normalizeHeader);
+        const kind = detectWorkbookKind(header);
+        if (expectedSource && expectedSource !== 'sheet' && kind !== expectedSource) {
+            throw new Error(
+                expectedSource === 'weekly'
+                    ? 'This looks like a monthly workbook. Use the Monthly upload box.'
+                    : 'This looks like a weekly flash workbook. Use the Weekly upload box.'
+            );
+        }
+
+        const idx = {
+            month: header.findIndex(h => h === 'month' || h === 'reported_month'),
+            headerSite: header.findIndex(h => h.includes('header_site') || h === 'header site'),
+            artist: header.indexOf('artist'),
+            rep: header.findIndex(h => h.includes('rep owner') || h === 'rep'),
+            label: header.findIndex(h => h.includes('label')),
+            category: header.findIndex(h => h.includes('music-merch') || h === 'music merch' || h.includes('music/merch')),
+            productId: header.findIndex(h => h.includes('product_id') || h === 'product id'),
+            title: header.findIndex(h => h === 'title' || h.includes('product title') || h.includes('product_title')),
+            country: header.findIndex(h => h.includes('customer_country') || h.includes('country')),
+            sales: header.findIndex(h =>
+                h.includes('sales_product_reported') ||
+                h.includes('sales product reported') ||
+                h.includes('product_net_eur') ||
+                h.includes('product net eur') ||
+                h.includes('product_net_gbp') ||
+                h.includes('product net gbp') ||
+                h.includes('net revenue') ||
+                h.includes('net_sales') ||
+                (h.includes('sales') && !h.includes('country') && !h.includes('pandp') && !h.includes('p and p'))
+            ),
+            units: header.findIndex(h =>
+                h.includes('unit_count') || h.includes('unit count') || h === 'units' || h.includes('unit_count4')
+            )
+        };
+        const required = ['month', 'artist', 'label', 'category', 'country', 'sales', 'units'];
+        if (kind === 'monthly' && expectedSource === 'monthly') required.push('rep');
+        const missing = required.filter(k => idx[k] < 0);
+        if (missing.length) throw new Error('Missing columns: ' + missing.join(', '));
+
+        const out = [];
+        for (let r = headerIdx + 1; r < matrix.length; r++) {
+            const row = matrix[r] || [];
+            const artist = toTitleCase(String(row[idx.artist] || '').trim());
+            const label = String(row[idx.label] || '').trim();
+            if (!artist || !label) continue;
+            if (!isAtlanticLabel(label)) continue;
+            let month = row[idx.month];
+            if (month instanceof Date) {
+                month = month.getFullYear() + '-' + String(month.getMonth() + 1).padStart(2, '0');
+            } else {
+                month = String(month || '').trim().slice(0, 7);
+            }
+            if (!/^\d{4}-\d{2}$/.test(month)) continue;
+            const country = String(row[idx.country] || '').trim();
+            const sales = parseNumberCell(row[idx.sales]);
+            const units = parseNumberCell(row[idx.units]);
+            if (!sales && !units) continue;
+            const rawCategory = String(row[idx.category] || '').trim() || 'Unknown';
+            const headerSite = idx.headerSite >= 0 ? String(row[idx.headerSite] || '').trim() : '';
+            const productId = idx.productId >= 0 ? String(row[idx.productId] || '').trim() : '';
+            const titleRaw = idx.title >= 0 ? String(row[idx.title] || '').trim() : '';
+            const title = cleanProductTitle(titleRaw) || productId || 'Untitled product';
+            const artCard = isSignedArtCard(titleRaw) || isSignedArtCard(title);
+            out.push({
+                month,
+                artist,
+                rep: idx.rep >= 0 ? (String(row[idx.rep] || '').trim() || 'Unknown') : 'Unknown',
+                label,
+                category: rawCategory,
+                // Art cards are music (not merch) for category filtering / revenue rollup
+                product: artCard ? 'music' : categoryBucket(rawCategory),
+                isArtCard: artCard,
+                productId,
+                title,
+                headerSite,
+                store: headerSiteToStore(headerSite),
+                country,
+                market: marketFromCountry(country),
+                sales,
+                units,
+                source: expectedSource === 'sheet' ? 'sheet' : kind
+            });
+        }
+        return { kind: expectedSource === 'sheet' ? 'sheet' : kind, rows: out };
+    }
+
+    function gvizPayloadToMatrix(payload) {
+        if (!payload || payload.status === 'error') {
+            const errs = (payload && payload.errors) || [];
+            const detail = errs.map(e => e.message || e.detailed_message || '').filter(Boolean).join('; ');
+            throw new Error(detail || 'Google Sheet query failed. Check sharing is Anyone with the link → Viewer.');
+        }
+        const table = payload.table;
+        if (!table || !Array.isArray(table.cols)) {
+            throw new Error('Unexpected Google Sheet response');
+        }
+        const header = table.cols.map((col, i) => {
+            const label = String(col.label || '').trim();
+            if (label) return label;
+            // Fallback when Google leaves labels empty — use first data row later.
+            return String(col.id || String.fromCharCode(65 + i));
+        });
+        const matrix = [header];
+        (table.rows || []).forEach(row => {
+            const cells = row && row.c ? row.c : [];
+            matrix.push(header.map((_, i) => {
+                const cell = cells[i];
+                if (!cell) return null;
+                return cell.v != null ? cell.v : (cell.f != null ? cell.f : null);
+            }));
+        });
+        // If header labels were empty placeholders (A,B,C…) but row 0 looks like real headers, promote it.
+        const headerLooksWeak = header.every(h => /^[A-Z]{1,3}$/.test(String(h || '')));
+        if (headerLooksWeak && matrix.length > 1) {
+            const maybeHeader = matrix[1].map(v => String(v == null ? '' : v).trim());
+            if (maybeHeader.some(v => /reported_month|^month$|artist|label/i.test(v))) {
+                matrix[0] = maybeHeader;
+                matrix.splice(1, 1);
+            }
+        }
+        return matrix;
+    }
+
+    function fetchGoogleSheetTabJsonp(tab) {
+        return new Promise((resolve, reject) => {
+            const callbackName = '__atlShippedSheetCb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+            const script = document.createElement('script');
+            let settled = false;
+            const timeoutId = setTimeout(() => {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(new Error('Timed out loading tab "' + (tab.name || tab.gid) + '"'));
+            }, 90000);
+            function cleanup() {
+                clearTimeout(timeoutId);
+                try { delete window[callbackName]; } catch (_e) { window[callbackName] = undefined; }
+                if (script.parentNode) script.parentNode.removeChild(script);
+            }
+            window[callbackName] = function (payload) {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                try {
+                    resolve({
+                        matrix: gvizPayloadToMatrix(payload),
+                        sig: payload && payload.sig != null ? String(payload.sig) : '',
+                        rawRowCount: payload && payload.table && Array.isArray(payload.table.rows)
+                            ? payload.table.rows.length
+                            : 0
+                    });
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            script.onerror = function () {
+                if (settled) return;
+                settled = true;
+                cleanup();
+                reject(new Error('Could not load tab "' + (tab.name || tab.gid) + '". Confirm Anyone with the link → Viewer.'));
+            };
+            script.src = GOOGLE_SHEET.jsonpUrl(callbackName, tab);
+            document.head.appendChild(script);
+        });
+    }
+
+    function setLastRefreshedStatus(iso, kind) {
+        const when = formatSavedAt(iso);
+        setStatus(when ? ('Last refreshed ' + when) : 'Last refreshed', kind || 'ok');
+    }
+
+    async function loadFromGoogleSheet(options = {}) {
+        const silent = !!options.silent;
+        setStatus('Refreshing…');
+        const btn = document.getElementById('btn-refresh-sheet');
+        if (btn) btn.disabled = true;
+        try {
+            const allRows = [];
+            const loadedTabs = [];
+            const skippedTabs = [];
+            const seenSigs = new Set();
+            for (const tab of GOOGLE_SHEET.tabs) {
+                setStatus('Refreshing…');
+                try {
+                    const result = await fetchGoogleSheetTabJsonp(tab);
+                    const fingerprint = result.sig || ('rows:' + result.rawRowCount);
+                    if (fingerprint && seenSigs.has(fingerprint)) {
+                        // gviz returns the first sheet when a named tab is missing — skip the duplicate.
+                        skippedTabs.push((tab.name || tab.gid) + ' (not present yet)');
+                        continue;
+                    }
+                    if (fingerprint) seenSigs.add(fingerprint);
+                    const parsed = parseDataMatrix(result.matrix, 'sheet');
+                    if (!parsed.rows.length) {
+                        skippedTabs.push((tab.name || tab.gid) + ' (0 Atlantic rows)');
+                        continue;
+                    }
+                    parsed.rows.forEach(r => allRows.push(r));
+                    loadedTabs.push(tab.name || String(tab.gid));
+                } catch (tabErr) {
+                    console.warn('Sheet tab load failed:', tab, tabErr);
+                    if (tab.required) throw tabErr;
+                    skippedTabs.push(tab.name || String(tab.gid));
+                }
+            }
+            if (!allRows.length) throw new Error('No Atlantic rows found across FY tabs in the Google Sheet');
+            weeklyRows = allRows;
+            monthlyRows = [];
+            const savedAt = new Date().toISOString();
+            const saved = await persistFeed('weekly');
+            const merge = rebuildRows();
+            selectedArtists = new Set();
+            populateFilterOptions();
+            updateCustomRangeVisibility();
+            renderAll();
+            if (saved) setLastRefreshedStatus(savedAt, 'ok');
+            else setStatus('Refreshed — could not save locally', 'err');
+            return true;
+        } catch (err) {
+            console.error(err);
+            setStatus('Refresh failed', 'err');
+            if (!silent) {
+                /* status already shown */
+            }
+            return false;
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    function slimRows(list) {
+        return list.map(r => [
+            r.month, r.artist, r.rep, r.label, r.category, r.product,
+            r.country, r.market, r.sales, r.units,
+            r.productId, r.title, r.headerSite, r.store, r.isArtCard ? 1 : 0
+        ]);
+    }
+
+    function hydrateRows(list) {
+        return (list || []).map(a => {
+            const title = cleanProductTitle(a[11] || a[10] || '') || toTitleCase(a[10] || '') || 'Untitled Product';
+            const artCard = a[14] === true || a[14] === 1 || isSignedArtCard(a[11] || title);
+            return {
+                month: a[0],
+                artist: toTitleCase(a[1] || ''),
+                rep: a[2], label: a[3],
+                category: a[4],
+                product: artCard ? 'music' : a[5],
+                country: a[6], market: a[7],
+                sales: a[8], units: a[9],
+                productId: a[10] || '',
+                title,
+                headerSite: a[12] || '',
+                store: a[13] || headerSiteToStore(a[12] || ''),
+                isArtCard: artCard
+            };
+        });
+    }
+
+    /**
+     * Build one running figure set from weekly + monthly.
+     * - Closed months (before the latest month in the monthly file) → monthly (authenticated).
+     * - Open / frontier months → weekly when present (Monday flash keeps updating).
+     * - Whichever feed alone exists is used in full.
+     */
+    function rebuildRows() {
+        const monthlyMonths = getAvailableMonths(monthlyRows);
+        const weeklyMonths = getAvailableMonths(weeklyRows);
+        if (!monthlyRows.length && !weeklyRows.length) {
+            rows = [];
+            return { monthlyMonths: 0, weeklyMonths: 0, closedMonths: 0, openMonths: 0 };
+        }
+        if (!monthlyRows.length) {
+            rows = weeklyRows.slice();
+            return { monthlyMonths: 0, weeklyMonths: weeklyMonths.length, closedMonths: 0, openMonths: weeklyMonths.length };
+        }
+        if (!weeklyRows.length) {
+            rows = monthlyRows.slice();
+            return { monthlyMonths: monthlyMonths.length, weeklyMonths: 0, closedMonths: monthlyMonths.length, openMonths: 0 };
+        }
+
+        const monthlyLatest = monthlyMonths[monthlyMonths.length - 1];
+        const monthlyMonthSet = new Set(monthlyMonths);
+        const weeklyMonthSet = new Set(weeklyMonths);
+        const allMonths = Array.from(new Set(monthlyMonths.concat(weeklyMonths))).sort(monthCompare);
+        const prefer = new Map();
+        allMonths.forEach(month => {
+            const hasM = monthlyMonthSet.has(month);
+            const hasW = weeklyMonthSet.has(month);
+            if (hasM && hasW) {
+                // Months fully closed by month-end stay on monthly; frontier+ use weekly flash
+                prefer.set(month, month < monthlyLatest ? 'monthly' : 'weekly');
+            } else if (hasM) {
+                prefer.set(month, 'monthly');
+            } else {
+                prefer.set(month, 'weekly');
+            }
+        });
+
+        const out = [];
+        monthlyRows.forEach(r => {
+            if (prefer.get(r.month) === 'monthly') out.push(r);
+        });
+        weeklyRows.forEach(r => {
+            if (prefer.get(r.month) === 'weekly') out.push(r);
+        });
+        rows = out;
+
+        let closedMonths = 0;
+        let openMonths = 0;
+        prefer.forEach((src) => {
+            if (src === 'monthly') closedMonths += 1;
+            else openMonths += 1;
+        });
+        return {
+            monthlyMonths: monthlyMonths.length,
+            weeklyMonths: weeklyMonths.length,
+            closedMonths,
+            openMonths
+        };
+    }
+
+    function formatSavedAt(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return '';
+        return d.toLocaleString(undefined, {
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    function openFeedDb() {
+        return new Promise((resolve, reject) => {
+            if (!window.indexedDB) {
+                reject(new Error('IndexedDB unavailable'));
+                return;
+            }
+            const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+            req.onupgradeneeded = function () {
+                const db = req.result;
+                if (!db.objectStoreNames.contains(IDB_STORE)) {
+                    db.createObjectStore(IDB_STORE);
+                }
+            };
+            req.onsuccess = function () { resolve(req.result); };
+            req.onerror = function () { reject(req.error || new Error('IndexedDB open failed')); };
+        });
+    }
+
+    function idbPutFeed(key, payload) {
+        return openFeedDb().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_STORE, 'readwrite');
+            tx.oncomplete = function () { db.close(); resolve(true); };
+            tx.onerror = function () { db.close(); reject(tx.error || new Error('IndexedDB write failed')); };
+            tx.objectStore(IDB_STORE).put(payload, key);
+        }));
+    }
+
+    function idbGetFeed(key) {
+        return openFeedDb().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction(IDB_STORE, 'readonly');
+            const req = tx.objectStore(IDB_STORE).get(key);
+            req.onsuccess = function () { db.close(); resolve(req.result || null); };
+            req.onerror = function () { db.close(); reject(req.error || new Error('IndexedDB read failed')); };
+        }));
+    }
+
+    function readLegacyLocalFeed(source) {
+        const key = source === 'weekly' ? STORAGE_WEEKLY : STORAGE_MONTHLY;
+        let raw = localStorage.getItem(key);
+        if (!raw && source === 'weekly') raw = localStorage.getItem('atl-shipped-sales-weekly-v1');
+        if (!raw && source === 'monthly') {
+            raw = localStorage.getItem('atl-shipped-sales-dev-v4') ||
+                localStorage.getItem('atl-shipped-sales-dev-v5');
+        }
+        if (!raw) return null;
+        try {
+            return JSON.parse(raw);
+        } catch (_e) {
+            return null;
+        }
+    }
+
+    async function persistFeed(source) {
+        const key = source === 'weekly' ? STORAGE_WEEKLY : STORAGE_MONTHLY;
+        const list = source === 'weekly' ? weeklyRows : monthlyRows;
+        const payload = {
+            savedAt: new Date().toISOString(),
+            source,
+            rows: slimRows(list)
+        };
+        try {
+            await idbPutFeed(key, payload);
+            try { localStorage.removeItem(key); } catch (_e) { /* ignore */ }
+            return true;
+        } catch (err) {
+            console.warn('Could not persist ' + source + ' rows', err);
+            return false;
+        }
+    }
+
+    /** @returns {Promise<{ok:boolean,savedAt:string}>} */
+    async function restoreFeed(source) {
+        const key = source === 'weekly' ? STORAGE_WEEKLY : STORAGE_MONTHLY;
+        try {
+            let parsed = null;
+            try {
+                parsed = await idbGetFeed(key);
+            } catch (idbErr) {
+                console.warn('IndexedDB restore failed', idbErr);
+            }
+            if (!parsed) {
+                parsed = readLegacyLocalFeed(source);
+                if (parsed) {
+                    try {
+                        await idbPutFeed(key, parsed);
+                        try { localStorage.removeItem(key); } catch (_e) { /* ignore */ }
+                    } catch (_migrateErr) { /* keep using in-memory restore */ }
+                }
+            }
+            if (!parsed) return { ok: false, savedAt: '' };
+            const hydrated = hydrateRows(parsed.rows || []);
+            if (source === 'weekly') weeklyRows = hydrated;
+            else monthlyRows = hydrated;
+            return {
+                ok: hydrated.length > 0,
+                savedAt: parsed.savedAt ? String(parsed.savedAt) : ''
+            };
+        } catch (_e) {
+            return { ok: false, savedAt: '' };
+        }
+    }
+
+    /** Shared across snapshot + period accordions: Market, Store, Rep Owner. */
+    function passesSharedFilters(r) {
+        if (filters.market !== 'all' && r.market !== filters.market) return false;
+        if (filters.rep !== 'all' && r.rep !== filters.rep) return false;
+        if (filters.store !== 'all' && r.store !== filters.store) return false;
+        return true;
+    }
+
+    /** Snapshot overview: Product category + Period (+ shared Market/Store/Rep). Period cards ignore Product category. */
+    function passesSnapshotFilters(r) {
+        if (filters.product !== 'all' && r.product !== filters.product) return false;
+        return passesSharedFilters(r);
+    }
+
+    function snapshotRows() {
+        const months = getAvailableMonths(rows);
+        const inPeriod = periodPredicate(filters.period, months);
+        return rows.filter(r => passesSnapshotFilters(r) && inPeriod(r.month));
+    }
+
+    function reportRows() {
+        return rows.filter(passesSharedFilters);
+    }
+
+    function pctShare(part, total) {
+        const p = Number(part) || 0;
+        const t = Number(total) || 0;
+        if (t <= 0) return '0%';
+        const n = (p / t) * 100;
+        const rounded = Math.round(n * 10) / 10;
+        return (Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)) + '%';
+    }
+
+    function aggregate(list) {
+        let sales = 0, units = 0;
+        let musicSales = 0, musicUnits = 0, merchSales = 0, merchUnits = 0;
+        let artCardUnits = 0;
+        const byArtist = new Map();
+        const byProduct = new Map();
+        list.forEach(r => {
+            sales += r.sales;
+            units += r.units;
+            if (r.isArtCard || r.product === 'music') {
+                musicSales += r.sales;
+                // Signed art cards contribute music revenue only — not music units
+                if (r.isArtCard) artCardUnits += r.units;
+                else musicUnits += r.units;
+            } else if (r.product === 'merch') {
+                merchSales += r.sales;
+                merchUnits += r.units;
+            }
+            const prev = byArtist.get(r.artist) || {
+                artist: r.artist,
+                sales: 0,
+                units: 0,
+                stores: new Set()
+            };
+            prev.sales += r.sales;
+            prev.units += r.units;
+            if (r.store) prev.stores.add(r.store);
+            byArtist.set(r.artist, prev);
+
+            // Omit signed art cards from Top Products rankings
+            if (r.isArtCard) return;
+
+            const pKey = productRollupKey(r);
+            const displayTitle = productDisplayTitle(r);
+            const pPrev = byProduct.get(pKey) || {
+                productId: r.productId || pKey,
+                title: displayTitle,
+                sales: 0,
+                units: 0,
+                artistSales: new Map()
+            };
+            pPrev.sales += r.sales;
+            pPrev.units += r.units;
+            pPrev.title = displayTitle;
+            if (r.artist) {
+                pPrev.artistSales.set(r.artist, (pPrev.artistSales.get(r.artist) || 0) + r.sales);
+            }
+            byProduct.set(pKey, pPrev);
+        });
+        const artists = Array.from(byArtist.values())
+            .map(a => ({
+                artist: a.artist,
+                sales: a.sales,
+                units: a.units,
+                stores: Array.from(a.stores)
+            }))
+            .sort((a, b) => b.sales - a.sales);
+        const products = Array.from(byProduct.values())
+            .map(p => {
+                let artist = '';
+                let topArtistSales = -Infinity;
+                p.artistSales.forEach((amt, name) => {
+                    if (amt > topArtistSales) {
+                        topArtistSales = amt;
+                        artist = name;
+                    }
+                });
+                return {
+                    productId: p.productId,
+                    title: p.title,
+                    artist,
+                    sales: p.sales,
+                    units: p.units
+                };
+            })
+            .sort((a, b) => b.sales - a.sales);
+        return {
+            sales, units, musicSales, musicUnits, merchSales, merchUnits, artCardUnits,
+            artists, products, artistCount: artists.length
+        };
+    }
+
+    function populateFilterOptions() {
+        const repSel = document.getElementById('shipped-filter-rep');
+        const reps = Array.from(new Set(rows.map(r => r.rep))).sort();
+        const keepRep = filters.rep;
+        repSel.innerHTML = '<option value="all">All</option>' + reps.map(r =>
+            '<option value="' + escapeHtml(r) + '">' + escapeHtml(r) + '</option>'
+        ).join('');
+        repSel.value = reps.includes(keepRep) ? keepRep : 'all';
+        filters.rep = repSel.value;
+    }
+
+    function renderTopTable(artists, limit) {
+        const top = artists.slice(0, limit);
+        if (!top.length) return '<div class="atl-top-stores-empty">No shipped sales for the selected filters.</div>';
+        return '<table class="atl-top-stores-table"><thead><tr>' +
+            '<th>Artist</th>' +
+            '<th class="num">Units</th>' +
+            '<th class="num">Total net revenue</th></tr></thead><tbody>' +
+            top.map((a, i) =>
+                '<tr><td><div class="artist-cell"><span class="rank">' + (i + 1) +
+                '</span><span class="artist-name" title="' + escapeHtml(a.artist) + '">' +
+                escapeHtml(a.artist) +
+                '</span>' + storeTagHtml(a.stores) +
+                '</div></td><td class="num">' + intFmt(a.units) +
+                '</td><td class="num">' + money(a.sales) + '</td></tr>'
+            ).join('') +
+            '</tbody></table>';
+    }
+
+    function renderCompactRank(artists, limit) {
+        const top = artists.slice(0, limit);
+        if (!top.length) return '<div class="atl-top-stores-empty">No data</div>';
+        return '<table><thead><tr><th>Artist</th><th class="num">Units</th><th class="num">Net revenue</th></tr></thead><tbody>' +
+            top.map((a, i) => {
+                const label = (i + 1) + ') ' + a.artist;
+                return '<tr><td><div class="artist-cell"><span class="artist-name" title="' +
+                    escapeHtml(a.artist) + '">' + escapeHtml(label) +
+                    '</span>' + storeTagHtml(a.stores) +
+                    '</div></td><td class="num">' + intFmt(a.units) +
+                    '</td><td class="num">' + money(a.sales) + '</td></tr>';
+            }).join('') +
+            '</tbody></table>';
+    }
+
+    function renderProductRank(products, limit) {
+        const top = products.slice(0, limit);
+        if (!top.length) return '<div class="atl-top-stores-empty">No data</div>';
+        return '<table class="product-rank-table"><thead><tr>' +
+            '<th>Product</th><th>Artist</th><th class="num">Units</th><th class="num">Net revenue</th>' +
+            '</tr></thead><tbody>' +
+            top.map((p, i) => {
+                const label = (i + 1) + ') ' + p.title;
+                return '<tr><td><div class="artist-cell"><span class="product-name" tabindex="0" data-tip-text="' +
+                    escapeHtml(p.title) + '">' + escapeHtml(label) +
+                    '</span></div></td><td><span class="product-artist" tabindex="0" data-tip-text="' +
+                    escapeHtml(p.artist || '') + '">' +
+                    escapeHtml(p.artist || '—') +
+                    '</span></td><td class="num">' + intFmt(p.units) +
+                    '</td><td class="num">' + money(p.sales) + '</td></tr>';
+            }).join('') +
+            '</tbody></table>';
+    }
+
+    function renderPeriodCard(el, title, rangeText, agg, openState) {
+        const wasOpen = openState != null ? !!openState : (el.open !== false);
+        const musicRevPct = pctShare(agg.musicSales, agg.sales);
+        const merchRevPct = pctShare(agg.merchSales, agg.sales);
+        const musicUnitsPct = pctShare(agg.musicUnits, agg.units);
+        const merchUnitsPct = pctShare(agg.merchUnits, agg.units);
+        const artCardUnitsPct = pctShare(agg.artCardUnits || 0, agg.units);
+        const artCardLine =
+            '<div class="units art-card-note">- Signed art cards: ' + intFmt(agg.artCardUnits || 0) +
+            ' units (' + artCardUnitsPct + ')</div>';
+        el.innerHTML =
+            '<summary><span>' + escapeHtml(title) + '</span>' + CHEVRON + '</summary>' +
+            '<div class="period-card-sub">' + escapeHtml(rangeText) + '</div>' +
+            '<div class="period-grid">' +
+            '<div class="period-box"><h4>Total net revenue</h4><div class="amt">' + money(agg.sales) +
+            '</div><div class="units">' + intFmt(agg.units) + ' units</div></div>' +
+            '<div class="period-box"><h4>Music net revenue</h4><div class="amt">' + money(agg.musicSales) +
+            ' <span class="pct">(' + musicRevPct + ')</span></div><div class="units">' +
+            intFmt(agg.musicUnits) + ' units (' + musicUnitsPct + ')</div>' + artCardLine + '</div>' +
+            '<div class="period-box"><h4>Merch net revenue</h4><div class="amt">' + money(agg.merchSales) +
+            ' <span class="pct">(' + merchRevPct + ')</span></div><div class="units">' +
+            intFmt(agg.merchUnits) + ' units (' + merchUnitsPct + ')</div></div>' +
+            '</div>';
+        el.open = wasOpen;
+    }
+
+    /**
+     * Period / rank rows: shared Market/Store/Rep + date window (+ optional artist).
+     * applyProduct: when true, also apply Product category (Top Artists / Top Products only).
+     */
+    function rowsInMonthRange(startMonth, endMonth, applyProduct) {
+        return rows.filter(r => {
+            if (!passesSharedFilters(r)) return false;
+            if (applyProduct && filters.product !== 'all' && r.product !== filters.product) return false;
+            if (r.month < startMonth || r.month > endMonth) return false;
+            if (selectedArtists.size && !selectedArtists.has(r.artist)) return false;
+            return true;
+        });
+    }
+
+    function selectedArtistList() {
+        return Array.from(selectedArtists);
+    }
+
+    function focusSuffix() {
+        const list = selectedArtistList();
+        if (!list.length) return '';
+        if (list.length === 1) return ' · ' + list[0];
+        return ' · ' + list.length + ' artists';
+    }
+
+    /** Artists + metrics under current Product / Market / Store / Rep / Period filters. */
+    function artistsMatchingFilters() {
+        return aggregate(snapshotRows()).artists;
+    }
+
+    function updateArtistButton(artists) {
+        const note = document.getElementById('artist-dir-note');
+        const clearBtn = document.getElementById('btn-clear-artist');
+        const selectedCount = selectedArtists.size;
+        clearBtn.classList.toggle('visible', selectedCount > 0);
+        if (!artists.length) {
+            note.textContent = 'No artists for current filters';
+            return;
+        }
+        const base = artists.length + ' artists';
+        note.textContent = selectedCount
+            ? selectedCount + ' selected · ' + base
+            : base;
+    }
+
+    function renderArtistModalList(artists) {
+        const el = document.getElementById('artist-modal-body');
+        const q = modalArtistQuery.trim().toLowerCase();
+        const filtered = !q ? artists : artists.filter(a => a.artist.toLowerCase().includes(q));
+        if (!artists.length) {
+            el.innerHTML = '<div class="index-state">No Atlantic shipped artists for the current filters.</div>';
+            return;
+        }
+        if (!filtered.length) {
+            el.innerHTML = '<div class="index-state">No artists match that search.</div>';
+            return;
+        }
+        el.innerHTML = '<ul class="artist-list">' + filtered.map(a => {
+            const active = selectedArtists.has(a.artist) ? ' active' : '';
+            return '<li><div class="artist-row' + active + '" data-artist="' +
+                encodeURIComponent(a.artist) + '" role="button" tabindex="0" aria-pressed="' +
+                (active ? 'true' : 'false') + '">' +
+                '<div class="artist-row-name"><span class="check" aria-hidden="true">✓</span>' +
+                escapeHtml(a.artist) + '</div>' +
+                '<div><span class="metric-label">Units</span><span class="metric-value">' + intFmt(a.units) + '</span></div>' +
+                '<div><span class="metric-label">Net revenue</span><span class="metric-value revenue">' + money(a.sales) + '</span></div>' +
+                '</div></li>';
+        }).join('') + '</ul>';
+        el.querySelectorAll('[data-artist]').forEach(row => {
+            const select = () => {
+                toggleArtist(decodeURIComponent(row.getAttribute('data-artist') || ''));
+            };
+            row.addEventListener('click', select);
+            row.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    select();
+                }
+            });
+        });
+    }
+
+    function openArtistModal() {
+        const modal = document.getElementById('artist-modal');
+        modal.hidden = false;
+        modal.classList.add('open');
+        document.getElementById('artist-modal-search').value = modalArtistQuery;
+        renderArtistModalList(artistsMatchingFilters());
+        setTimeout(() => document.getElementById('artist-modal-search').focus(), 0);
+    }
+
+    function closeArtistModal() {
+        const modal = document.getElementById('artist-modal');
+        modal.classList.remove('open');
+        modal.hidden = true;
+        renderAll();
+    }
+
+    function toggleArtist(name) {
+        if (!name) return;
+        if (selectedArtists.has(name)) selectedArtists.delete(name);
+        else selectedArtists.add(name);
+        const filteredArtists = artistsMatchingFilters();
+        renderArtistModalList(filteredArtists);
+        updateArtistButton(filteredArtists);
+        // Live-update report behind the modal
+        renderReportSections();
+    }
+
+    function clearSelectedArtists() {
+        selectedArtists = new Set();
+        renderAll();
+        if (document.getElementById('artist-modal').classList.contains('open')) {
+            renderArtistModalList(artistsMatchingFilters());
+        }
+    }
+
+    function emptyPeriodAgg() {
+        return {
+            sales: 0, units: 0,
+            musicSales: 0, musicUnits: 0,
+            merchSales: 0, merchUnits: 0,
+            artCardUnits: 0,
+            artists: [], products: [], artistCount: 0
+        };
+    }
+
+    function renderReportSections() {
+        const months = getAvailableMonths(rows);
+        const stack = document.getElementById('period-stack');
+        const ranks = document.getElementById('rank-tables');
+        const productRanks = document.getElementById('product-rank-tables');
+        stack.hidden = false;
+
+        if (!months.length) {
+            ranks.hidden = true;
+            productRanks.hidden = true;
+            delete stack.dataset.hasData;
+            const empty = emptyPeriodAgg();
+            const waiting = 'Waiting for shipped sales data…';
+            renderPeriodCard(document.getElementById('card-latest'), 'Current month net revenue', waiting, empty, false);
+            renderPeriodCard(document.getElementById('card-prior'), 'Last month net revenue', waiting, empty, false);
+            renderPeriodCard(document.getElementById('card-fytd'), 'Financial YTD net revenue', waiting, empty, false);
+            return;
+        }
+
+        ranks.hidden = false;
+        productRanks.hidden = false;
+        const firstData = stack.dataset.hasData !== '1';
+        stack.dataset.hasData = '1';
+        const latest = referenceMonth(months);
+        const prior = priorMonth(latest);
+        const fyStart = financialYtdStartMonth(latest);
+        // Period cards ignore Product category; Top Artists / Top Products respect it.
+        const latestAgg = aggregate(rowsInMonthRange(latest, latest, false));
+        const priorAgg = aggregate(rowsInMonthRange(prior, prior, false));
+        const fyAgg = aggregate(rowsInMonthRange(fyStart, latest, false));
+        const latestRankAgg = aggregate(rowsInMonthRange(latest, latest, true));
+        const fyRankAgg = aggregate(rowsInMonthRange(fyStart, latest, true));
+        const suffix = focusSuffix();
+        const openOpt = firstData ? true : null;
+        renderPeriodCard(document.getElementById('card-latest'), 'Current month net revenue', monthLabel(latest) + suffix, latestAgg, openOpt);
+        renderPeriodCard(document.getElementById('card-prior'), 'Last month net revenue', monthLabel(prior) + suffix, priorAgg, openOpt);
+        renderPeriodCard(
+            document.getElementById('card-fytd'),
+            'Financial YTD net revenue',
+            monthLabel(fyStart) + ' – ' + monthLabel(latest) + suffix,
+            fyAgg,
+            openOpt
+        );
+        document.getElementById('rank-latest-head').textContent = 'Top Artists — Current Month';
+        document.getElementById('rank-fytd-head').textContent = 'Top Artists — Financial YTD';
+        document.getElementById('rank-latest').innerHTML = renderCompactRank(latestRankAgg.artists, 10);
+        document.getElementById('rank-fytd').innerHTML = renderCompactRank(fyRankAgg.artists, 10);
+        document.getElementById('product-rank-latest').innerHTML = renderProductRank(latestRankAgg.products, 10);
+        document.getElementById('product-rank-fytd').innerHTML = renderProductRank(fyRankAgg.products, 10);
+        bindFloatingTips(ranks);
+        bindFloatingTips(productRanks);
+    }
+
+    function renderAll() {
+        const months = getAvailableMonths(rows);
+        const allArtists = aggregate(rows).artists;
+        selectedArtists = new Set(selectedArtistList().filter(name => allArtists.some(a => a.artist === name)));
+        const list = snapshotRows();
+        const snapAgg = aggregate(list);
+        const starProduct = snapAgg.products[0];
+
+        document.getElementById('overview-note').textContent =
+            (snapAgg.artistCount ? snapAgg.artistCount + ' artists' : '0 artists') +
+            ' · Atlantic · £ · Google Sheet' +
+            ' · ' + periodNoteLabel(filters.period, months);
+
+        document.getElementById('kpi-artists').textContent = snapAgg.artistCount ? intFmt(snapAgg.artistCount) : '—';
+        document.getElementById('kpi-units').textContent = list.length ? intFmt(snapAgg.units) : '—';
+        document.getElementById('kpi-revenue').textContent = list.length ? money(snapAgg.sales) : '—';
+        document.getElementById('kpi-star').textContent = starProduct
+            ? (starProduct.title + ' (' + money(starProduct.sales) + ')')
+            : '—';
+        const topBody = document.getElementById('top-artists-body');
+        topBody.innerHTML = renderTopTable(snapAgg.artists, 5);
+        bindFloatingTips(topBody);
+
+        renderReportSections();
+        updateArtistButton(snapAgg.artists);
+        if (document.getElementById('artist-modal').classList.contains('open')) {
+            renderArtistModalList(snapAgg.artists);
+        }
+    }
+
+    function bindFilters() {
+        const map = {
+            'shipped-filter-product': 'product',
+            'shipped-filter-market': 'market',
+            'shipped-filter-store': 'store',
+            'shipped-filter-rep': 'rep',
+            'shipped-filter-period': 'period'
+        };
+        Object.entries(map).forEach(([id, key]) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('change', (e) => {
+                filters[key] = e.target.value;
+                if (key === 'period') updateCustomRangeVisibility();
+                renderAll();
+            });
+        });
+        const customStart = document.getElementById('shipped-filter-custom-start');
+        const customEnd = document.getElementById('shipped-filter-custom-end');
+        if (customStart) {
+            customStart.addEventListener('change', (e) => {
+                filters.customStart = normalizeMonthInput(e.target.value) || '';
+                renderAll();
+            });
+        }
+        if (customEnd) {
+            customEnd.addEventListener('change', (e) => {
+                filters.customEnd = normalizeMonthInput(e.target.value) || '';
+                renderAll();
+            });
+        }
+    }
+
+    document.getElementById('btn-refresh-sheet')?.addEventListener('click', () => {
+        loadFromGoogleSheet({ silent: false });
+    });
+    document.getElementById('btn-artists-shipped').addEventListener('click', openArtistModal);
+    document.getElementById('btn-close-artist-modal').addEventListener('click', closeArtistModal);
+    document.getElementById('btn-clear-artist').addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearSelectedArtists();
+    });
+    document.getElementById('artist-modal-search').addEventListener('input', (e) => {
+        modalArtistQuery = e.target.value || '';
+        renderArtistModalList(artistsMatchingFilters());
+    });
+    document.getElementById('artist-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'artist-modal') closeArtistModal();
+    });
+    document.addEventListener('scroll', hideFloatingTip, true);
+    window.addEventListener('resize', hideFloatingTip);
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            hideFloatingTip();
+            if (document.getElementById('artist-modal').classList.contains('open')) {
+                closeArtistModal();
+            }
+        }
+    });
+    bindFilters();
+
+    (async function boot() {
+        // Open / browser refresh: show last refreshed data only.
+        // Live Sheet pulls happen solely via the Artist Selector Refresh button.
+        const restored = await restoreFeed('weekly');
+        rebuildRows();
+        populateFilterOptions();
+        updateCustomRangeVisibility();
+        renderAll();
+        if (restored.ok) {
+            setLastRefreshedStatus(restored.savedAt, 'ok');
+        } else {
+            setStatus('Click Refresh to load data', 'err');
+        }
+    })();
+})();
+    
+    </script>
+
+    <script>
+    (function () {
+        const tabs = Array.from(document.querySelectorAll('.atl-view-tab'));
+        const panels = {
+            sales: document.getElementById('panel-sales'),
+            shipped: document.getElementById('panel-shipped')
+        };
+        function activate(view) {
+            const key = view === 'shipped' ? 'shipped' : 'sales';
+            tabs.forEach(tab => {
+                const on = tab.getAttribute('data-view') === key;
+                tab.setAttribute('aria-selected', on ? 'true' : 'false');
+                tab.tabIndex = on ? 0 : -1;
+            });
+            Object.keys(panels).forEach(k => {
+                if (!panels[k]) return;
+                if (k === key) panels[k].removeAttribute('hidden');
+                else panels[k].setAttribute('hidden', '');
+            });
+            try { history.replaceState(null, '', '#' + key); } catch (_e) {}
+        }
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => activate(tab.getAttribute('data-view')));
+        });
+        const hash = (location.hash || '').replace(/^#/, '').toLowerCase();
+        activate(hash === 'shipped' ? 'shipped' : 'sales');
+        window.addEventListener('hashchange', () => {
+            const h = (location.hash || '').replace(/^#/, '').toLowerCase();
+            activate(h === 'shipped' ? 'shipped' : 'sales');
+        });
+    })();
+    </script>
+
 </body>
 </html>
