@@ -2104,6 +2104,29 @@ VISUALIZE sessions TYPE horizontal_bar`
             return true;
         }
 
+        function isTrafficAnalyticsRow(row) {
+            if (!row || typeof row !== 'object') return false;
+            let hasSessions = false;
+            let hasSales = false;
+            Object.keys(row).forEach(k => {
+                const cleanK = String(k || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanK === 'sessions' || cleanK === 'sessioncountry' || cleanK.includes('sessiondevicetype')) hasSessions = true;
+                if (cleanK.includes('netsales') || cleanK.includes('ordername') || cleanK.includes('producttitle')) hasSales = true;
+            });
+            return hasSessions && !hasSales;
+        }
+
+        function filterSalesRowsFromBank(rows) {
+            if (!Array.isArray(rows) || !rows.length) return { rows: rows || [], droppedTraffic: 0 };
+            const out = [];
+            let droppedTraffic = 0;
+            rows.forEach(row => {
+                if (isTrafficAnalyticsRow(row)) droppedTraffic += 1;
+                else out.push(row);
+            });
+            return { rows: out, droppedTraffic };
+        }
+
         async function persistQuarterToSupabase(quarterKey, rows, meta) {
             if (!v2SupabaseReady || typeof RepQuarterBankSupabase === 'undefined') return;
             const artistName = document.getElementById('input-artist-name')?.value?.trim();
@@ -2141,29 +2164,6 @@ VISUALIZE sessions TYPE horizontal_bar`
                 RepQuarterBank.saveBank(v2QuarterBank);
                 renderQuarterBankUI();
             });
-        }
-
-        function isTrafficAnalyticsRow(row) {
-            if (!row || typeof row !== 'object') return false;
-            let hasSessions = false;
-            let hasSales = false;
-            Object.keys(row).forEach(k => {
-                const cleanK = String(k || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-                if (cleanK === 'sessions' || cleanK === 'sessioncountry' || cleanK.includes('sessiondevicetype')) hasSessions = true;
-                if (cleanK.includes('netsales') || cleanK.includes('ordername') || cleanK.includes('producttitle')) hasSales = true;
-            });
-            return hasSessions && !hasSales;
-        }
-
-        function filterSalesRowsFromBank(rows) {
-            if (!Array.isArray(rows) || !rows.length) return { rows: rows || [], droppedTraffic: 0 };
-            const out = [];
-            let droppedTraffic = 0;
-            rows.forEach(row => {
-                if (isTrafficAnalyticsRow(row)) droppedTraffic += 1;
-                else out.push(row);
-            });
-            return { rows: out, droppedTraffic };
         }
 
         function buildArtistRollupForPublish() {
@@ -3058,6 +3058,12 @@ VISUALIZE sessions TYPE horizontal_bar`
             if(document.getElementById('prior-campaign-market-eu')) document.getElementById('prior-campaign-market-eu').checked = !!f.eu;
             if(document.getElementById('prior-campaign-market-us')) document.getElementById('prior-campaign-market-us').checked = !!f.us;
             if(document.getElementById('prior-campaign-market-int')) document.getElementById('prior-campaign-market-int').checked = !!f.int;
+        }
+        function syncPriorCampaignModeUi() {
+            const mode = getPriorCampaignMode();
+            const btn = document.getElementById('btn-prior-campaign-formats');
+            if(btn) btn.classList.toggle('hidden', mode !== 'selected');
+            updatePriorCampaignFormatsLabel(getPriorCampaignSelectedFormats());
         }
         function updatePriorCampaignFormatsLabel(names) {
             const label = document.getElementById('prior-campaign-formats-label');
@@ -5301,7 +5307,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             setSalesforcePriorUnits(old.salesforcePriorUnits || null, false);
 
             // Always paint the published snapshot first. Auto-hydrating a large artist bank
-            // (e.g. Alex Warren ~50k+ rows) on campaign select can crash the tab (Aw, Snap!).
+            // on campaign select can crash the tab — refresh from bank only when republishing.
             windowCurrentCSVData = null;
             window.__hasCsvData = false;
             applySavedCampaignDates(old);
@@ -5460,7 +5466,9 @@ VISUALIZE sessions TYPE horizontal_bar`
             }
 
             Object.keys(storeData).forEach(m => {
-                storeData[m].loaded = true; storeData[m].revenue = 0; storeData[m].items = 0; storeData[m].orders.clear();
+                storeData[m].loaded = true; storeData[m].revenue = 0; storeData[m].items = 0;
+                // Always use a real Set — snapshot loads use a lightweight stand-in whose add() is a no-op.
+                storeData[m].orders = new Set();
                 storeData[m].products = {}; storeData[m].musicProducts = {}; storeData[m].merchProducts = {}; storeData[m].weekly = {}; storeData[m].daily = {}; storeData[m].weeklyUnits = {}; storeData[m].dailyUnits = {}; storeData[m].dailyProducts = {}; storeData[m].weeklyMusicRev = {};
                 storeData[m].merch = { musicRev:0, merchRev:0, sizes:{XXS:0,XS:0,S:0,M:0,L:0,XL:0,XXL:0,'3XL+':0}, categories:{} };
             });
@@ -5555,7 +5563,9 @@ VISUALIZE sessions TYPE horizontal_bar`
                 storeData[tMk].revenue += rev; storeData[tMk].items += derivedQty;
                 acceptedRowsByMarket[tMk] += 1;
                 acceptedRevenueByMarket[tMk] += rev;
-                if(id) storeData[tMk].orders.add(id);
+                // Count every accepted line's order key (fallback row id) so missing Order Name
+                // columns still produce a non-zero order total for preview/publish guards.
+                storeData[tMk].orders.add(orderKey);
                 const normalizedCountry = normalizeCountryName(shippingCountry);
                 if(normalizedCountry) {
                     if(!globalCountryStats[normalizedCountry]) globalCountryStats[normalizedCountry] = { revenue: 0, orders: new Set() };
@@ -6559,12 +6569,33 @@ VISUALIZE sessions TYPE horizontal_bar`
                         return alert('Change Save / Update Name before saving as a new report (e.g. add the campaign date range).');
                     }
                 }
+                // If a live bank/CSV is already in memory, refresh aggregation before the empty guard.
+                // Do not force-hydrate the full artist bank here — that can wipe a valid snapshot
+                // or OOM the tab before Save completes.
+                if (hasLiveCsvUpload()) {
+                    runDataAggregation();
+                }
                 const liveRev = Object.values(storeData).reduce((sum, m) => sum + (Number(m.revenue) || 0), 0);
                 const liveOrders = Object.values(storeData).reduce((sum, m) => sum + (m.orders?.size || 0), 0);
-                if (windowCurrentCSVData?.length && liveOrders === 0) {
-                    return alert('No sales data is loaded in the preview (0 orders). Upload your Master Sales File again and check Data quality notes before publishing.');
+                const csvRowsNow = getActiveSalesCsvRows().length;
+                // Block only when the preview is truly empty (no orders and no revenue).
+                if (csvRowsNow && liveOrders === 0 && liveRev <= 0) {
+                    const { start, end } = getCampaignDates();
+                    const mk = getSelectedMarkets();
+                    const range = getCsvDataDateRange();
+                    return alert(
+                        'No sales data is loaded in the preview (0 orders).\n\n' +
+                        `Bank/CSV rows in view: ${csvRowsNow.toLocaleString()}\n` +
+                        `CSV date span: ${range ? `${range.start} → ${range.end}` : 'unknown'}\n` +
+                        `Campaign dates filter: ${start || '—'} → ${end || '—'}\n` +
+                        `Markets: ${mk.length ? mk.join(', ').toUpperCase() : 'none selected'}\n\n` +
+                        'Check Data quality notes (post-filter ingest counts). If totals are still 0, clear Campaign Dates temporarily to confirm data loads, then set them again.'
+                    );
                 }
-                if (windowCurrentCSVData?.length && liveRev > 0 && liveRev < 100) {
+                if (csvRowsNow && liveRev > 0 && liveOrders === 0) {
+                    if (!confirm(`Preview has £${liveRev.toFixed(2)} revenue but 0 order IDs (Order Name column may be missing). Publish anyway?`)) return;
+                }
+                if (csvRowsNow && liveRev > 0 && liveRev < 100) {
                     if (!confirm(`Preview totals look very low (£${liveRev.toFixed(2)} revenue, ${liveOrders} orders). Publish anyway?`)) return;
                 }
                 const resDiv = document.getElementById('publish-result');
