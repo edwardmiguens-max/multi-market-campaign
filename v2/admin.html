@@ -261,6 +261,7 @@
                             <select id="input-campaign-chart-mode" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-2 text-white mb-2">
                                 <option value="all_music">All music products</option>
                                 <option value="no_focus">No Campaign Focus</option>
+                                <option value="merch_only">Merch Only</option>
                                 <option value="selected">Selected products</option>
                             </select>
                             <button type="button" id="btn-campaign-chart-products" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-2 text-white hover:border-yellow-500 text-left flex justify-between items-center gap-2 hidden">
@@ -394,6 +395,13 @@
                                 <input type="hidden" id="input-lever-sale-products" value="[]">
                                 <div class="flex items-center gap-2 mt-1"><button type="button" id="btn-lever-sale-products" class="text-[10px] px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600">Select products</button><span id="lever-sale-products-label" class="text-[10px] text-gray-400">None selected</span></div>
                             </div>
+                        </div>
+                        <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="freeShipping">
+                            <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-cyan-300">Free Shipping</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-freeShipping-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-freeShipping-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-freeShipping-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-freeShipping-int" class="mr-0.5">ROW</label></div></div>
+                            <input type="text" id="lever-freeShipping-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Free Shipping">
+                            <textarea id="lever-freeShipping-notes" rows="2" placeholder="Extra free shipping information (shown below header on report)" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white resize-y"></textarea>
+                            <p class="text-[10px] text-gray-400 leading-tight">Measures orders in this window that received a shipping discount (<code class="text-gray-300">shipping_charge_discounts</code> in the master CSV). Uses the same KPIs as Sale (orders, units, AOV, revenue, top products, music/merch).</p>
+                            <div class="grid grid-cols-2 gap-2 text-[10px]"><div><span class="text-gray-400 block mb-0.5">Start date</span><input type="date" id="lever-freeShipping-start-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">Start time</span><input type="time" id="lever-freeShipping-start-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End date</span><input type="date" id="lever-freeShipping-end-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End time</span><input type="time" id="lever-freeShipping-end-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div></div>
                         </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="signedUkEu">
                             <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-rose-300">Signed (UK / EU / ROW)</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-signedUkEu-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-signedUkEu-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-signedUkEu-int" class="mr-0.5">ROW</label></div></div>
@@ -1408,7 +1416,7 @@
                 title: 'Option A: Master Sales File',
                 intro: 'In Shopify Analytics, open any sales report and replace the parameters with the below. Once generated, save the report with the title "Master Data Report". Eurostore / Rhino uploads need Product vendor in the export so rows can be filtered to one artist. If the report is slow to load then change the timeframe to "Month to Date" or "Quarter to Date" and upload multiple files:',
                 query: `FROM sales
-  SHOW net_items_sold, net_sales
+  SHOW net_items_sold, net_sales, shipping_charge_discounts, shipping_charges
   WHERE order_name IS NOT NULL
   GROUP BY order_name, product_variant_sku, product_variant_title,
     shipping_country, market, product_title, product_vendor, line_item_id, day,
@@ -2211,6 +2219,9 @@ VISUALIZE sessions TYPE horizontal_bar`
                 || cleanK.includes('netitemssold') || (cleanK.includes('items') && cleanK.includes('sold'))
                 || cleanK.includes('compareatprice') || cleanK.includes('compareprice')
                 || cleanK.includes('linediscount') || cleanK.includes('discountamount') || cleanK === 'discount'
+                || cleanK.includes('shippingchargediscounts') || cleanK.includes('shippingdiscounts')
+                || cleanK.includes('shippingcharges') || cleanK === 'shipping'
+                || cleanK.includes('discountshippingtitle') || cleanK.includes('discounttitle') || cleanK.includes('discountcode')
                 || cleanK.includes('shippingcountry') || cleanK === 'shipcountry'
                 || cleanK.includes('billingcountry') || cleanK === 'billingcountry'
                 || cleanK === 'country' || cleanK === 'destinationcountry' || cleanK === 'customercountry'
@@ -2620,11 +2631,12 @@ VISUALIZE sessions TYPE horizontal_bar`
         }
         let aggregatedLineRows = [];
         let orderIndex = {};
+        let csvHasShippingDiscountData = false;
         let loadedLeversPayload = null;
         let loadedAttachedPriorCampaign = null;
 
-        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'signedUkEu', 'signedUs', 'nfcProduct', 'digitalDownload'];
-        const LEVER_TIMED_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'competition', 'sale'];
+        const LEVER_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'giftWithPurchase', 'upsell', 'competition', 'sale', 'freeShipping', 'signedUkEu', 'signedUs', 'nfcProduct', 'digitalDownload'];
+        const LEVER_TIMED_KEYS = ['preOrder1', 'preOrder2', 'earlyAccess', 'competition', 'sale', 'freeShipping'];
         const LEVER_TIMEZONE_OPTIONS = [
             { value: 'Europe/London', label: 'UK (GMT/BST)' },
             { value: 'America/New_York', label: 'US Eastern (ET)' },
@@ -2946,16 +2958,26 @@ VISUALIZE sessions TYPE horizontal_bar`
             updateCampaignChartProductsLabel(getCampaignChartProducts());
         }
         function getStandoutSectionTitle(mode) {
-            return (mode || getCampaignChartMode()) === 'no_focus' ? 'Standout Products' : 'Standout Campaign Music Formats';
+            const m = mode || getCampaignChartMode();
+            if(m === 'no_focus') return 'Standout Products';
+            if(m === 'merch_only') return 'Standout Merch Products';
+            return 'Standout Campaign Music Formats';
+        }
+        function getCampaignChartUnitsLabel(mode) {
+            const m = mode || getCampaignChartMode();
+            if(m === 'merch_only') return 'Units Sold';
+            if(m === 'no_focus') return 'Music Units Sold';
+            return 'Campaign D2C Chart Units';
         }
         function lineMatchesCampaignChart(name, isMusic, isMerch, signedArtCardLine, chartMode, selectedProducts) {
             if(signedArtCardLine) return false;
             const mode = chartMode || 'all_music';
             const selected = selectedProducts || [];
-            if(mode === 'no_focus') return isMusic || isMerch;
+            if(mode === 'no_focus') return !!isMusic;
+            if(mode === 'merch_only') return !!isMerch;
             if(mode === 'selected') return selected.length > 0 && selected.includes(name);
             if(selected.length > 0) return selected.includes(name);
-            return isMusic;
+            return !!isMusic;
         }
         function getCampaignChartProducts() {
             try {
@@ -2973,7 +2995,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const label = document.getElementById('campaign-chart-products-label');
             if(!label) return;
             const mode = getCampaignChartMode();
-            if(mode === 'no_focus') return;
+            if(mode === 'no_focus' || mode === 'merch_only') return;
             if(mode === 'all_music') { label.textContent = 'All music products'; return; }
             if(!names || names.length === 0) label.textContent = 'Configure selected products';
             else if(names.length === 1) label.textContent = names[0].length > 42 ? names[0].slice(0, 42) + '…' : names[0];
@@ -3921,6 +3943,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 upsell: { ...readLeverMarketFlags('upsell'), title: document.getElementById('lever-upsell-title')?.value || 'Upsell', productName: document.getElementById('lever-upsell-product')?.value || '', discountPercent: Number(document.getElementById('lever-upsell-discount')?.value || 0) },
                 competition: { ...readLeverMarketFlags('competition'), title: document.getElementById('lever-competition-title')?.value || 'Competition', startDate: document.getElementById('lever-competition-start-date')?.value || '', startTime: document.getElementById('lever-competition-start-time')?.value || '', endDate: document.getElementById('lever-competition-end-date')?.value || '', endTime: document.getElementById('lever-competition-end-time')?.value || '', prize: document.getElementById('lever-competition-prize')?.value || '', npnSignups: Number(document.getElementById('lever-competition-npn')?.value || 0) },
                 sale: { ...readLeverMarketFlags('sale'), title: document.getElementById('lever-sale-title')?.value || 'Sale', notes: document.getElementById('lever-sale-notes')?.value || '', startDate: document.getElementById('lever-sale-start-date')?.value || '', startTime: document.getElementById('lever-sale-start-time')?.value || '', endDate: document.getElementById('lever-sale-end-date')?.value || '', endTime: document.getElementById('lever-sale-end-time')?.value || '', saleProducts: getLeverSaleProducts() },
+                freeShipping: { ...readLeverMarketFlags('freeShipping'), title: document.getElementById('lever-freeShipping-title')?.value || 'Free Shipping', notes: document.getElementById('lever-freeShipping-notes')?.value || '', startDate: document.getElementById('lever-freeShipping-start-date')?.value || '', startTime: document.getElementById('lever-freeShipping-start-time')?.value || '', endDate: document.getElementById('lever-freeShipping-end-date')?.value || '', endTime: document.getElementById('lever-freeShipping-end-time')?.value || '' },
                 signedUkEu: { ...readLeverMarketFlags('signedUkEu'), title: document.getElementById('lever-signedUkEu-title')?.value || 'Signed', mode: signedUkEuModeEl?.value || 'signed_formats' },
                 signedUs: { ...readLeverMarketFlags('signedUs'), title: document.getElementById('lever-signedUs-title')?.value || 'Signed', mode: signedUsModeEl?.value || 'signed_formats' },
                 nfcProduct: { ...readLeverMarketFlags('nfcProduct'), title: document.getElementById('lever-nfcProduct-title')?.value || 'NFC Product', productName: document.getElementById('lever-nfcProduct-product')?.value || '', redeemed: Number(document.getElementById('lever-nfcProduct-redeemed')?.value || 0) },
@@ -3942,6 +3965,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 if(key === 'upsell') { ensureLeverProductOption('lever-upsell-product', c.productName); set('lever-upsell-discount', c.discountPercent ?? 0, false); }
                 if(key === 'competition') { set('lever-competition-prize', c.prize, false); set('lever-competition-npn', c.npnSignups, false); }
                 if(key === 'sale') { set('lever-sale-notes', c.notes, false); setLeverSaleProducts(c.saleProducts || []); }
+                if(key === 'freeShipping') { set('lever-freeShipping-notes', c.notes, false); }
                 if(key === 'nfcProduct') {
                     ensureLeverProductOption('lever-nfcProduct-product', c.productName);
                     set('lever-nfcProduct-redeemed', c.redeemed ?? 0, false);
@@ -4114,7 +4138,8 @@ VISUALIZE sessions TYPE horizontal_bar`
         }
         function getMarketChartUnits(market) {
             let units = Object.values(storeData[market]?.musicProducts || {}).reduce((sum, p) => sum + (Number(p.units) || 0), 0);
-            units += getSalesforceUnitsForMarket(market);
+            // Prior Salesforce units are music-only — skip for merch-focused chart modes.
+            if(getCampaignChartMode() !== 'merch_only') units += getSalesforceUnitsForMarket(market);
             return units;
         }
         function lineLondonDateKey(ts) {
@@ -4285,6 +4310,78 @@ VISUALIZE sessions TYPE horizontal_bar`
                 emptyReason: saleUnits === 0 ? 'No sale product units sold in this window.' : ''
             };
         }
+        function orderHasFreeShipping(orderId) {
+            if(!orderId) return false;
+            const ord = orderIndex[orderId];
+            if(ord?.hasFreeShipping) return true;
+            return aggregatedLineRows.some(l => l.orderId === orderId && l.hasFreeShipping);
+        }
+        function aggregateFreeShippingLever(market, cfg) {
+            const { startMs, endMs } = getLeverWindowBoundsMs(cfg);
+            const windowLabel = formatLeverWindow(cfg.startDate, cfg.startTime, cfg.endDate, cfg.endTime, getLeverTimeZone());
+            const empty = (reason) => ({
+                windowLabel,
+                notes: cfg.notes || '',
+                totalOrders: 0,
+                saleUnits: 0,
+                aov: 0,
+                totalRevenue: 0,
+                saleRevenue: 0,
+                saleRevenuePct: 0,
+                saleMusicRev: 0,
+                saleMerchRev: 0,
+                top5: [],
+                emptyReason: reason
+            });
+            if(!cfg.startDate || !cfg.endDate) {
+                return empty('Set start and end date/time for free shipping.');
+            }
+            if(!csvHasShippingDiscountData) {
+                return empty('No shipping discount columns found in the master CSV. Re-export with shipping_charge_discounts (see Shopify query instructions).');
+            }
+            const lines = (startMs !== null && endMs !== null) ? linesInWindow(market, startMs, endMs) : linesInDateWindow(market, cfg.startDate, cfg.endDate);
+            if(lines.length === 0) {
+                return empty('No sales rows fall inside this free shipping window for the selected market.');
+            }
+            let totalRevenue = 0;
+            const periodOrderIds = new Set();
+            const freeShipOrderIds = new Set();
+            lines.forEach(l => {
+                if(l.orderId) periodOrderIds.add(l.orderId);
+                totalRevenue += l.rev;
+                if(l.orderId && orderHasFreeShipping(l.orderId)) freeShipOrderIds.add(l.orderId);
+            });
+            let saleUnits = 0, saleRevenue = 0, saleMusicRev = 0, saleMerchRev = 0;
+            const products = {};
+            lines.forEach(l => {
+                if(!l.orderId || !freeShipOrderIds.has(l.orderId)) return;
+                saleUnits += l.units;
+                saleRevenue += l.rev;
+                if(l.isMusic) saleMusicRev += l.rev;
+                if(l.isMerch) saleMerchRev += l.rev;
+                if(!products[l.name]) products[l.name] = { units: 0, revenue: 0 };
+                products[l.name].units += l.units;
+                products[l.name].revenue += l.rev;
+            });
+            const totalOrders = freeShipOrderIds.size;
+            const aov = totalOrders > 0 ? saleRevenue / totalOrders : 0;
+            const top5 = sortTopProductsByRevenue(Object.entries(products)).slice(0, 5);
+            return {
+                windowLabel,
+                notes: cfg.notes || '',
+                totalOrders,
+                periodOrders: periodOrderIds.size,
+                saleUnits,
+                aov,
+                totalRevenue,
+                saleRevenue,
+                saleRevenuePct: totalRevenue > 0 ? (saleRevenue / totalRevenue) * 100 : 0,
+                saleMusicRev,
+                saleMerchRev,
+                top5,
+                emptyReason: totalOrders === 0 ? 'No orders with free shipping applied in this window.' : ''
+            };
+        }
         function aggregateSignedLever(market, cfg) {
             const products = {};
             let chartUnits = 0, revenue = 0;
@@ -4371,6 +4468,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 if(leverEnabledForMarket(config.upsell, market)) out[market].upsell = { ...aggregateUpsellLever(market, config.upsell), title: config.upsell.title };
                 if(leverEnabledForMarket(config.competition, market)) out[market].competition = { ...aggregateTimedLever(market, config.competition, gwpNames), title: config.competition.title };
                 if(leverEnabledForMarket(config.sale, market)) out[market].sale = { ...aggregateSaleLever(market, config.sale), title: config.sale.title };
+                if(leverEnabledForMarket(config.freeShipping, market)) out[market].freeShipping = { ...aggregateFreeShippingLever(market, config.freeShipping), title: config.freeShipping.title };
                 if(leverEnabledForMarket(config.signedUkEu, market)) out[market].signedUkEu = { ...aggregateSignedLever(market, config.signedUkEu), title: config.signedUkEu.title };
                 if(leverEnabledForMarket(config.signedUs, market)) out[market].signedUs = { ...aggregateSignedLever(market, config.signedUs), title: config.signedUs.title };
                 if(leverEnabledForMarket(config.nfcProduct, market)) out[market].nfcProduct = { ...aggregateNfcProductLever(market, config.nfcProduct), title: config.nfcProduct.title };
@@ -4455,6 +4553,14 @@ VISUALIZE sessions TYPE horizontal_bar`
             const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
             return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: #ea580c"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Sale window:</strong> ${data.windowLabel || '—'}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total orders</p><p class="preview-body-data text-xl font-bold">${Number(data.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale units</p><p class="preview-body-data text-xl font-bold">${Number(data.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="preview-body-data text-xl font-bold">£${Number(data.aov||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="preview-body-data text-lg font-bold">£${Number(data.totalRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Sale revenue</p><p class="preview-body-data text-lg font-bold">£${Number(data.saleRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from sale items</p><p class="preview-body-data text-xl font-bold">${Number(data.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 sale products</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No sale products in window</td></tr>'}</tbody></table></div><div><p class="preview-header-label mb-2">Music vs merch (sale items)</p><div class="chart-shell chart-h-pie h-48"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="preview-header-label mb-2">Top 5 D2C Chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
         }
+        function renderFreeShippingLeverCard(market, key, data, panePrefix) {
+            if(!data) return '';
+            const chartId = `${panePrefix}-chart-${key}`;
+            const pieId = `${panePrefix}-pie-${key}`;
+            const notesHtml = data.notes ? `<p class="text-sm text-gray-600 whitespace-pre-wrap">${String(data.notes).replace(/</g, '&lt;')}</p>` : '';
+            const topRows = (data.top5 || []).map(([n, m]) => `<tr class="border-b"><td class="py-1.5 font-medium max-w-[200px] truncate">${n}</td><td class="py-1.5 text-right">${m.units}</td><td class="py-1.5 text-right">£${m.revenue.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`).join('');
+            return `<div class="dashboard-card border-l-4 space-y-3" style="border-color: #0891b2"><h3 class="preview-header-label text-base mb-0">${data.title || key}</h3>${notesHtml}<p class="text-xs text-gray-500"><strong>Free shipping window:</strong> ${data.windowLabel || '—'}</p>${data.emptyReason ? `<p class="text-xs text-amber-600 italic">${data.emptyReason}</p>` : ''}<div class="grid grid-cols-2 md:grid-cols-3 gap-3"><div><p class="text-[10px] uppercase text-gray-400 font-bold">Free shipping orders</p><p class="preview-body-data text-xl font-bold">${Number(data.totalOrders||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Units</p><p class="preview-body-data text-xl font-bold">${Number(data.saleUnits||0).toLocaleString()}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">AOV</p><p class="preview-body-data text-xl font-bold">£${Number(data.aov||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Total revenue (period)</p><p class="preview-body-data text-lg font-bold">£${Number(data.totalRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">Free shipping revenue</p><p class="preview-body-data text-lg font-bold">£${Number(data.saleRevenue||0).toLocaleString(undefined,{minimumFractionDigits:2})}</p></div><div><p class="text-[10px] uppercase text-gray-400 font-bold">% revenue from free shipping orders</p><p class="preview-body-data text-xl font-bold">${Number(data.saleRevenuePct||0).toFixed(1)}%</p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><p class="preview-header-label mb-2">Top 5 products (free shipping orders)</p><table class="w-full text-xs"><thead><tr class="border-b"><th class="text-left py-1">Product</th><th class="text-right py-1">Units</th><th class="text-right py-1">Revenue</th></tr></thead><tbody>${topRows || '<tr><td colspan="3" class="italic text-gray-400 py-2">No free shipping products in window</td></tr>'}</tbody></table></div><div><p class="preview-header-label mb-2">Music vs merch (free shipping orders)</p><div class="chart-shell chart-h-pie h-48"><canvas id="${pieId}"></canvas></div></div></div><div class="w-full"><p class="preview-header-label mb-2">Top 5 D2C Chart</p><div class="chart-shell chart-h-sale-top5 w-full"><canvas id="${chartId}"></canvas></div></div></div>`;
+        }
         function renderSalePieChart(canvasId, musicRev, merchRev, styles) {
             if(typeof Chart === 'undefined') return;
             if(chartInstances[canvasId]) { chartInstances[canvasId].destroy(); delete chartInstances[canvasId]; }
@@ -4500,6 +4606,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             if(data.upsell) html += renderUpsellLeverCard('upsell', data.upsell, prefix);
             if(data.competition) html += renderTimedLeverCard(market, 'competition', data.competition, prefix);
             if(data.sale) html += renderSaleLeverCard(market, 'sale', data.sale, prefix);
+            if(data.freeShipping) html += renderFreeShippingLeverCard(market, 'freeShipping', data.freeShipping, prefix);
             if(data.signedUkEu) html += renderSignedLeverCard('signedUkEu', data.signedUkEu, prefix);
             if(data.signedUs) html += renderSignedLeverCard('signedUs', data.signedUs, prefix);
             if(data.signed && !data.signedUkEu && !data.signedUs) html += renderSignedLeverCard('signed', data.signed, prefix);
@@ -4514,6 +4621,10 @@ VISUALIZE sessions TYPE horizontal_bar`
                 if(data.sale) {
                     renderSalePieChart(`${prefix}-pie-sale`, data.sale.saleMusicRev, data.sale.saleMerchRev, styles);
                     if(data.sale.top5?.length) renderSaleTop5Chart(`${prefix}-chart-sale`, data.sale.top5);
+                }
+                if(data.freeShipping) {
+                    renderSalePieChart(`${prefix}-pie-freeShipping`, data.freeShipping.saleMusicRev, data.freeShipping.saleMerchRev, styles);
+                    if(data.freeShipping.top5?.length) renderSaleTop5Chart(`${prefix}-chart-freeShipping`, data.freeShipping.top5);
                 }
             }, 50);
         }
@@ -4639,6 +4750,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 upsell: { ...LEVER_MARKETS_OFF, title: 'Upsell', productName: '', discountPercent: 0 },
                 competition: { ...LEVER_MARKETS_OFF, title: 'Competition', startDate: '', startTime: '', endDate: '', endTime: '', prize: '', npnSignups: 0 },
                 sale: { ...LEVER_MARKETS_OFF, title: 'Sale', notes: '', startDate: '', startTime: '', endDate: '', endTime: '', saleProducts: [] },
+                freeShipping: { ...LEVER_MARKETS_OFF, title: 'Free Shipping', notes: '', startDate: '', startTime: '', endDate: '', endTime: '' },
                 signedUkEu: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' },
                 signedUs: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' },
                 nfcProduct: { ...LEVER_MARKETS_OFF, title: 'NFC Product', productName: '', redeemed: 0 },
@@ -4665,6 +4777,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             lastPublishedSalesMonths = [];
             aggregatedLineRows = [];
             orderIndex = {};
+            csvHasShippingDiscountData = false;
             comparisonModel = { markets: {}, periodOrder: [] };
             globalCountryStats = {};
             marketCountryMusicStats = { uk: {}, eu: {}, us: {}, int: {} };
@@ -4968,6 +5081,8 @@ VISUALIZE sessions TYPE horizontal_bar`
             let musicUnitsCount = 0;
             if(typeof d.campaignChartUnits === 'number') musicUnitsCount = d.campaignChartUnits;
             else if(d.musicProducts) { Object.values(d.musicProducts).forEach(m => { musicUnitsCount += m.units; }); }
+            const chartUnitsLabel = d.campaignChartUnitsLabel || getCampaignChartUnitsLabel(d.campaignChartMode);
+            const showSfNote = d.campaignChartMode !== 'merch_only';
 
             ['device', 'mm', 'size', 'cat'].forEach(t => { if(chartInstances[`${prefix}_${t}`]) chartInstances[`${prefix}_${t}`].destroy(); });
 
@@ -4980,7 +5095,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                     <div class="dashboard-card border-l-4" style="border-color: var(--accent-primary)">
                         <div class="flex justify-between items-start">
                             <div><p class="preview-header-label font-bold uppercase">Territory Revenue</p><p class="preview-body-data text-2xl font-bold">${d.revenue}</p><p class="preview-small-text mt-1 text-gray-500">${d.items} units sold across ${d.orders} orders (AOV: ${d.aov})</p></div>
-                            <div class="text-right"><p class="preview-header-label font-bold uppercase">Campaign D2C Chart Units</p><p class="preview-body-data text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p>${prefix === 'uk' && getSalesforceUnitsForMarket('uk') ? `<p class="text-[10px] text-gray-400 mt-1">Includes ${getSalesforceUnitsForMarket('uk').toLocaleString()} prior SF units (GB→UK)</p>` : ''}${prefix === 'eu' && getSalesforceUnitsForMarket('eu') ? `<p class="text-[10px] text-gray-400 mt-1">Includes ${getSalesforceUnitsForMarket('eu').toLocaleString()} prior SF units (excl. GB)</p>` : ''}</div>
+                            <div class="text-right"><p class="preview-header-label font-bold uppercase">${chartUnitsLabel}</p><p class="preview-body-data text-2xl font-black text-indigo-600">${musicUnitsCount.toLocaleString()}</p>${showSfNote && prefix === 'uk' && getSalesforceUnitsForMarket('uk') ? `<p class="text-[10px] text-gray-400 mt-1">Includes ${getSalesforceUnitsForMarket('uk').toLocaleString()} prior SF units (GB→UK)</p>` : ''}${showSfNote && prefix === 'eu' && getSalesforceUnitsForMarket('eu') ? `<p class="text-[10px] text-gray-400 mt-1">Includes ${getSalesforceUnitsForMarket('eu').toLocaleString()} prior SF units (excl. GB)</p>` : ''}</div>
                         </div>
                     </div>
                     <div class="dashboard-card flex-1"><h3 class="preview-header-label mb-2 font-bold uppercase">${d.standoutSectionTitle || 'Standout Campaign Music Formats'}</h3><table class="w-full text-sm"><tbody id="${prefix}-table-preview" class="preview-small-text"></tbody></table></div>
@@ -5077,7 +5192,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                         items: d.items.toLocaleString(), orders: ordersCount.toLocaleString(),
                         aov: `£${(ordersCount > 0 ? d.revenue/ordersCount : 0).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`,
                         trafficAvailable: traffic.trafficAvailable,
-                        sessions: traffic.sessions, atcRate: traffic.atcRate, conversionRate: traffic.conversionRate, upt: traffic.upt, mobilePerc: traffic.mobilePerc, desktopPct: traffic.desktopPct, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), campaignChartMode: chartMode, euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined, intTopCountries: k === 'int' ? getIntTopCountriesForDisplay() : undefined
+                        sessions: traffic.sessions, atcRate: traffic.atcRate, conversionRate: traffic.conversionRate, upt: traffic.upt, mobilePerc: traffic.mobilePerc, desktopPct: traffic.desktopPct, rawProducts: d.products, topProducts: Object.entries(d.products).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,5), topStandoutProducts, topMusicFormats: topStandoutProducts, standoutSectionTitle, musicProducts: d.musicProducts, merch: d.merch, campaignChartUnits: getMarketChartUnits(k), campaignChartMode: chartMode, campaignChartUnitsLabel: getCampaignChartUnitsLabel(chartMode), euTopCountries: k === 'eu' ? getEuTopCountriesForDisplay() : undefined, intTopCountries: k === 'int' ? getIntTopCountriesForDisplay() : undefined
                     };
                     renderSegmentPreview(k, segmentPayload);
                     gRev += d.revenue; gItems += d.items; gOrders += ordersCount;
@@ -5454,6 +5569,15 @@ VISUALIZE sessions TYPE horizontal_bar`
             loadedGlobalMerchPayload = null;
             aggregatedLineRows = [];
             orderIndex = {};
+            csvHasShippingDiscountData = false;
+            if(Array.isArray(csvRows) && csvRows[0]) {
+                Object.keys(csvRows[0]).forEach(k => {
+                    const cleanK = String(k || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if(cleanK.includes('shippingchargediscounts') || cleanK.includes('shippingdiscounts') || cleanK.includes('discountshippingtitle')) {
+                        csvHasShippingDiscountData = true;
+                    }
+                });
+            }
             const activeFilters = getAdvancedFilters();
             if(activeFilters.markets.length === 0) {
                 ingestionWarnings.push('No markets selected in Advanced Compare Filters.');
@@ -5495,7 +5619,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const acceptedRowsByMarket = { uk: 0, eu: 0, us: 0, int: 0 };
             const acceptedRevenueByMarket = { uk: 0, eu: 0, us: 0, int: 0 };
             csvRows.forEach((row, rowIdx) => {
-                let name = '', variant = '', pType = '', id = '', sku = '', rev = 0, rawQty = 1, netItemsSold = null, marketVal = '', dayVal = null, hourVal = null, shippingCountry = '', compareAtPrice = null, lineDiscount = null;
+                let name = '', variant = '', pType = '', id = '', sku = '', rev = 0, rawQty = 1, netItemsSold = null, marketVal = '', dayVal = null, hourVal = null, shippingCountry = '', compareAtPrice = null, lineDiscount = null, shippingChargeDiscounts = null, shippingCharges = null, discountShippingTitle = '', discountTitle = '', discountCode = '';
                 Object.keys(row).forEach(k => {
                     if (!k) return;
                     const cleanK = String(k).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -5513,6 +5637,11 @@ VISUALIZE sessions TYPE horizontal_bar`
                         if(!isNaN(parsedUnits)) netItemsSold = parsedUnits;
                     }
                     else if (cleanK.includes('compareatprice') || cleanK.includes('compareprice')) { const p = parseFloat(row[k]); if(!isNaN(p)) compareAtPrice = p; }
+                    else if (cleanK.includes('shippingchargediscounts') || cleanK.includes('shippingdiscounts')) { const p = parseFloat(row[k]); if(!isNaN(p)) { shippingChargeDiscounts = p; csvHasShippingDiscountData = true; } }
+                    else if (cleanK.includes('shippingcharges') || cleanK === 'shippingcharge') { const p = parseFloat(row[k]); if(!isNaN(p)) shippingCharges = p; }
+                    else if (cleanK.includes('discountshippingtitle')) { discountShippingTitle = String(row[k] || ''); csvHasShippingDiscountData = true; }
+                    else if (cleanK.includes('discounttitle') && !cleanK.includes('shipping')) discountTitle = String(row[k] || '');
+                    else if (cleanK.includes('discountcode')) discountCode = String(row[k] || '');
                     else if (cleanK.includes('linediscount') || cleanK.includes('discountamount') || cleanK === 'discount') { const p = parseFloat(row[k]); if(!isNaN(p)) lineDiscount = p; }
                     else if (cleanK.includes('shippingcountry') || cleanK === 'shipcountry') shippingCountry = String(row[k] || '');
                     else if (!shippingCountry && (cleanK.includes('billingcountry') || cleanK === 'billingcountry')) shippingCountry = String(row[k] || '');
@@ -5551,11 +5680,16 @@ VISUALIZE sessions TYPE horizontal_bar`
                 const orderKey = id || `row_${rowIdx}`;
                 const unitPrice = derivedQty ? Math.abs(rev / derivedQty) : 0;
                 const isDiscountedFromCsv = (lineDiscount !== null && Math.abs(lineDiscount) > 0.001) || (compareAtPrice !== null && compareAtPrice > 0 && derivedQty && unitPrice < compareAtPrice * 0.995);
-                const lineRec = { orderId: orderKey, market: tMk, timestamp: rowTs, name, upperName, rev, units: derivedQty, unitPrice, compareAtPrice, lineDiscount, isDiscountedFromCsv, isMusic, isMerch, hasProductTitle, isSignedArtCard: isSignedArtCard(name), isSignedFormat: isMusic && upperName.includes('SIGNED') && !isSignedArtCard(name) };
+                const freeShipTitleBlob = `${discountShippingTitle} ${discountTitle} ${discountCode}`.toLowerCase();
+                const titleSuggestsFreeShipping = /free\s*ship|freeship/.test(freeShipTitleBlob);
+                const hasShippingDiscountAmount = shippingChargeDiscounts !== null && Math.abs(shippingChargeDiscounts) > 0.001;
+                const lineHasFreeShipping = hasShippingDiscountAmount || titleSuggestsFreeShipping;
+                const lineRec = { orderId: orderKey, market: tMk, timestamp: rowTs, name, upperName, rev, units: derivedQty, unitPrice, compareAtPrice, lineDiscount, isDiscountedFromCsv, shippingChargeDiscounts, shippingCharges, hasFreeShipping: lineHasFreeShipping, isMusic, isMerch, hasProductTitle, isSignedArtCard: isSignedArtCard(name), isSignedFormat: isMusic && upperName.includes('SIGNED') && !isSignedArtCard(name) };
                 aggregatedLineRows.push(lineRec);
-                if(!orderIndex[orderKey]) orderIndex[orderKey] = { market: tMk, timestamp: rowTs, lines: [], totalRev: 0 };
+                if(!orderIndex[orderKey]) orderIndex[orderKey] = { market: tMk, timestamp: rowTs, lines: [], totalRev: 0, hasFreeShipping: false };
                 orderIndex[orderKey].lines.push(lineRec);
                 orderIndex[orderKey].totalRev += rev;
+                if(lineHasFreeShipping) orderIndex[orderKey].hasFreeShipping = true;
 
                 const weekKey = weekKeyForRow(dayVal, id, minOrder, maxOrder);
                 periodKeys.add(weekKey);
@@ -5592,7 +5726,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                         storeData[tMk].dailyProducts[dayKey][name].kind = isMusic ? 'music' : 'merch';
                     }
                 }
-                const countsForChart = isMusic && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts);
+                const countsForChart = lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts);
                 if(countsForChart && derivedQty) {
                     if(!storeData[tMk].weeklyUnits[weekKey]) storeData[tMk].weeklyUnits[weekKey] = 0;
                     storeData[tMk].weeklyUnits[weekKey] += derivedQty;
@@ -5627,7 +5761,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                     }
                 } else {
                     storeData[tMk].merch.merchRev += rev;
-                    if(activeFilters.campaignChartMode === 'no_focus' && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
+                    if((activeFilters.campaignChartMode === 'merch_only' || activeFilters.campaignChartMode === 'selected') && lineMatchesCampaignChart(name, isMusic, isMerch, isSignedArtCard(name), activeFilters.campaignChartMode, activeFilters.campaignChartProducts)) {
                         if(hasProductTitle) {
                             if(!storeData[tMk].musicProducts[name]) storeData[tMk].musicProducts[name] = { units: 0, revenue: 0 };
                             storeData[tMk].musicProducts[name].units += derivedQty; storeData[tMk].musicProducts[name].revenue += rev;
@@ -6628,7 +6762,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                     const topMerchProductsArr = Object.entries(d.merchProducts || {}).sort((a,b)=>(b[1]?.revenue || 0)-(a[1]?.revenue || 0)).slice(0,5).map(([pName, metrics]) => [pName, { units: metrics?.units || 0, revenue: metrics?.revenue || 0 }]);
                     const euTopCountries = prefix === 'eu' ? getEuTopCountriesForDisplay() : undefined;
                     const intTopCountries = prefix === 'int' ? getIntTopCountriesForDisplay() : undefined;
-                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, topMerchProducts: topMerchProductsArr, standoutSectionTitle, campaignChartMode: chartMode, weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: slimDailyProductsForPublish(d.dailyProducts), campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
+                    return { revenue: `£${revNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, items: itemsNum.toLocaleString(), orders: ordersCount.toLocaleString(), aov: `£${aovNum.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`, sessions: sessions, atcRate: atcRate, conversionRate: convRate, upt: upt, mobilePerc: d.traffic?.mobile || 85, desktopPct: d.traffic?.desktop || 15, topProducts: topProductsArr, topStandoutProducts, topMusicFormats: topStandoutProducts, topMerchProducts: topMerchProductsArr, standoutSectionTitle, campaignChartMode: chartMode, campaignChartUnitsLabel: getCampaignChartUnitsLabel(chartMode), weekly: d.weekly || {}, daily: d.daily || {}, weeklyUnits: d.weeklyUnits || {}, dailyUnits: d.dailyUnits || {}, weeklyMusicRev: d.weeklyMusicRev || {}, weeklyProductUnits: buildWeeklyProductUnits(prefix), dailyProducts: slimDailyProductsForPublish(d.dailyProducts), campaignChartUnits, euTopCountries, intTopCountries, merch: safeMerch };
                 };
 
                 const buildIndexOverviewFromSegments = (segments) => {
