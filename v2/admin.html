@@ -400,8 +400,13 @@
                             <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-cyan-300">Free Shipping</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-freeShipping-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-freeShipping-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-freeShipping-us" class="mr-0.5">US</label><label><input type="checkbox" id="lever-freeShipping-int" class="mr-0.5">ROW</label></div></div>
                             <input type="text" id="lever-freeShipping-title" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white" value="Free Shipping">
                             <textarea id="lever-freeShipping-notes" rows="2" placeholder="Extra free shipping information (shown below header on report)" class="w-full bg-gray-900 text-xs border border-gray-600 rounded p-1.5 text-white resize-y"></textarea>
-                            <p class="text-[10px] text-gray-400 leading-tight">Measures orders in this window that received a shipping discount (<code class="text-gray-300">shipping_charge_discounts</code> in the master CSV). Uses the same KPIs as Sale (orders, units, AOV, revenue, top products, music/merch).</p>
+                            <p class="text-[10px] text-gray-400 leading-tight">Same KPIs as Sale for this date window. When the master CSV includes shipping discount / £0 shipping fields, metrics are limited to those orders; otherwise all orders in the window are used (promo-period view).</p>
                             <div class="grid grid-cols-2 gap-2 text-[10px]"><div><span class="text-gray-400 block mb-0.5">Start date</span><input type="date" id="lever-freeShipping-start-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">Start time</span><input type="time" id="lever-freeShipping-start-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End date</span><input type="date" id="lever-freeShipping-end-date" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div><div><span class="text-gray-400 block mb-0.5">End time</span><input type="time" id="lever-freeShipping-end-time" class="w-full bg-gray-900 border border-gray-600 rounded p-1 text-white"></div></div>
+                            <div>
+                                <span class="text-gray-400 text-[10px]">Focus products (optional — leave empty for all products)</span>
+                                <input type="hidden" id="input-lever-freeShipping-products" value="[]">
+                                <div class="flex items-center gap-2 mt-1"><button type="button" id="btn-lever-freeShipping-products" class="text-[10px] px-2 py-1 rounded bg-gray-700 text-white hover:bg-gray-600">Select products</button><span id="lever-freeShipping-products-label" class="text-[10px] text-gray-400">All products</span></div>
+                            </div>
                         </div>
                         <div class="border border-gray-700 rounded p-2 space-y-2 bg-gray-800/40" data-lever-key="signedUkEu">
                             <div class="flex justify-between items-center gap-2"><span class="text-xs font-bold text-rose-300">Signed (UK / EU / ROW)</span><div class="flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] justify-end max-w-[11rem]"><label><input type="checkbox" id="lever-signedUkEu-uk" class="mr-0.5">UK</label><label><input type="checkbox" id="lever-signedUkEu-eu" class="mr-0.5">EU</label><label><input type="checkbox" id="lever-signedUkEu-int" class="mr-0.5">ROW</label></div></div>
@@ -679,6 +684,24 @@
             <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
                 <button type="button" id="btn-lever-sale-products-cancel" class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
                 <button type="button" id="btn-lever-sale-products-apply" class="text-xs px-3 py-1.5 rounded bg-orange-600 text-white font-semibold hover:bg-orange-500">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lever-freeShipping-products-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+        <div class="bg-gray-900 border border-gray-700 rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center px-4 py-3 border-b border-gray-700">
+                <h3 class="text-sm font-bold text-cyan-300">Free Shipping — Select Products</h3>
+                <button type="button" id="btn-lever-freeShipping-products-close" class="text-gray-400 hover:text-white text-lg leading-none">&times;</button>
+            </div>
+            <div class="px-4 py-2 border-b border-gray-800 flex gap-2">
+                <button type="button" id="btn-lever-freeShipping-select-all" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700">Select all</button>
+                <button type="button" id="btn-lever-freeShipping-clear-all" class="text-[10px] px-2 py-1 rounded bg-gray-800 text-gray-300 hover:bg-gray-700">Clear all</button>
+            </div>
+            <div id="lever-freeShipping-products-list" class="overflow-y-auto flex-1 p-3 space-y-1 text-xs text-gray-200"></div>
+            <div class="px-4 py-3 border-t border-gray-700 flex justify-end gap-2">
+                <button type="button" id="btn-lever-freeShipping-products-cancel" class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-300 hover:bg-gray-800">Cancel</button>
+                <button type="button" id="btn-lever-freeShipping-products-apply" class="text-xs px-3 py-1.5 rounded bg-cyan-700 text-white font-semibold hover:bg-cyan-600">Apply</button>
             </div>
         </div>
     </div>
@@ -2632,6 +2655,7 @@ VISUALIZE sessions TYPE horizontal_bar`
         let aggregatedLineRows = [];
         let orderIndex = {};
         let csvHasShippingDiscountData = false;
+        let csvHasShippingChargesData = false;
         let loadedLeversPayload = null;
         let loadedAttachedPriorCampaign = null;
 
@@ -3943,7 +3967,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 upsell: { ...readLeverMarketFlags('upsell'), title: document.getElementById('lever-upsell-title')?.value || 'Upsell', productName: document.getElementById('lever-upsell-product')?.value || '', discountPercent: Number(document.getElementById('lever-upsell-discount')?.value || 0) },
                 competition: { ...readLeverMarketFlags('competition'), title: document.getElementById('lever-competition-title')?.value || 'Competition', startDate: document.getElementById('lever-competition-start-date')?.value || '', startTime: document.getElementById('lever-competition-start-time')?.value || '', endDate: document.getElementById('lever-competition-end-date')?.value || '', endTime: document.getElementById('lever-competition-end-time')?.value || '', prize: document.getElementById('lever-competition-prize')?.value || '', npnSignups: Number(document.getElementById('lever-competition-npn')?.value || 0) },
                 sale: { ...readLeverMarketFlags('sale'), title: document.getElementById('lever-sale-title')?.value || 'Sale', notes: document.getElementById('lever-sale-notes')?.value || '', startDate: document.getElementById('lever-sale-start-date')?.value || '', startTime: document.getElementById('lever-sale-start-time')?.value || '', endDate: document.getElementById('lever-sale-end-date')?.value || '', endTime: document.getElementById('lever-sale-end-time')?.value || '', saleProducts: getLeverSaleProducts() },
-                freeShipping: { ...readLeverMarketFlags('freeShipping'), title: document.getElementById('lever-freeShipping-title')?.value || 'Free Shipping', notes: document.getElementById('lever-freeShipping-notes')?.value || '', startDate: document.getElementById('lever-freeShipping-start-date')?.value || '', startTime: document.getElementById('lever-freeShipping-start-time')?.value || '', endDate: document.getElementById('lever-freeShipping-end-date')?.value || '', endTime: document.getElementById('lever-freeShipping-end-time')?.value || '' },
+                freeShipping: { ...readLeverMarketFlags('freeShipping'), title: document.getElementById('lever-freeShipping-title')?.value || 'Free Shipping', notes: document.getElementById('lever-freeShipping-notes')?.value || '', startDate: document.getElementById('lever-freeShipping-start-date')?.value || '', startTime: document.getElementById('lever-freeShipping-start-time')?.value || '', endDate: document.getElementById('lever-freeShipping-end-date')?.value || '', endTime: document.getElementById('lever-freeShipping-end-time')?.value || '', saleProducts: getLeverFreeShippingProducts() },
                 signedUkEu: { ...readLeverMarketFlags('signedUkEu'), title: document.getElementById('lever-signedUkEu-title')?.value || 'Signed', mode: signedUkEuModeEl?.value || 'signed_formats' },
                 signedUs: { ...readLeverMarketFlags('signedUs'), title: document.getElementById('lever-signedUs-title')?.value || 'Signed', mode: signedUsModeEl?.value || 'signed_formats' },
                 nfcProduct: { ...readLeverMarketFlags('nfcProduct'), title: document.getElementById('lever-nfcProduct-title')?.value || 'NFC Product', productName: document.getElementById('lever-nfcProduct-product')?.value || '', redeemed: Number(document.getElementById('lever-nfcProduct-redeemed')?.value || 0) },
@@ -3965,7 +3989,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 if(key === 'upsell') { ensureLeverProductOption('lever-upsell-product', c.productName); set('lever-upsell-discount', c.discountPercent ?? 0, false); }
                 if(key === 'competition') { set('lever-competition-prize', c.prize, false); set('lever-competition-npn', c.npnSignups, false); }
                 if(key === 'sale') { set('lever-sale-notes', c.notes, false); setLeverSaleProducts(c.saleProducts || []); }
-                if(key === 'freeShipping') { set('lever-freeShipping-notes', c.notes, false); }
+                if(key === 'freeShipping') { set('lever-freeShipping-notes', c.notes, false); setLeverFreeShippingProducts(c.saleProducts || c.products || []); }
                 if(key === 'nfcProduct') {
                     ensureLeverProductOption('lever-nfcProduct-product', c.productName);
                     set('lever-nfcProduct-redeemed', c.redeemed ?? 0, false);
@@ -4059,6 +4083,46 @@ VISUALIZE sessions TYPE horizontal_bar`
             else if(names.length === 1) label.textContent = names[0].length > 42 ? names[0].slice(0, 42) + '…' : names[0];
             else label.textContent = `${names.length} products selected`;
         }
+        function getLeverFreeShippingProducts() {
+            try {
+                const raw = document.getElementById('input-lever-freeShipping-products')?.value || '[]';
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            } catch (_err) { return []; }
+        }
+        function setLeverFreeShippingProducts(names) {
+            const input = document.getElementById('input-lever-freeShipping-products');
+            if(input) input.value = JSON.stringify(names || []);
+            const label = document.getElementById('lever-freeShipping-products-label');
+            if(!label) return;
+            if(!names || names.length === 0) label.textContent = 'All products';
+            else if(names.length === 1) label.textContent = names[0].length > 42 ? names[0].slice(0, 42) + '…' : names[0];
+            else label.textContent = `${names.length} products selected`;
+        }
+        function populateLeverFreeShippingProductModal() {
+            const list = document.getElementById('lever-freeShipping-products-list');
+            if(!list) return;
+            const selected = new Set(getLeverFreeShippingProducts());
+            const names = new Set();
+            aggregatedLineRows.forEach(r => { if(r.name) names.add(r.name); });
+            const sorted = Array.from(names).sort((a,b) => a.localeCompare(b));
+            if(sorted.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 italic p-2">Upload a sales CSV first.</p>';
+                return;
+            }
+            list.innerHTML = sorted.map(n => {
+                const safe = n.replace(/"/g, '&quot;');
+                const checked = selected.has(n) ? 'checked' : '';
+                return `<label class="flex items-start gap-2 p-1.5 rounded hover:bg-gray-800 cursor-pointer"><input type="checkbox" class="lever-freeShipping-product-cb mt-0.5 rounded" value="${safe}" ${checked}><span class="leading-tight">${n.replace(/</g,'&lt;')}</span></label>`;
+            }).join('');
+        }
+        function openLeverFreeShippingProductModal() {
+            populateLeverFreeShippingProductModal();
+            document.getElementById('lever-freeShipping-products-modal')?.classList.remove('hidden');
+        }
+        function closeLeverFreeShippingProductModal() {
+            document.getElementById('lever-freeShipping-products-modal')?.classList.add('hidden');
+        }
         function populateLeverSaleProductModal() {
             const list = document.getElementById('lever-sale-products-list');
             if(!list) return;
@@ -4122,6 +4186,17 @@ VISUALIZE sessions TYPE horizontal_bar`
         }
         function closeLeverDigitalDownloadProductModal() {
             document.getElementById('lever-digitalDownload-products-modal')?.classList.add('hidden');
+        }
+        function parseMoneyCell(value) {
+            if(value === null || value === undefined || value === '') return null;
+            if(typeof value === 'number') return Number.isFinite(value) ? value : null;
+            let s = String(value).trim();
+            if(!s || /^n\/?a$/i.test(s) || s === '-' || s === '—') return null;
+            const parenNeg = /^\(.*\)$/.test(s);
+            s = s.replace(/[£$€,\s]/g, '').replace(/^\((.*)\)$/, '$1');
+            const n = parseFloat(s);
+            if(Number.isNaN(n)) return null;
+            return parenNeg && n > 0 ? -n : n;
         }
         function lineUnitPrice(line) {
             if(!line || !line.units) return 0;
@@ -4316,7 +4391,13 @@ VISUALIZE sessions TYPE horizontal_bar`
             if(ord?.hasFreeShipping) return true;
             return aggregatedLineRows.some(l => l.orderId === orderId && l.hasFreeShipping);
         }
+        function canDetectFreeShippingOrders() {
+            // Product-level Shopify exports often include shipping_charges as 0/blank for every
+            // line, so only treat discount/title fields as reliable free-shipping detectors.
+            return csvHasShippingDiscountData;
+        }
         function aggregateFreeShippingLever(market, cfg) {
+            const focusProducts = new Set(cfg.saleProducts || cfg.products || []);
             const { startMs, endMs } = getLeverWindowBoundsMs(cfg);
             const windowLabel = formatLeverWindow(cfg.startDate, cfg.startTime, cfg.endDate, cfg.endTime, getLeverTimeZone());
             const empty = (reason) => ({
@@ -4336,25 +4417,35 @@ VISUALIZE sessions TYPE horizontal_bar`
             if(!cfg.startDate || !cfg.endDate) {
                 return empty('Set start and end date/time for free shipping.');
             }
-            if(!csvHasShippingDiscountData) {
-                return empty('No shipping discount columns found in the master CSV. Re-export with shipping_charge_discounts (see Shopify query instructions).');
-            }
             const lines = (startMs !== null && endMs !== null) ? linesInWindow(market, startMs, endMs) : linesInDateWindow(market, cfg.startDate, cfg.endDate);
             if(lines.length === 0) {
                 return empty('No sales rows fall inside this free shipping window for the selected market.');
             }
-            let totalRevenue = 0;
-            const periodOrderIds = new Set();
+
+            const detectFs = canDetectFreeShippingOrders();
             const freeShipOrderIds = new Set();
-            lines.forEach(l => {
-                if(l.orderId) periodOrderIds.add(l.orderId);
-                totalRevenue += l.rev;
-                if(l.orderId && orderHasFreeShipping(l.orderId)) freeShipOrderIds.add(l.orderId);
-            });
-            let saleUnits = 0, saleRevenue = 0, saleMusicRev = 0, saleMerchRev = 0;
+            if(detectFs) {
+                lines.forEach(l => {
+                    if(l.orderId && orderHasFreeShipping(l.orderId)) freeShipOrderIds.add(l.orderId);
+                });
+            }
+
+            // Prefer true free-shipping orders when detectable; otherwise use the full promo window
+            // (product-level Shopify exports often omit/zero shipping amounts, so window mode must still work).
+            const useFsFilter = detectFs && freeShipOrderIds.size > 0;
+            const scopedLines = useFsFilter
+                ? lines.filter(l => l.orderId && freeShipOrderIds.has(l.orderId))
+                : lines;
+
+            const orderIds = new Set();
+            let totalUnits = 0, totalRevenue = 0, saleUnits = 0, saleRevenue = 0, saleMusicRev = 0, saleMerchRev = 0;
             const products = {};
-            lines.forEach(l => {
-                if(!l.orderId || !freeShipOrderIds.has(l.orderId)) return;
+            scopedLines.forEach(l => {
+                if(l.orderId) orderIds.add(l.orderId);
+                totalUnits += l.units;
+                totalRevenue += l.rev;
+                const countsAsFocus = focusProducts.size === 0 || focusProducts.has(l.name);
+                if(!countsAsFocus) return;
                 saleUnits += l.units;
                 saleRevenue += l.rev;
                 if(l.isMusic) saleMusicRev += l.rev;
@@ -4363,14 +4454,17 @@ VISUALIZE sessions TYPE horizontal_bar`
                 products[l.name].units += l.units;
                 products[l.name].revenue += l.rev;
             });
-            const totalOrders = freeShipOrderIds.size;
-            const aov = totalOrders > 0 ? saleRevenue / totalOrders : 0;
+            const totalOrders = orderIds.size;
+            const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
             const top5 = sortTopProductsByRevenue(Object.entries(products)).slice(0, 5);
+            const noteBits = [];
+            if(useFsFilter) noteBits.push('Filtered to orders with free shipping applied');
+            else noteBits.push('Promo window (all orders) — shipping discount fields not detected in CSV');
+            if(focusProducts.size) noteBits.push(focusProducts.size + ' focus product' + (focusProducts.size === 1 ? '' : 's'));
             return {
                 windowLabel,
-                notes: cfg.notes || '',
+                notes: [cfg.notes || '', noteBits.join(' · ')].filter(Boolean).join('\n'),
                 totalOrders,
-                periodOrders: periodOrderIds.size,
                 saleUnits,
                 aov,
                 totalRevenue,
@@ -4379,13 +4473,18 @@ VISUALIZE sessions TYPE horizontal_bar`
                 saleMusicRev,
                 saleMerchRev,
                 top5,
-                emptyReason: totalOrders === 0 ? 'No orders with free shipping applied in this window.' : ''
+                emptyReason: saleUnits === 0 ? 'No units in this free shipping window for the current filters.' : ''
             };
         }
         function aggregateSignedLever(market, cfg) {
             const products = {};
             let chartUnits = 0, revenue = 0;
             const mode = cfg.mode || 'signed_formats';
+            // When the campaign filter is "Selected products", only signed lines within the selected
+            // products count toward the signed lever (previous-campaign signed products are excluded).
+            // Any other campaign filter mode keeps every signed format.
+            const selectedChartProducts = getCampaignChartMode() === 'selected' ? new Set(getCampaignChartProducts()) : null;
+            const inCampaignScope = l => !selectedChartProducts || selectedChartProducts.has(l.name);
             if(mode === 'signed_art_card') {
                 const orderIds = new Set();
                 Object.entries(orderIndex).forEach(([oid, ord]) => {
@@ -4396,6 +4495,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                     if(l.market !== market || !orderIds.has(l.orderId)) return;
                     if(l.isSignedArtCard) return;
                     if(!l.isMusic) return;
+                    if(!inCampaignScope(l)) return;
                     chartUnits += l.units; revenue += l.rev;
                     if(!products[l.name]) products[l.name] = { units: 0, revenue: 0 };
                     products[l.name].units += l.units; products[l.name].revenue += l.rev;
@@ -4403,6 +4503,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             } else {
                 aggregatedLineRows.forEach(l => {
                     if(l.market !== market || !l.isSignedFormat) return;
+                    if(!inCampaignScope(l)) return;
                     chartUnits += l.units; revenue += l.rev;
                     if(!products[l.name]) products[l.name] = { units: 0, revenue: 0 };
                     products[l.name].units += l.units; products[l.name].revenue += l.rev;
@@ -4750,7 +4851,7 @@ VISUALIZE sessions TYPE horizontal_bar`
                 upsell: { ...LEVER_MARKETS_OFF, title: 'Upsell', productName: '', discountPercent: 0 },
                 competition: { ...LEVER_MARKETS_OFF, title: 'Competition', startDate: '', startTime: '', endDate: '', endTime: '', prize: '', npnSignups: 0 },
                 sale: { ...LEVER_MARKETS_OFF, title: 'Sale', notes: '', startDate: '', startTime: '', endDate: '', endTime: '', saleProducts: [] },
-                freeShipping: { ...LEVER_MARKETS_OFF, title: 'Free Shipping', notes: '', startDate: '', startTime: '', endDate: '', endTime: '' },
+                freeShipping: { ...LEVER_MARKETS_OFF, title: 'Free Shipping', notes: '', startDate: '', startTime: '', endDate: '', endTime: '', saleProducts: [] },
                 signedUkEu: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' },
                 signedUs: { ...LEVER_MARKETS_OFF, title: 'Signed', mode: 'signed_formats' },
                 nfcProduct: { ...LEVER_MARKETS_OFF, title: 'NFC Product', productName: '', redeemed: 0 },
@@ -4764,6 +4865,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             const nfcSel = document.getElementById('lever-nfcProduct-product');
             if(nfcSel) nfcSel.innerHTML = '<option value="">— Select after CSV upload —</option>';
             setLeverSaleProducts([]);
+            setLeverFreeShippingProducts([]);
             setLeverDigitalDownloadProducts([]);
         }
         function clearAllIngestedData() {
@@ -4778,6 +4880,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             aggregatedLineRows = [];
             orderIndex = {};
             csvHasShippingDiscountData = false;
+            csvHasShippingChargesData = false;
             comparisonModel = { markets: {}, periodOrder: [] };
             globalCountryStats = {};
             marketCountryMusicStats = { uk: {}, eu: {}, us: {}, int: {} };
@@ -5570,11 +5673,15 @@ VISUALIZE sessions TYPE horizontal_bar`
             aggregatedLineRows = [];
             orderIndex = {};
             csvHasShippingDiscountData = false;
+            csvHasShippingChargesData = false;
             if(Array.isArray(csvRows) && csvRows[0]) {
                 Object.keys(csvRows[0]).forEach(k => {
                     const cleanK = String(k || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-                    if(cleanK.includes('shippingchargediscounts') || cleanK.includes('shippingdiscounts') || cleanK.includes('discountshippingtitle')) {
+                    if(cleanK.includes('shippingchargediscounts') || cleanK.includes('shippingdiscounts') || cleanK.includes('discountshippingtitle') || cleanK.includes('grossshippingcharges')) {
                         csvHasShippingDiscountData = true;
+                    }
+                    if(cleanK.includes('shippingcharges') || cleanK === 'shippingcharge' || cleanK === 'shipping') {
+                        csvHasShippingChargesData = true;
                     }
                 });
             }
@@ -5637,12 +5744,25 @@ VISUALIZE sessions TYPE horizontal_bar`
                         if(!isNaN(parsedUnits)) netItemsSold = parsedUnits;
                     }
                     else if (cleanK.includes('compareatprice') || cleanK.includes('compareprice')) { const p = parseFloat(row[k]); if(!isNaN(p)) compareAtPrice = p; }
-                    else if (cleanK.includes('shippingchargediscounts') || cleanK.includes('shippingdiscounts')) { const p = parseFloat(row[k]); if(!isNaN(p)) { shippingChargeDiscounts = p; csvHasShippingDiscountData = true; } }
-                    else if (cleanK.includes('shippingcharges') || cleanK === 'shippingcharge') { const p = parseFloat(row[k]); if(!isNaN(p)) shippingCharges = p; }
+                    else if (cleanK.includes('shippingchargediscounts') || cleanK.includes('shippingdiscounts') || cleanK.includes('grossshippingcharges')) {
+                        const p = parseMoneyCell(row[k]);
+                        if(p !== null) {
+                            if(cleanK.includes('grossshipping')) {
+                                // Keep gross for free-ship inference only when net shipping also present later.
+                            } else {
+                                shippingChargeDiscounts = p;
+                            }
+                            csvHasShippingDiscountData = true;
+                        }
+                    }
+                    else if (cleanK.includes('shippingcharges') || cleanK === 'shippingcharge' || cleanK === 'shipping') {
+                        const p = parseMoneyCell(row[k]);
+                        if(p !== null) { shippingCharges = p; csvHasShippingChargesData = true; }
+                    }
                     else if (cleanK.includes('discountshippingtitle')) { discountShippingTitle = String(row[k] || ''); csvHasShippingDiscountData = true; }
                     else if (cleanK.includes('discounttitle') && !cleanK.includes('shipping')) discountTitle = String(row[k] || '');
                     else if (cleanK.includes('discountcode')) discountCode = String(row[k] || '');
-                    else if (cleanK.includes('linediscount') || cleanK.includes('discountamount') || cleanK === 'discount') { const p = parseFloat(row[k]); if(!isNaN(p)) lineDiscount = p; }
+                    else if (cleanK.includes('linediscount') || cleanK.includes('discountamount') || cleanK === 'discount') { const p = parseMoneyCell(row[k]); if(p !== null) lineDiscount = p; }
                     else if (cleanK.includes('shippingcountry') || cleanK === 'shipcountry') shippingCountry = String(row[k] || '');
                     else if (!shippingCountry && (cleanK.includes('billingcountry') || cleanK === 'billingcountry')) shippingCountry = String(row[k] || '');
                     else if (!shippingCountry && (cleanK === 'country' || cleanK === 'destinationcountry' || cleanK === 'customercountry')) shippingCountry = String(row[k] || '');
@@ -5681,8 +5801,9 @@ VISUALIZE sessions TYPE horizontal_bar`
                 const unitPrice = derivedQty ? Math.abs(rev / derivedQty) : 0;
                 const isDiscountedFromCsv = (lineDiscount !== null && Math.abs(lineDiscount) > 0.001) || (compareAtPrice !== null && compareAtPrice > 0 && derivedQty && unitPrice < compareAtPrice * 0.995);
                 const freeShipTitleBlob = `${discountShippingTitle} ${discountTitle} ${discountCode}`.toLowerCase();
-                const titleSuggestsFreeShipping = /free\s*ship|freeship/.test(freeShipTitleBlob);
+                const titleSuggestsFreeShipping = /free\s*ship|freeship|shipping\s*promo/.test(freeShipTitleBlob);
                 const hasShippingDiscountAmount = shippingChargeDiscounts !== null && Math.abs(shippingChargeDiscounts) > 0.001;
+                // £0 shipping alone is unreliable on product-level exports (often blank/0 for all lines).
                 const lineHasFreeShipping = hasShippingDiscountAmount || titleSuggestsFreeShipping;
                 const lineRec = { orderId: orderKey, market: tMk, timestamp: rowTs, name, upperName, rev, units: derivedQty, unitPrice, compareAtPrice, lineDiscount, isDiscountedFromCsv, shippingChargeDiscounts, shippingCharges, hasFreeShipping: lineHasFreeShipping, isMusic, isMerch, hasProductTitle, isSignedArtCard: isSignedArtCard(name), isSignedFormat: isMusic && upperName.includes('SIGNED') && !isSignedArtCard(name) };
                 aggregatedLineRows.push(lineRec);
@@ -6474,6 +6595,17 @@ VISUALIZE sessions TYPE horizontal_bar`
                 const selected = Array.from(document.querySelectorAll('.lever-sale-product-cb:checked')).map(cb => cb.value);
                 setLeverSaleProducts(selected);
                 closeLeverSaleProductModal();
+                calculateGlobalDashboard();
+            });
+            document.getElementById('btn-lever-freeShipping-products')?.addEventListener('click', openLeverFreeShippingProductModal);
+            document.getElementById('btn-lever-freeShipping-products-close')?.addEventListener('click', closeLeverFreeShippingProductModal);
+            document.getElementById('btn-lever-freeShipping-products-cancel')?.addEventListener('click', closeLeverFreeShippingProductModal);
+            document.getElementById('btn-lever-freeShipping-select-all')?.addEventListener('click', () => { document.querySelectorAll('.lever-freeShipping-product-cb').forEach(cb => { cb.checked = true; }); });
+            document.getElementById('btn-lever-freeShipping-clear-all')?.addEventListener('click', () => { document.querySelectorAll('.lever-freeShipping-product-cb').forEach(cb => { cb.checked = false; }); });
+            document.getElementById('btn-lever-freeShipping-products-apply')?.addEventListener('click', () => {
+                const selected = Array.from(document.querySelectorAll('.lever-freeShipping-product-cb:checked')).map(cb => cb.value);
+                setLeverFreeShippingProducts(selected);
+                closeLeverFreeShippingProductModal();
                 calculateGlobalDashboard();
             });
             document.getElementById('btn-lever-digitalDownload-products')?.addEventListener('click', openLeverDigitalDownloadProductModal);
