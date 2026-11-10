@@ -3585,18 +3585,36 @@
         setStatus(when ? ('Last refreshed ' + when) : 'Last refreshed', kind || 'ok');
     }
 
+    /** Warner FY tabs are Oct–Sep; FY27 = 2026-10 → 2027-09. */
+    function fyMonthRangeFromTabName(tabName) {
+        const m = String(tabName || '').match(/FY\s*(\d{2})/i);
+        if (!m) return null;
+        const fyEndYear = 2000 + Number(m[1]);
+        const fyStartYear = fyEndYear - 1;
+        return { start: fyStartYear + '-10', end: fyEndYear + '-09' };
+    }
+
+    function findFy27Tab() {
+        return GOOGLE_SHEET.tabs.find(t => /FY\s*27/i.test(t.name || '')) || null;
+    }
+
     async function loadFromGoogleSheet(options = {}) {
         const silent = !!options.silent;
+        const forceFull = !!options.full;
         setStatus('Refreshing…');
         const btn = document.getElementById('btn-refresh-sheet');
         if (btn) btn.disabled = true;
         try {
+            // After an initial full pull, Refresh only reloads FY27 and keeps prior FY tabs from cache.
+            const fy27Tab = findFy27Tab();
+            const incremental = !forceFull && weeklyRows.length > 0 && !!fy27Tab;
+            const tabsToLoad = incremental ? [fy27Tab] : GOOGLE_SHEET.tabs;
             const allRows = [];
             const loadedTabs = [];
             const skippedTabs = [];
             const seenSigs = new Set();
-            for (const tab of GOOGLE_SHEET.tabs) {
-                setStatus('Refreshing…');
+            for (const tab of tabsToLoad) {
+                setStatus(incremental ? 'Refreshing FY27…' : 'Refreshing…');
                 try {
                     const result = await fetchGoogleSheetTabJsonp(tab);
                     const fingerprint = result.sig || ('rows:' + result.rawRowCount);
@@ -3619,8 +3637,21 @@
                     skippedTabs.push(tab.name || String(tab.gid));
                 }
             }
-            if (!allRows.length) throw new Error('No Atlantic rows found across FY tabs in the Google Sheet');
-            weeklyRows = allRows;
+            if (!allRows.length) {
+                throw new Error(incremental
+                    ? 'No Atlantic rows found in FY27 Data'
+                    : 'No Atlantic rows found across FY tabs in the Google Sheet');
+            }
+            if (incremental) {
+                const range = fyMonthRangeFromTabName(fy27Tab.name) || { start: '2026-10', end: '2027-09' };
+                const retained = weeklyRows.filter(r => {
+                    const month = String(r.month || '');
+                    return !month || month < range.start || month > range.end;
+                });
+                weeklyRows = retained.concat(allRows);
+            } else {
+                weeklyRows = allRows;
+            }
             monthlyRows = [];
             const savedAt = new Date().toISOString();
             const saved = await persistFeed('weekly');
