@@ -247,6 +247,57 @@
         return data || [];
     }
 
+    /**
+     * Hard-reset one artist's sales bank in Supabase (chunks + quarters + rollup).
+     * Keeps the artists directory row so the name still appears for re-upload.
+     * Does not modify published reports — republish after uploading correct CSVs.
+     */
+    async function deleteArtistBank(artistName) {
+        const client = getClient();
+        if (!client) throw new Error('Supabase client not ready.');
+        const artistKey = global.RepQuarterBank.slugifyArtistKey(artistName);
+        const { data: artist, error } = await client
+            .from('artists')
+            .select('id, artist_key, artist_name')
+            .eq('artist_key', artistKey)
+            .maybeSingle();
+        if (error) throw error;
+        if (!artist?.id) {
+            return { deleted: false, artistKey, reason: 'not_in_supabase' };
+        }
+
+        const { error: chunkErr } = await client
+            .from('artist_quarter_chunks')
+            .delete()
+            .eq('artist_id', artist.id);
+        if (chunkErr) throw chunkErr;
+
+        const { error: quarterErr } = await client
+            .from('artist_quarters')
+            .delete()
+            .eq('artist_id', artist.id);
+        if (quarterErr) throw quarterErr;
+
+        const { error: rollupErr } = await client
+            .from('artist_rollups')
+            .delete()
+            .eq('artist_id', artist.id);
+        if (rollupErr && !isMissingTableError(rollupErr)) throw rollupErr;
+
+        const { error: artistErr } = await client
+            .from('artists')
+            .update({ active_quarter: null, updated_at: new Date().toISOString() })
+            .eq('id', artist.id);
+        if (artistErr) throw artistErr;
+
+        return {
+            deleted: true,
+            artistId: artist.id,
+            artistKey: artist.artist_key || artistKey,
+            artistName: artist.artist_name || artistName
+        };
+    }
+
     function normalizeSkuEntry(entry) {
         const sku = String(entry?.sku || '').trim();
         if (!sku) return null;
@@ -306,6 +357,7 @@
         saveQuarterRows,
         setQuarterStatus,
         saveArtistRollup,
+        deleteArtistBank,
         upsertProductSkus
     };
 })(typeof window !== 'undefined' ? window : globalThis);

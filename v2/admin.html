@@ -223,7 +223,7 @@
                             <p class="text-[10px] text-gray-400 mb-2 leading-tight">Upload a Salesforce EU country export (.xlsx). Vinyl units are added to D2C chart units — <strong>GB → UK</strong>, all other countries → EU. Revenue is ignored.</p>
                             <div class="flex items-center gap-2 flex-wrap">
                                 <input type="file" id="upload-salesforce-country" accept=".xlsx,.xls" class="block text-[10px] text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600">
-                                <button type="button" id="btn-clear-salesforce-country" class="text-[10px] px-2 py-1 rounded bg-red-900/80 text-red-200 hover:bg-red-800">Clear all data</button>
+                                <button type="button" id="btn-clear-salesforce-country" class="text-[10px] px-2 py-1 rounded bg-red-900/80 text-red-200 hover:bg-red-800">Clear report</button>
                             </div>
                             <p id="salesforce-country-summary" class="text-[10px] text-gray-400 mt-2 leading-tight">No prior Salesforce units loaded.</p>
                         </div>
@@ -546,7 +546,9 @@
                             </div>
                         </div>
                         <button type="button" id="btn-copy-debug-snapshot" class="w-full text-[10px] px-2 py-1.5 rounded bg-gray-800 text-cyan-300 hover:bg-gray-700 border border-cyan-800 font-semibold">Copy debug snapshot (paste in chat)</button>
-                        <button type="button" id="btn-clear-data-uploads" class="w-full text-[10px] px-2 py-1.5 rounded bg-red-900/80 text-red-200 hover:bg-red-800 font-semibold">Clear all data</button>
+                        <button type="button" id="btn-clear-data-uploads" class="w-full text-[10px] px-2 py-1.5 rounded bg-red-900/80 text-red-200 hover:bg-red-800 font-semibold">Clear report</button>
+                        <button type="button" id="btn-wipe-artist-bank" class="w-full text-[10px] px-2 py-1.5 rounded bg-red-950 text-red-100 hover:bg-red-900 border border-red-800 font-semibold mt-1.5">Clear all data</button>
+                        <p class="text-[10px] text-gray-500 leading-tight mt-1.5"><strong>Clear report</strong> resets this Admin session only. If wrong artist data keeps coming back after upload, use <strong>Clear all data</strong> — that deletes banked quarters for the selected artist in Supabase and this browser. Then re-upload the correct CSV and <strong>Publish / Update</strong> the report.</p>
                     </div>
                 </details>
             </div>
@@ -4913,6 +4915,71 @@ VISUALIZE sessions TYPE horizontal_bar`
             });
             calculateGlobalDashboard();
         }
+
+        /**
+         * Hard reset for contaminated artist banks (e.g. wrong CSV banked under Griff / MCR).
+         * Clears Supabase chunks/quarters/rollup + local IndexedDB/localStorage for sales & traffic.
+         * Published report snapshots are unchanged until you re-upload and Publish / Update.
+         */
+        async function wipeArtistBankCompletely() {
+            const artistName = getBankStorageName();
+            if (!artistName) {
+                alert('Select or enter the artist name first (the bank key to clear).');
+                return false;
+            }
+            const confirmed = window.confirm(
+                `Clear all data for "${artistName}"?\n\n` +
+                'This permanently deletes banked sales + traffic quarters in Supabase and this browser.\n' +
+                'Published report pages stay as-is until you re-upload the correct CSV and Publish / Update.\n\n' +
+                'Continue?'
+            );
+            if (!confirmed) return false;
+
+            const btn = document.getElementById('btn-wipe-artist-bank');
+            if (btn) btn.disabled = true;
+            renderCsvUploadStatus(`Clearing all data for ${artistName}…`, 'wait');
+
+            try {
+                let cloudMsg = 'not in Supabase (local only)';
+                if (typeof RepQuarterBankSupabase !== 'undefined') {
+                    await probeV2SupabaseTables();
+                    if (v2SupabaseReady) {
+                        const result = await RepQuarterBankSupabase.deleteArtistBank(artistName);
+                        cloudMsg = result.deleted
+                            ? 'Supabase bank cleared'
+                            : 'no Supabase bank row (ok)';
+                    } else {
+                        cloudMsg = 'Supabase unavailable — cleared local only';
+                    }
+                }
+
+                if (typeof RepQuarterBank !== 'undefined') {
+                    await RepQuarterBank.deleteArtistBankLocal(artistName, 'sales');
+                    await RepQuarterBank.deleteArtistBankLocal(artistName, 'traffic');
+                }
+
+                v2QuarterBank = null;
+                v2TrafficQuarterBank = null;
+                lastLoadedArtistKey = null;
+                clearAllIngestedData();
+                renderQuarterBankUI();
+                renderTrafficQuarterBankUI();
+                ingestionWarnings = [
+                    `Cleared all data for ${artistName} (${cloudMsg}).`,
+                    'Upload the correct Master Sales CSV for this artist, then Publish / Update the live report.'
+                ];
+                renderWarnings();
+                renderCsvUploadStatus(`All data cleared — ready for clean upload (${artistName})`, 'ok');
+                return true;
+            } catch (err) {
+                console.error('Clear all data failed:', err);
+                renderCsvUploadStatus(`Clear all data failed: ${err?.message || err}`, 'err');
+                alert('Could not clear all data: ' + (err?.message || err));
+                return false;
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
         function clearSegmentPreview(prefix) {
             ['device', 'mm', 'size', 'cat'].forEach(t => {
                 if(chartInstances[`${prefix}_${t}`]) { chartInstances[`${prefix}_${t}`].destroy(); delete chartInstances[`${prefix}_${t}`]; }
@@ -6389,6 +6456,7 @@ VISUALIZE sessions TYPE horizontal_bar`
             });
             document.getElementById('btn-clear-salesforce-country')?.addEventListener('click', () => { clearAllIngestedData(); });
             document.getElementById('btn-clear-data-uploads')?.addEventListener('click', () => { clearAllIngestedData(); });
+            document.getElementById('btn-wipe-artist-bank')?.addEventListener('click', () => { wipeArtistBankCompletely(); });
             document.getElementById('select-artist-directory')?.addEventListener('change', async (e) => {
                 const val = e.target.value;
                 if (val === '__new__') {

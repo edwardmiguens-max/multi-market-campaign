@@ -175,6 +175,36 @@
         return results;
     }
 
+    /** Remove localStorage metadata + IndexedDB quarter rows for one artist bank. */
+    async function deleteArtistBankLocal(artistKey, bankKind) {
+        const kind = normalizeBankKind(bankKind);
+        const slug = slugifyArtistKey(artistKey);
+        const prefix = bankConfig(kind).storagePrefix;
+        try { localStorage.removeItem(prefix + slug); } catch (_e) { /* ignore */ }
+        // Older saves may have used the display name before slugifying in storageKey.
+        try {
+            if (artistKey && artistKey !== slug) localStorage.removeItem(prefix + artistKey);
+        } catch (_e) { /* ignore */ }
+        try {
+            const db = await openRowDb(kind);
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(IDB_STORE, 'readwrite');
+                const store = tx.objectStore(IDB_STORE);
+                const req = store.openCursor();
+                req.onsuccess = () => {
+                    const cursor = req.result;
+                    if (!cursor) return;
+                    const key = String(cursor.key || '');
+                    if (key === slug || key.startsWith(slug + '::')) cursor.delete();
+                    cursor.continue();
+                };
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error || new Error('IndexedDB delete failed'));
+            });
+        } catch (_err) { /* local wipe best-effort */ }
+        return { ok: true, artistKey: slug, bankKind: kind };
+    }
+
     function slugifyArtistKey(name) {
         return String(name || 'unknown-artist').trim().toLowerCase()
             .replace(/[^\w\s-]+/g, '').replace(/\s+/g, '-')
@@ -521,6 +551,7 @@
         hydrateBankRowsLocal,
         persistAllBankRowsLocal,
         countQuarterRowsLocal,
-        verifyQuarterRowsLocal
+        verifyQuarterRowsLocal,
+        deleteArtistBankLocal
     };
 })(typeof window !== 'undefined' ? window : globalThis);
