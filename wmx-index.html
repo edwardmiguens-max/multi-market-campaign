@@ -9,8 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,500;0,600;0,700;0,800;1,500&family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
     
-    <link rel="icon" href="assets/atlantic-favicon.png" type="image/png">
-    <link rel="apple-touch-icon" href="assets/atlantic-favicon.png">
+    <link rel="icon" href="assets/wmx-favicon.png" type="image/png">
+    <link rel="icon" href="assets/wmx-favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="apple-touch-icon" href="assets/wmx-apple-touch.png">
     <style>
 
         :root {
@@ -1481,14 +1482,11 @@
         .label-accordion.thirdparty { border-top: 3px solid var(--label-thirdparty); }
         .atl-brand-mark {
             flex-shrink: 0;
-            font-family: var(--atl-font-display);
-            font-size: clamp(1.75rem, 4vw, 2.25rem);
-            font-weight: 800;
-            letter-spacing: 0.12em;
-            line-height: 1;
-            color: var(--atl-black);
-            border: 2px solid var(--atl-black);
-            padding: 0.55rem 0.75rem;
+            display: block;
+            height: clamp(2.25rem, 6vw, 3.25rem);
+            width: auto;
+            max-width: clamp(8.5rem, 28vw, 12.5rem);
+            object-fit: contain;
         }
         .label-accordion > summary {
             list-style: none;
@@ -1633,7 +1631,7 @@
 <body>
     <div class="atl-page">
         <header class="atl-header">
-            <div class="atl-brand-mark" aria-hidden="true">WMX</div>
+            <img class="atl-brand-mark" src="assets/wmx-logo.png" alt="WMX" width="154" height="38" decoding="async">
             <div class="atl-header-copy">
                 <h1>WMX D2C Campaign Reports</h1>
                 <p>All labels and third-party campaign performance — Sales and Shipped in one index.</p>
@@ -3643,9 +3641,17 @@
         if (l.includes('parlophone') || l.includes('plg ') || l.startsWith('plg') || l.includes('14th floor') || l.includes('maverick')) {
             return 'parlophone';
         }
-        if (l.includes('warner')) return 'warner';
+        // Warner family + sheet aliases (WM UK alone is ~£1m+ on FY26 and was previously dropped).
+        if (
+            l.includes('warner') ||
+            l === 'wm uk' || l.startsWith('wm ') || l.includes('wmuk') || l.includes('wmasi') ||
+            l.includes('nonesuch') || l.includes('elektra') || l.includes('london records')
+        ) return 'warner';
         if (l.includes('rhino')) return 'rhino';
-        if (l.includes('third party') || l.includes('thirdparty') || l.includes('third-party')) return 'thirdparty';
+        if (
+            l.includes('third party') || l.includes('thirdparty') || l.includes('third-party') ||
+            l.includes('artist arena') || l.includes('ada distribution') || l === 'ada'
+        ) return 'thirdparty';
         return '';
     }
     function isWarnerParlophoneShippedLabel(label) {
