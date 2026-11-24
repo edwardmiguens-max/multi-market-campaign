@@ -1919,6 +1919,12 @@
                             <option value="cumulative">Cumulative (year to date)</option>
                         </select>
                     </div>
+                    <div class="atl-filter">
+                        <label for="fy-chart-compare" id="fy-chart-compare-label">Current year vs</label>
+                        <select id="fy-chart-compare">
+                            <option value="all" selected>All financial years</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div class="fy-chart-body">
@@ -4963,7 +4969,7 @@
     const FY_MONTH_NAMES = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
     /** Latest FY first: bold brand blue, then contrasting colours for earlier years. */
     const FY_COLORS = ['#1F3A5F', '#C8102E', '#C8A96A', '#2E8B57', '#8E5BA8', '#9AA5B1'];
-    const fyView = { metric: 'sales', mode: 'monthly' };
+    const fyView = { metric: 'sales', mode: 'monthly', compare: 'all' };
     let fyChart = null;
 
     function fyStartYearOf(month) {
@@ -5098,7 +5104,25 @@
         const ordered = built.series.slice().reverse(); // latest first, for colour assignment
         const colorFor = (fy) => FY_COLORS[Math.min(ordered.findIndex(s => s.fy === fy), FY_COLORS.length - 1)];
 
-        const datasets = built.series.map(s => {
+        // "Current year vs" selector: All years, or the current FY against one earlier FY.
+        const compareEl = document.getElementById('fy-chart-compare');
+        const previousYears = ordered.filter(s => s.fy !== latestYear);
+        if (compareEl) {
+            const wanted = fyView.compare;
+            const valid = wanted === 'all' || previousYears.some(s => String(s.fy) === wanted);
+            if (!valid) fyView.compare = 'all';
+            compareEl.innerHTML = '<option value="all">All financial years</option>' +
+                previousYears.map(s =>
+                    '<option value="' + s.fy + '">' + escapeHtml(s.label) + ' (Oct ' + s.fy + ' – Sep ' + (s.fy + 1) + ')</option>'
+                ).join('');
+            compareEl.value = fyView.compare;
+        }
+        const compareYear = fyView.compare === 'all' ? null : Number(fyView.compare);
+        const visibleSeries = compareYear === null
+            ? built.series
+            : built.series.filter(s => s.fy === latestYear || s.fy === compareYear);
+
+        const datasets = visibleSeries.map(s => {
             const isLatest = s.fy === latestYear;
             const color = colorFor(s.fy);
             return {
@@ -5123,6 +5147,7 @@
         if (footEl) footEl.hidden = false;
         noteEl.textContent = fyFilterSummary() + ' · ' + (fyView.mode === 'cumulative' ? 'Cumulative' : 'Monthly') +
             ' · ' + (fyView.metric === 'units' ? 'Units' : 'Net revenue') +
+            (compareYear !== null ? ' · ' + fyLabel(latestYear) + ' vs ' + fyLabel(compareYear) : '') +
             (openMonthIsPartial ? ' · ' + monthLabel(built.latestData) + ' still open (dashed)' : '');
 
         if (fyChart) { fyChart.destroy(); fyChart = null; }
@@ -5166,10 +5191,11 @@
                             label: (ctx) => ctx.parsed.y === null ? null : ctx.dataset.label + ': ' + fyFormatValue(ctx.parsed.y, false),
                             afterBody: (items) => {
                                 const latest = items.find(i => i.dataset.fy === latestYear);
-                                const prev = items.find(i => i.dataset.fy === latestYear - 1);
+                                const baseYear = compareYear === null ? latestYear - 1 : compareYear;
+                                const prev = items.find(i => i.dataset.fy === baseYear);
                                 if (!latest || !prev || latest.parsed.y === null || !prev.parsed.y) return '';
                                 const pct = ((latest.parsed.y - prev.parsed.y) / prev.parsed.y) * 100;
-                                return fyLabel(latestYear) + ' vs ' + fyLabel(latestYear - 1) + ': ' +
+                                return fyLabel(latestYear) + ' vs ' + fyLabel(baseYear) + ': ' +
                                     (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
                             }
                         }
@@ -5192,6 +5218,8 @@
         const modeEl = document.getElementById('fy-chart-mode');
         if (metricEl) metricEl.addEventListener('change', (e) => { fyView.metric = e.target.value; renderFyChart(); });
         if (modeEl) modeEl.addEventListener('change', (e) => { fyView.mode = e.target.value; renderFyChart(); });
+        const compareEl = document.getElementById('fy-chart-compare');
+        if (compareEl) compareEl.addEventListener('change', (e) => { fyView.compare = e.target.value; renderFyChart(); });
     })();
 
     function renderAll() {
