@@ -12,6 +12,7 @@
     <link rel="icon" href="assets/wmx-favicon.png" type="image/png">
     <link rel="icon" href="assets/wmx-favicon-32.png" type="image/png" sizes="32x32">
     <link rel="apple-touch-icon" href="assets/wmx-apple-touch.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <style>
 
         :root {
@@ -603,6 +604,24 @@
             font-style: italic;
         }
     
+
+        /* —— Shipped sales by financial year chart —— */
+        .fy-chart-body { padding: 1rem 1.15rem 1.15rem; }
+        .fy-chart-canvas-wrap { position: relative; height: 22rem; }
+        .fy-chart-empty {
+            padding: 2rem 1rem;
+            text-align: center;
+            font-family: var(--atl-font-editorial);
+            font-style: italic;
+            font-size: 0.875rem;
+            color: var(--atl-muted);
+        }
+        .fy-chart-foot {
+            margin-top: 0.6rem;
+            font-size: 0.6875rem;
+            line-height: 1.4;
+            color: var(--atl-muted);
+        }
 
         /* —— Shipped Sales styles (merged for v1.2) —— */
 
@@ -1873,6 +1892,42 @@
                 <h3>Top 5 artists shipped</h3>
                 <div id="top-artists-body">
                     <div class="atl-top-stores-empty">Waiting for shipped sales data…</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="atl-overview" id="fy-chart-section" aria-label="Shipped sales by financial year">
+            <div class="atl-overview-head">
+                <div class="atl-overview-head-main">
+                    <h2>Shipped Sales by Financial Year</h2>
+                    <span class="atl-overview-note" id="fy-chart-note">Waiting for shipped sales data…</span>
+                </div>
+            </div>
+            <div class="atl-overview-filters">
+                <div class="atl-filter-group snapshot">
+                    <div class="atl-filter">
+                        <label for="fy-chart-metric">Measure</label>
+                        <select id="fy-chart-metric">
+                            <option value="sales" selected>Net revenue</option>
+                            <option value="units">Units</option>
+                        </select>
+                    </div>
+                    <div class="atl-filter">
+                        <label for="fy-chart-mode">View</label>
+                        <select id="fy-chart-mode">
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="cumulative">Cumulative (year to date)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="fy-chart-body">
+                <div class="fy-chart-empty" id="fy-chart-empty">Waiting for shipped sales data…</div>
+                <div class="fy-chart-canvas-wrap" id="fy-chart-wrap" hidden>
+                    <canvas id="fy-chart-canvas" role="img" aria-label="Shipped sales by month, one line per financial year"></canvas>
+                </div>
+                <div class="fy-chart-foot" id="fy-chart-foot" hidden>
+                    Financial year runs October to September (FY27 = Oct 2026 to Sep 2027). Uses the Product, Market, Store, Rep owner and Label filters and any selected artists; the Period filter does not apply, so every financial year is shown.
                 </div>
             </div>
         </section>
@@ -4904,6 +4959,241 @@
         bindFloatingTips(productRanks);
     }
 
+    /* ---------- Shipped sales by financial year (one line per FY, Oct to Sep) ---------- */
+    const FY_MONTH_NAMES = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'];
+    /** Latest FY first: bold brand blue, then contrasting colours for earlier years. */
+    const FY_COLORS = ['#1F3A5F', '#C8102E', '#C8A96A', '#2E8B57', '#8E5BA8', '#9AA5B1'];
+    const fyView = { metric: 'sales', mode: 'monthly' };
+    let fyChart = null;
+
+    function fyStartYearOf(month) {
+        const parts = String(month).split('-').map(Number);
+        return parts[1] >= 10 ? parts[0] : parts[0] - 1;
+    }
+    /** Position in the financial year: Oct = 0 … Sep = 11. */
+    function fyIndexOf(month) {
+        return (Number(String(month).slice(5, 7)) + 2) % 12;
+    }
+    function fyMonthKey(fyStartYear, idx) {
+        const calMonth = ((idx + 9) % 12) + 1;
+        const calYear = idx < 3 ? fyStartYear : fyStartYear + 1;
+        return calYear + '-' + String(calMonth).padStart(2, '0');
+    }
+    function fyLabel(fyStartYear) {
+        return 'FY' + String(fyStartYear + 1).slice(-2);
+    }
+
+    /** Rows for the chart: all filters except Period (the chart compares years). */
+    function fyChartRows() {
+        return rows.filter(r => {
+            if (!r.month) return false;
+            if (!passesSnapshotFilters(r)) return false;
+            if (selectedArtists.size && !selectedArtists.has(r.artist)) return false;
+            return true;
+        });
+    }
+
+    function buildFySeries() {
+        const months = getAvailableMonths(rows);
+        if (!months.length) return null;
+        const firstData = months[0];
+        const latestData = months[months.length - 1];
+        const years = Array.from(new Set(months.map(fyStartYearOf))).sort((a, b) => a - b);
+        const buckets = new Map();
+        years.forEach(y => buckets.set(y, { sales: Array(12).fill(0), units: Array(12).fill(0) }));
+        fyChartRows().forEach(r => {
+            const b = buckets.get(fyStartYearOf(r.month));
+            if (!b) return;
+            const i = fyIndexOf(r.month);
+            b.sales[i] += Number(r.sales) || 0;
+            b.units[i] += Number(r.units) || 0;
+        });
+        const series = years.map(y => {
+            const raw = buckets.get(y)[fyView.metric];
+            let running = 0;
+            const data = raw.map((v, i) => {
+                const key = fyMonthKey(y, i);
+                if (key > latestData || key < firstData) return null;
+                if (fyView.mode === 'cumulative') {
+                    running += v;
+                    return running;
+                }
+                return v;
+            });
+            return { fy: y, label: fyLabel(y), data };
+        });
+        return { series, latestData };
+    }
+
+    function fyFormatValue(v, compact) {
+        if (v === null || v === undefined || Number.isNaN(v)) return '—';
+        if (fyView.metric === 'units') {
+            return compact
+                ? new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(v)
+                : intFmt(v);
+        }
+        const code = window.WmxCurrency ? window.WmxCurrency.currencyCode() : 'GBP';
+        try {
+            return new Intl.NumberFormat(undefined, {
+                style: 'currency',
+                currency: code,
+                notation: compact ? 'compact' : 'standard',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: compact ? 1 : 0
+            }).format(v);
+        } catch (_e) {
+            return code + ' ' + Math.round(v).toLocaleString();
+        }
+    }
+
+    function fyFilterSummary() {
+        const bits = [];
+        bits.push(filters.market === 'all' ? 'All markets' : filters.market.toUpperCase());
+        if (filters.product === 'all') bits.push('Music + merch');
+        else bits.push(filters.product === 'music' ? 'Music' : 'Merch');
+        if (filters.store !== 'all') bits.push(storeLabel(filters.store));
+        if (filters.rep !== 'all') bits.push(filters.rep);
+        if (filters.label !== 'all') bits.push(SHIPPED_LABEL_NAMES[filters.label] || filters.label);
+        if (selectedArtists.size === 1) bits.push(Array.from(selectedArtists)[0]);
+        else if (selectedArtists.size > 1) bits.push(selectedArtists.size + ' artists');
+        if (fyView.metric === 'sales') {
+            bits.push(window.WmxCurrency ? window.WmxCurrency.currencyCode() : 'GBP');
+        }
+        return bits.join(' · ');
+    }
+
+    function renderFyChart() {
+        const noteEl = document.getElementById('fy-chart-note');
+        const emptyEl = document.getElementById('fy-chart-empty');
+        const wrapEl = document.getElementById('fy-chart-wrap');
+        const footEl = document.getElementById('fy-chart-foot');
+        const canvas = document.getElementById('fy-chart-canvas');
+        if (!noteEl || !emptyEl || !wrapEl || !canvas) return;
+
+        function showEmpty(message) {
+            if (fyChart) { fyChart.destroy(); fyChart = null; }
+            emptyEl.textContent = message;
+            emptyEl.hidden = false;
+            wrapEl.hidden = true;
+            if (footEl) footEl.hidden = true;
+        }
+
+        const built = buildFySeries();
+        if (!built) {
+            noteEl.textContent = 'Waiting for shipped sales data…';
+            showEmpty('Waiting for shipped sales data…');
+            return;
+        }
+        if (typeof Chart === 'undefined') {
+            noteEl.textContent = 'Chart library not loaded';
+            showEmpty('The chart library could not be loaded. Check your connection and refresh the page.');
+            return;
+        }
+
+        const useCurrency = fyView.metric === 'sales' && window.WmxCurrency;
+        const convert = (v) => (v === null ? null : (useCurrency ? window.WmxCurrency.convertFromGbp(v) : v));
+        const latestYear = built.series[built.series.length - 1].fy;
+        const openMonthIsPartial = built.latestData === calendarCurrentMonth();
+        const openIdx = fyIndexOf(built.latestData);
+        const ordered = built.series.slice().reverse(); // latest first, for colour assignment
+        const colorFor = (fy) => FY_COLORS[Math.min(ordered.findIndex(s => s.fy === fy), FY_COLORS.length - 1)];
+
+        const datasets = built.series.map(s => {
+            const isLatest = s.fy === latestYear;
+            const color = colorFor(s.fy);
+            return {
+                label: isLatest ? s.label + ' (YTD)' : s.label,
+                fy: s.fy,
+                data: s.data.map(convert),
+                borderColor: color,
+                backgroundColor: color,
+                borderWidth: isLatest ? 3 : 2,
+                pointRadius: isLatest ? 3 : 2,
+                pointHoverRadius: 5,
+                tension: 0.25,
+                spanGaps: false,
+                segment: {
+                    borderDash: (ctx) => (isLatest && openMonthIsPartial && ctx.p1DataIndex === openIdx) ? [6, 4] : undefined
+                }
+            };
+        });
+
+        emptyEl.hidden = true;
+        wrapEl.hidden = false;
+        if (footEl) footEl.hidden = false;
+        noteEl.textContent = fyFilterSummary() + ' · ' + (fyView.mode === 'cumulative' ? 'Cumulative' : 'Monthly') +
+            ' · ' + (fyView.metric === 'units' ? 'Units' : 'Net revenue') +
+            (openMonthIsPartial ? ' · ' + monthLabel(built.latestData) + ' still open (dashed)' : '');
+
+        if (fyChart) { fyChart.destroy(); fyChart = null; }
+        fyChart = new Chart(canvas.getContext('2d'), {
+            type: 'line',
+            data: { labels: FY_MONTH_NAMES, datasets },
+            // Adds breathing room between the key and the plot area.
+            plugins: [{
+                id: 'fyLegendSpacing',
+                beforeInit(chart) {
+                    const legend = chart.legend;
+                    if (!legend) return;
+                    const originalFit = legend.fit;
+                    legend.fit = function () {
+                        originalFit.bind(legend)();
+                        legend.height += 16;
+                    };
+                }
+            }],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                layout: { padding: { top: 2, bottom: 4 } },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'start',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'line',
+                            boxWidth: 22,
+                            boxHeight: 8,
+                            padding: 18,
+                            color: '#121212',
+                            font: { size: 11, weight: '600' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ctx.parsed.y === null ? null : ctx.dataset.label + ': ' + fyFormatValue(ctx.parsed.y, false),
+                            afterBody: (items) => {
+                                const latest = items.find(i => i.dataset.fy === latestYear);
+                                const prev = items.find(i => i.dataset.fy === latestYear - 1);
+                                if (!latest || !prev || latest.parsed.y === null || !prev.parsed.y) return '';
+                                const pct = ((latest.parsed.y - prev.parsed.y) / prev.parsed.y) * 100;
+                                return fyLabel(latestYear) + ' vs ' + fyLabel(latestYear - 1) + ': ' +
+                                    (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(18, 18, 18, 0.08)' },
+                        ticks: { font: { size: 11 }, callback: (v) => fyFormatValue(v, true) }
+                    }
+                }
+            }
+        });
+    }
+
+    (function bindFyControls() {
+        const metricEl = document.getElementById('fy-chart-metric');
+        const modeEl = document.getElementById('fy-chart-mode');
+        if (metricEl) metricEl.addEventListener('change', (e) => { fyView.metric = e.target.value; renderFyChart(); });
+        if (modeEl) modeEl.addEventListener('change', (e) => { fyView.mode = e.target.value; renderFyChart(); });
+    })();
+
     function renderAll() {
         const months = getAvailableMonths(rows);
         const allArtists = aggregate(rows).artists;
@@ -4929,6 +5219,7 @@
         bindFloatingTips(topBody);
 
         renderReportSections();
+        renderFyChart();
         updateArtistButton(snapAgg.artists);
         if (document.getElementById('artist-modal').classList.contains('open')) {
             renderArtistModalList(snapAgg.artists);
@@ -5040,6 +5331,8 @@
                 else panels[k].setAttribute('hidden', '');
             });
             try { history.replaceState(null, '', '#' + key); } catch (_e) {}
+            // Charts built while the Shipped tab was hidden need a resize once it is visible.
+            if (key === 'shipped') window.dispatchEvent(new Event('resize'));
         }
         tabs.forEach(tab => {
             tab.addEventListener('click', () => activate(tab.getAttribute('data-view')));
